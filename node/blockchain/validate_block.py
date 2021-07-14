@@ -8,7 +8,6 @@ from node.blockchain.transaction_operations import *
 from node.blockchain.header_serialization import *
 from node.blockchain.block_serialization import deserialize_block, serialize_block
 from node.blockchain.transaction_serialization import serialize_transaction
-from bitcoin.blocks import serialize_header
 from node.blockchain.queries import *
 from collections import Counter
 
