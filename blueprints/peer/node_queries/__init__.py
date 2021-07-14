@@ -1,0 +1,109 @@
+'''
+Created on Mar 28, 2021
+
+@author: brett_wood
+'''
+
+from flask import request
+from flask_restplus import Namespace, Resource, fields, Api
+from http import HTTPStatus
+from node.networking.peering_functions import authenticate_peer
+from node.networking.node_query_functions import (
+    get_block_height_peer,
+    get_blocks_start_end,
+    get_block_by_height
+    )
+
+namespace = Namespace('node_queries', 'Node Queries')
+
+block_height_model = namespace.model('Block Height', {
+    'block_height': fields.Integer(
+        required=True,
+        description='Block height'
+    ),
+    'block_hash': fields.String(
+        required=True,
+        description='Block hash'
+    )
+})
+
+blocks_model = namespace.model('Blocks', {
+    'blocks': fields.String(
+        required=True,
+        description='Blocks'
+    )
+})
+
+block_model = namespace.model('Block', {
+    'block': fields.String(
+        required=True,
+        description='Block'
+    )
+})
+
+
+@namespace.route('/getBlockHeight')
+class get_block_height(Resource):
+    '''Get block height of node'''
+
+    @namespace.response(500, 'Internal Server error')
+    @namespace.marshal_with(block_height_model)
+    @namespace.doc(security='Bearer')   
+    def get(self):
+        
+        if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
+            namespace.abort(401, 'Not authenticated as peer')
+        
+        #print(request.headers)
+        #print(request.headers.get("Authorization"))
+
+        block_height = get_block_height_peer().id
+        block_hash = get_block_height_peer().header_hash
+
+        return {
+            'block_height': block_height,
+            'block_hash': block_hash
+        }
+
+
+@namespace.route('/getBlocks/<int:start_block>/<int:end_block>')
+class get_blocks(Resource):
+    '''Get blocks from starting to ending'''
+
+    @namespace.response(500, 'Internal Server error')
+    @namespace.marshal_with(blocks_model)
+    @namespace.doc(security='Bearer')   
+    def get(self, start_block, end_block):
+        
+        if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
+            namespace.abort(400, 'Not authenticated as peer')
+        
+        blocks = get_blocks_start_end(start_block, end_block)
+
+        return {
+            'blocks': blocks
+        }
+
+
+@namespace.route('/getBlock/<int:block_height>')
+class get_block(Resource):
+    '''Get blocks from starting to ending'''
+
+    @namespace.response(500, 'Internal Server error')
+    @namespace.marshal_with(block_model)
+    @namespace.doc(security='Bearer')   
+    def get(self, block_height):
+        
+        if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
+            namespace.abort(400, 'Not authenticated as peer')
+        
+        block = get_block_by_height(block_height)
+
+        return {
+            'block': block
+        }
+
+        
+#UPDATE
+#get_transactions
+
