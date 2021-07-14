@@ -1,3 +1,8 @@
+--name database bitland
+
+create extension postgis;
+create schema bitland;
+
 drop table if exists bitland.planet cascade;
 create table bitland.planet (
   id SERIAL PRIMARY key,
@@ -51,7 +56,7 @@ create table bitland.output_parcel (
   CONSTRAINT output_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES bitland.transaction(id)
  );
 
-CREATE INDEX idx_output_parcel_geom_gist ON ONLY bitland.output_parcel USING gist (geom);
+CREATE INDEX idx_output_parcel_geom_gist ON bitland.output_parcel USING gist (geom);
 
 drop table if exists bitland.input_parcel cascade;
 create table bitland.input_parcel (
@@ -127,6 +132,7 @@ insert into bitland.int_join (a) select a from bitland.int_join;
 insert into bitland.int_join (a) select a from bitland.int_join;
 insert into bitland.int_join (a) select a from bitland.int_join;
 
+
 --drop table if exists bitland.tiles;
 --create table bitland.tiles (id serial primary key, x_ordinal int, y_ordinal int, x float8, y float8, geom_1024 geometry, geom_4386 geometry);
 
@@ -145,7 +151,7 @@ group by 1
 )
 select * --x_level, y_level, x_start_, cumulative_y_count + x_length, 
 from calc1 c1
-join cumulative_count cc on c1.id = cc.id
+join cumulative_count cc on c1.id = cc.id;
 
 
 create schema testing;
@@ -320,6 +326,7 @@ $$;
 truncate testing.land_divide;
 select testing.find_polygons();
 
+/*
 select *,
   st_distance(pt1::geography, pt2::geography) as height,
   st_distance(pt2::geography, pt3::geography) as width
@@ -328,6 +335,7 @@ order by row;
 
 select count(*)
 from testing.land_divide
+*/
 
 --drop table testing.land_divide_test1
 --select * into testing.land_divide_test1 from testing.land_divide;
@@ -350,6 +358,7 @@ update testing.land_divide set pt1 = st_geomfromtext('POINT (' || long1 || ' ' |
 update testing.land_divide set pt2 = st_geomfromtext('POINT (' || long2 || ' ' || lat2 || ')');
 update testing.land_divide set pt3 = st_geomfromtext('POINT (' || long3 || ' ' || lat3 || ')');
 
+/*
 CREATE OR REPLACE FUNCTION xml_escape(TEXT)
 RETURNS TEXT AS $$
   SELECT replace(replace(replace($1, '&', '&amp;'), '<', '&lt;'), '>', '&gt;');
@@ -417,8 +426,7 @@ RETURNS TEXT AS $$
 $$ LANGUAGE sql IMMUTABLE STRICT;
 
 select as_kmldoc(geom) from testing.land_divide ld;
-
-
+*/
 
 create table testing.iteration_table (id int);
 
@@ -471,7 +479,7 @@ create table bitland.landbase_enum(
 	geom geometry,
 	area float8);
 
-CREATE INDEX idx_landbase_enum_geom_gist ON ONLY bitland.landbase_enum USING gist (geom);
+CREATE INDEX idx_landbase_enum_geom_gist ON bitland.landbase_enum USING gist (geom);
 
 insert into bitland.landbase_enum (x_id,y_id,x1 , y1 , x2 , y2 , x3 , y3 , x4 , y4 )
 select itx.id as x_id, ity.id as y_id, 1/ld.cols::numeric*(itx.id-1) as x1, y1, 1/ld.cols::numeric*(itx.id-1) as x2, y2, 1/ld.cols::numeric*itx.id as x3, y3, 1/ld.cols::numeric*itx.id as x4, y4
@@ -487,7 +495,6 @@ update bitland.landbase_enum set long1 = round((180 - x1*360)::numeric,6), lat1 
 update bitland.landbase_enum set geom = st_geomfromtext('POLYGON((' ||long1 || ' ' ||lat1 || ',' ||long2 || ' ' ||lat2 || ',' ||long3 || ' ' ||lat3 || ',' ||long4 || ' ' ||lat4 || ',' ||long1 || ' ' ||lat1 || '))',4326 ) ;
 update bitland.landbase_enum set area = st_area(geom::geography) ;
 
-
 alter table bitland.landbase_enum drop column long1;
 alter table bitland.landbase_enum drop column long2;
 alter table bitland.landbase_enum drop column long3;
@@ -497,22 +504,11 @@ alter table bitland.landbase_enum drop column lat2;
 alter table bitland.landbase_enum drop column lat3;
 alter table bitland.landbase_enum drop column lat4;
 
-/*
-alter table bitland.landbase_enum add column long1 float8;
-alter table bitland.landbase_enum add column 	lat1 float8;
-alter table bitland.landbase_enum add column 	long2 float8; 
-alter table bitland.landbase_enum add column 	lat2 float8;
-alter table bitland.landbase_enum add column 	long3 float8; 
-alter table bitland.landbase_enum add column 	lat3 float8; 
-alter table bitland.landbase_enum add column 	long4 float8; 
-alter table bitland.landbase_enum add column 	lat4 float8;
- */
-
 alter table bitland.landbase_enum add column geom_x_y geometry;
 
 update bitland.landbase_enum set geom_x_y = st_geomfromtext('POLYGON((' ||x1 || ' ' ||y1 || ',' ||x2|| ' ' ||y2 || ',' ||x3 || ' ' ||y3 || ',' ||x4 || ' ' ||y4|| ',' ||x1|| ' ' ||y1|| '))',4326 );
 
-select as_kmldoc(geom) from bitland.landbase_enum where y_id <= 8;
+--select as_kmldoc(geom) from bitland.landbase_enum where y_id <= 8;
 
 alter table bitland.landbase_enum add column block_claim int;
 
@@ -523,7 +519,7 @@ alter table bitland.landbase_enum add column valid_enabled_block int;
 
 with minmax as (
 select min(y_id) as min_id, max(y_id) as max_id
-from landbase_enum le 
+from bitland.landbase_enum le 
 )
 update bitland.landbase_enum le
 set valid_claim = true
@@ -540,8 +536,7 @@ drop table bitland.int_join;
 drop table bitland.geography_definition;
 drop table if exists bitland.address;
 
-
-drop function bitland.rollback_block (rollback_block_id int);
+drop function if exists bitland.rollback_block (rollback_block_id int);
 
 create function bitland.rollback_block (rollback_block_id int)
 returns int
@@ -604,28 +599,23 @@ begin
 end;
 $$;
 
-drop view if exists bitland.utxo;
-create view bitland.utxo as 
-select op.*, t.transaction_hash, t.block_id, t.miner_fee_sats, t.miner_fee_blocks, t.transfer_fee_sats, t.transfer_fee_blocks, t.transfer_fee_address, b.bitcoin_block_height, b.miner_bitcoin_address, opl.pub_key as miner_landbase_address, ipop.pub_key as transfer_fee_failover_address, c.claim_fee_sats, c.claim_block_height, mft.status as miner_fee_status, tft.status as transfer_fee_status, mft.bitcoin_block_height as miner_fee_status_block_height, tft.bitcoin_block_height as transfer_fee_status_block_height
-from bitland.output_parcel op
-left join bitland.input_parcel ip on op.id = ip.output_parcel_id and ip.input_version = 1
-join bitland.transaction t on op.transaction_id = t.id
-join bitland.block b on t.block_id = b.id
-left join bitland.transaction tl on b.id = tl.block_id and tl.is_landbase = true
-left join bitland.output_parcel opl on tl.id = opl.transaction_id
-left join bitland.input_parcel ip2 on ip2.transaction_id = op.transaction_id and ip2.vin = 0
-left join bitland.output_parcel ipop on ip2.output_parcel_id = ipop.id
-left join bitland.claim c on c.claimed_output_parcel_id = op.id and c.leading_claim = true
-left join bitland.miner_fee_transaction mft on op.transaction_id = mft.transaction_id
-left join bitland.transfer_fee_transaction tft on op.transaction_id = tft.transaction_id
-where ip.id is null;
+drop table if exists bitland.claim cascade;
+create table bitland.claim(
+  id SERIAL primary key, 
+  claimed_output_parcel_id int, 
+  claim_action_output_parcel_id int,
+  claim_fee_sats int,
+  claim_block_height int,
+  leading_claim boolean,
+  invalidated_claim boolean,
+  invalidation_input_parcel_id int,
+  from_bitland_block_height int,
+  to_bitland_block_height int,
+  CONSTRAINT claimed_output_parcel_id_fkey FOREIGN KEY (claimed_output_parcel_id) REFERENCES bitland.output_parcel(id),
+  CONSTRAINT claim_action_output_parcel_id_fkey FOREIGN KEY (claim_action_output_parcel_id) REFERENCES bitland.output_parcel(id),
+  CONSTRAINT claim_block_height_fkey FOREIGN KEY (claim_block_height) REFERENCES bitland.block(id)
+);
 
-drop view if exists bitland.transaction_contingency;
-create view bitland.transaction_contingency as 
-select t.*, mft.status as miner_fee_status, tft.status as transfer_fee_status, mft.bitcoin_block_height as miner_fee_status_block_height, tft.bitcoin_block_height as transfer_fee_status_block_height
-from bitland.transaction t
-left join bitland.miner_fee_transaction mft on t.id = mft.transaction_id 
-left join bitland.transfer_fee_transaction tft on t.id = tft.transaction_id;
 
 drop table if exists bitland.miner_fee_transaction cascade;
 create table bitland.miner_fee_transaction(
@@ -653,6 +643,30 @@ create table bitland.transfer_fee_transaction(
   CONSTRAINT transfer_fee_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES bitland.transaction(id)
 );
 
+drop view if exists bitland.utxo;
+create view bitland.utxo as 
+select op.*, t.transaction_hash, t.block_id, t.miner_fee_sats, t.miner_fee_blocks, t.transfer_fee_sats, t.transfer_fee_blocks, t.transfer_fee_address, b.bitcoin_block_height, b.miner_bitcoin_address, opl.pub_key as miner_landbase_address, ipop.pub_key as transfer_fee_failover_address, c.claim_fee_sats, c.claim_block_height, mft.status as miner_fee_status, tft.status as transfer_fee_status, mft.bitcoin_block_height as miner_fee_status_block_height, tft.bitcoin_block_height as transfer_fee_status_block_height
+from bitland.output_parcel op
+left join bitland.input_parcel ip on op.id = ip.output_parcel_id and ip.input_version = 1
+join bitland.transaction t on op.transaction_id = t.id
+join bitland.block b on t.block_id = b.id
+left join bitland.transaction tl on b.id = tl.block_id and tl.is_landbase = true
+left join bitland.output_parcel opl on tl.id = opl.transaction_id
+left join bitland.input_parcel ip2 on ip2.transaction_id = op.transaction_id and ip2.vin = 0
+left join bitland.output_parcel ipop on ip2.output_parcel_id = ipop.id
+left join bitland.claim c on c.claimed_output_parcel_id = op.id and c.leading_claim = true
+left join bitland.miner_fee_transaction mft on op.transaction_id = mft.transaction_id
+left join bitland.transfer_fee_transaction tft on op.transaction_id = tft.transaction_id
+where ip.id is null;
+
+drop view if exists bitland.transaction_contingency;
+create view bitland.transaction_contingency as 
+select t.*, mft.status as miner_fee_status, tft.status as transfer_fee_status, mft.bitcoin_block_height as miner_fee_status_block_height, tft.bitcoin_block_height as transfer_fee_status_block_height
+from bitland.transaction t
+left join bitland.miner_fee_transaction mft on t.id = mft.transaction_id 
+left join bitland.transfer_fee_transaction tft on t.id = tft.transaction_id;
+
+
 /*
 drop table if exists bitland.contingency_status;
 create table bitland.contingency_status (
@@ -667,24 +681,6 @@ create table bitland.contingency_status (
   CONSTRAINT contingency_output_id_fkey FOREIGN KEY (output_parcel_id) REFERENCES bitland.output_parcel(id)
 );
 */
-
-drop table if exists bitland.claim cascade;
-create table bitland.claim(
-  id SERIAL primary key, 
-  claimed_output_parcel_id int, 
-  claim_action_output_parcel_id int,
-  claim_fee_sats int,
-  claim_block_height int,
-  leading_claim boolean,
-  invalidated_claim boolean,
-  invalidation_input_parcel_id int,
-  from_bitland_block_height int,
-  to_bitland_block_height int,
-  CONSTRAINT claimed_output_parcel_id_fkey FOREIGN KEY (claimed_output_parcel_id) REFERENCES bitland.output_parcel(id),
-  CONSTRAINT claim_action_output_parcel_id_fkey FOREIGN KEY (claim_action_output_parcel_id) REFERENCES bitland.output_parcel(id),
-  CONSTRAINT claim_block_height_fkey FOREIGN KEY (claim_block_height) REFERENCES bitland.block(id)
-);
-
 
 /* RESET SCRIPT
 truncate bitland.block cascade;
@@ -716,6 +712,5 @@ create table networking.peer (
 );
   
   
-
 
 

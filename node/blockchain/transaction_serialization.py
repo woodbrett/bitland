@@ -10,7 +10,6 @@ from utilities.serialization import deserialize_text, serialize_text
 from utilities.sqlUtils import executeSql
 from wallet.key_generation import *
 import ecdsa
-from bitcoin.transaction import serialize
 
 def serialize_transaction(version, inputs, outputs, contingencies):
         

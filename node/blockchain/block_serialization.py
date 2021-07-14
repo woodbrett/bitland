@@ -12,7 +12,6 @@ from codecs import decode, encode
 from utilities.serialization import deserialize_text, serialize_text
 from node.blockchain.transaction_serialization import *
 from node.blockchain.header_serialization import *
-from bitcoin.blocks import serialize_header
 
 def serialize_block(
         header,
