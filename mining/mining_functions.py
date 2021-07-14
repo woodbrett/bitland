@@ -108,7 +108,7 @@ def mining_process():
     
     current_block_height = getMaxBlockHeight()
     
-    'entering mine'
+    print('entering mine')
     
     mine = findValidHeader(
         version_bytes,
@@ -124,6 +124,8 @@ def mining_process():
     
     header = mine[0]
     status = mine[1]
+    
+    print('mining status: ' + status)
     
     #UPDATE do we need to wait at all to allow block to propagate?
     if status == 'found valid block':
