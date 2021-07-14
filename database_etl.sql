@@ -701,7 +701,21 @@ update landbase_enum set valid_claim = true, valid_enabled_block = 0 where y_id 
  */
 
 
+create schema networking;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+drop table if exists networking.peer;
+create table networking.peer (
+  ip_address varchar,
+  port int,
+  status varchar,
+  connected_time time default now(),
+  last_ping time default now(),
+  self_auth_key uuid,
+  peer_auth_key uuid default uuid_generate_v1() 
+);
+  
+  
 
 
 
