@@ -58,7 +58,15 @@ def getBlocks(start_block_id, end_block_id):
     
     blocks = ''
     
-    for i in (start_block_id, end_block_id):
+    for i in range(start_block_id, end_block_id):
         blocks = blocks + getBlock(i)
         
     return blocks
+
+
+if __name__ == '__main__':
+    
+    print(getBlocks(1,51))
+
+
+
