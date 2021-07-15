@@ -9,11 +9,19 @@ from binascii import unhexlify,hexlify
 from node.networking.node_query_functions import get_blocks_start_end
 import json
 
+#UPDATE
 def ask_peers_for_height():
     
     return True
 
 
+#UPDATE
+def ask_peer_for_blocks(start_block, end_blocks):
+    
+    return True
+
+
+#UPDATE
 def process_blocks(blocks):
     
     return True
