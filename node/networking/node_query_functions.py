@@ -44,3 +44,5 @@ def get_blocks_start_end(start_block, end_block):
 if __name__ == '__main__':
     
     print(get_blocks_start_end(1, 5))
+    
+    print(get_block_height_peer().id)

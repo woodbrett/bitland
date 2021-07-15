@@ -59,9 +59,6 @@ class get_block_height(Resource):
         if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(401, 'Not authenticated as peer')
         
-        #print(request.headers)
-        #print(request.headers.get("Authorization"))
-
         block_height = get_block_height_peer().id
         block_hash = get_block_height_peer().header_hash
 
