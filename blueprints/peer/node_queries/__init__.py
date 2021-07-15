@@ -28,9 +28,14 @@ block_height_model = namespace.model('Block Height', {
 })
 
 blocks_model = namespace.model('Blocks', {
+    'start_block_height': fields.String(
+        required=True,
+        description='Start block height'
+    ),
     'blocks': fields.String(
         required=True,
-        description='Blocks'
+        description='Blocks',
+        as_list=True
     )
 })
 
@@ -71,7 +76,7 @@ class get_blocks(Resource):
     '''Get blocks from starting to ending'''
 
     @namespace.response(500, 'Internal Server error')
-    @namespace.marshal_with(blocks_model)
+    @namespace.marshal_list_with(blocks_model)
     @namespace.doc(security='Bearer')   
     def get(self, start_block, end_block):
         
@@ -81,7 +86,8 @@ class get_blocks(Resource):
         blocks = get_blocks_start_end(start_block, end_block)
 
         return {
-            'blocks': blocks
+            'start_block_height': blocks[0],
+            'blocks': blocks[1]
         }
 
 
@@ -100,7 +106,7 @@ class get_block(Resource):
         block = get_block_by_height(block_height)
 
         return {
-            'block': block
+            'blocks': blocks
         }
 
         

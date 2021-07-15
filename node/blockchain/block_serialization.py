@@ -31,8 +31,11 @@ def deserialize_block(block):
     
     header = deserialize_block_header(block)
     counter = header[8]
+    print(counter)
     counter_int = int.from_bytes(counter, byteorder='big')
+    print(counter_int)
     block_length = len(block)
+    print(block_length)
     
     transactions = []
 

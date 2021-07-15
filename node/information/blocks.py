@@ -5,7 +5,7 @@ Created on Jul 12, 2021
 '''
 from utilities.sqlUtils import *
 from collections import namedtuple
-
+import json
 
 def getMaxBlockHeight():
     
@@ -56,17 +56,26 @@ def getBlock(block_id):
 
 def getBlocks(start_block_id, end_block_id):
     
-    blocks = ''
+    blocks = []
     
-    for i in range(start_block_id, end_block_id):
-        blocks = blocks + getBlock(i)
+    for i in range(start_block_id, end_block_id + 1): #+1 to make it inclusive
         
+        blocks.append([i,getBlock(i)])
+    
     return blocks
 
 
 if __name__ == '__main__':
     
-    print(getBlocks(1,51))
-
-
+    #x = getBlocks(1,51)
+    #print(x.get(1))
+    
+    
+    mydict = {}
+    mydict[1]='abc'
+    print(mydict)
+    mydict[2]='def'
+    print(mydict)
+    
+    print(json.dumps(mydict))
 

@@ -19,7 +19,7 @@ app.register_blueprint(documented_endpoint)
 app.register_blueprint(peer)
 
 #start mining if true
-run_mining = True
+run_mining = False
 if run_mining == True:
     t2 = threading.Thread(target=mining_process,daemon=True)
     t2.start()

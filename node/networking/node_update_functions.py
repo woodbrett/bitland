@@ -33,15 +33,6 @@ def analyze_new_block_from_peer(block,peer):
 
     while action_queue[0] != threading.get_ident():
         time.sleep(1)        
-    
-    '''
-    print('1 ' + str(threading.get_ident()))
-    time.sleep(5)
-    print('2 ' + str(threading.get_ident()))
-    time.sleep(5)
-    print('3 ' + str(threading.get_ident()))
-    time.sleep(5)
-    '''
 
     block_bytes = unhexlify(block)
 

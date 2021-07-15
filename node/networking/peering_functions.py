@@ -288,6 +288,24 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
 
     return responses
 
+
+#UPDATE 
+#currently hardcoded to the structure of the peers query
+def message_peer(endpoint, peer_ip_address, payload='', rest_type='get'):
+
+    peer = query_peer(peer_ip_address)
+
+    url = "http://" + peer_ip_address + ":" + str(peer.port) + endpoint
+    print(url)
+    headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+    try:
+        r = requests.post(url, data=json.dumps(payload), headers=headers).json()
+    except Exception as error:
+        print('error calling peer ' + peer_ip_address)
+        r = 'error calling peer'
+
+    return r
+
     
 if __name__ == '__main__':
     

@@ -4,6 +4,7 @@ Created on Jul 12, 2021
 @author: brett_wood
 '''
 #this is for storing the functions to support the peer blockchain APIs
+import json
 
 from node.information.blocks import (
     getMaxBlockInformation,
@@ -27,8 +28,12 @@ def get_block_by_height(block_height):
 def get_blocks_start_end(start_block, end_block):
     
     blocks = getBlocks(start_block, end_block)
+    start_block = blocks[0][0]
+    block_list = []
+    for i in range(0,len(blocks)):
+        block_list.append(blocks[i][1])
     
-    return blocks
+    return start_block, block_list
 
 
 
@@ -38,4 +43,4 @@ def get_blocks_start_end(start_block, end_block):
 
 if __name__ == '__main__':
     
-    print(get_block_height_peer().id)
+    print(get_blocks_start_end(1, 5))
