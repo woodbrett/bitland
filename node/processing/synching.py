@@ -3,14 +3,28 @@ Created on Jul 14, 2021
 
 @author: brett_wood
 '''
-from node.information.blocks import getBlocks
+from node.information.blocks import (
+    getBlocks,
+    getMaxBlockHeight
+    )
 from node.blockchain.block_serialization import deserialize_block
 from binascii import unhexlify,hexlify
 from node.networking.node_query_functions import get_blocks_start_end
 import json
 from node.networking.peering_functions import message_all_connected_peers
 
-#UPDATE
+def synch_node():
+    
+    peer_heights = ask_peers_for_height()
+    self_height = getMaxBlockHeight()
+    max_height = self_height
+    
+    for i in range(0,len(peer_heights)):
+        1
+    
+    return True
+    
+
 def ask_peers_for_height():
     
     heights = message_all_connected_peers('/peer/node_queries/getBlockHeight', rest_type='get')
