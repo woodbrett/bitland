@@ -270,6 +270,7 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
         peer_ip_address = peers[i][0]
         peer_port = peers[i][1]
         peer_status = peers[i][2]
+        token = peers[i][5]
 
         for j in range(0,len(peers_to_exclude)):
             if peer_ip_address == peers_to_exclude[j]:
@@ -279,7 +280,12 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
             print(peers[i][0])   
             url = "http://" + peer_ip_address + ":" + str(peer_port) + endpoint
             print(url)
-            headers = {'Content-type': 'application/json', 'Accept': 'application/json', 'Authorization': '2acb8c08-e51b-11eb-bead-579de5eb0138'}
+            headers = {
+                'Content-type': 'application/json', 
+                'Accept': 'application/json', 
+                'Authorization': token #'2acb8c08-e51b-11eb-bead-579de5eb0138'
+            }
+            print(headers)
             
             if rest_type == 'get':
                 print('trying get')

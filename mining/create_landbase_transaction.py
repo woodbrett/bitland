@@ -17,7 +17,7 @@ def desiredLandbase():
     path = 'LINESTRING(-24.32582123586823 89.84080925775434, -74.62860694880915 82.52182923327297, -91.10241210722151 75.38399911209015, -95.0423241796008 66.86026257852093, -100.6851598368639 54.57263922226819)'
     
     query_find_desired_landbase = ("select st_astext(geom) as landbase "
-        + "from landbase_enum le "
+        + "from bitland.landbase_enum le "
         + "where st_intersects( "
           + "le.geom, " 
           + "st_geomfromtext('" + path + "',4326) ) "
@@ -88,7 +88,8 @@ def populateLandbaseTransaction(landbase):
 if __name__ == '__main__':
 
     print(desiredLandbase())
-
+    
+    '''
     landbase = 'POLYGON((-22.5 89.74674,-22.5 89.51868,-45 89.51868,-45 89.74674,-22.5 89.74674))'
     public_key = '027c5ef9bc2b7b169cde0327fc08883e0d4e2a603f2c6a47c08b75fe79df0e88742e461b2a3956d15467d253455dae6737ea2f22de440fc2923f3d1c592cc1d1'
     
@@ -122,3 +123,4 @@ if __name__ == '__main__':
     print(hexlify(serialized_transaction).decode('utf-8'))
     
     print(hexlify(getLandbaseTransaction()).decode('utf-8'))
+    '''
