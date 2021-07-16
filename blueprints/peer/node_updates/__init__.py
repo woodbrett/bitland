@@ -13,6 +13,10 @@ from node.networking.node_update_functions import queue_new_block_from_peer
 namespace = Namespace('node_updates', 'Node Updates')
 
 block_model = namespace.model('Blockchain', {
+    'block_height': fields.Integer(
+        required=True,
+        description='Block height'
+    ),
     'block': fields.String(
         required=True,
         description='Encoded block'
@@ -33,13 +37,14 @@ class send_new_block(Resource):
             namespace.abort(400, 'Not authenticated as peer')
         
         print(request.json['block'])
+        block_height = request.json['block_height']
         block = request.json['block']
         ip_address = request.remote_addr
         
-        x = queue_new_block_from_peer(block,ip_address)
+        x = queue_new_block_from_peer(block_height,block,ip_address)
         print(x)
         
-        status = 'success'
+        status = 'received'
 
         return {
             'status': status

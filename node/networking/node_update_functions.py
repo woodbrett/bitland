@@ -10,12 +10,14 @@ from node.blockchain.validate_block import validateBlock
 from node.blockchain.block_operations import addBlock
 from binascii import unhexlify
 from node.networking.peering_functions import message_all_connected_peers
+from node.information.blocks import getMaxBlockHeight
+from node.processing.synching import synch_node
 
 action_queue = []
 
-def queue_new_block_from_peer(block,peer=''):
+def queue_new_block_from_peer(block_height,block,peer=''):
     
-    t1 = threading.Thread(target=analyze_new_block_from_peer,args=(block,peer,),daemon=True)
+    t1 = threading.Thread(target=analyze_new_block_from_peer,args=(block_height,block,peer,),daemon=True)
     t1.start()
 
     print('thread started, exiting function')
@@ -23,7 +25,7 @@ def queue_new_block_from_peer(block,peer=''):
     return True
     
 
-def analyze_new_block_from_peer(block,peer):
+def analyze_new_block_from_peer(block_height,block,peer):
     
     action_queue.append(threading.get_ident())
     print(action_queue)
@@ -34,11 +36,22 @@ def analyze_new_block_from_peer(block,peer):
     while action_queue[0] != threading.get_ident():
         time.sleep(1)        
 
+    self_height = getMaxBlockHeight()
     block_bytes = unhexlify(block)
 
-    if validateBlock(block_bytes) == True:
-        addBlock(block_bytes)
-        send_block_to_peers(block,peers_to_exclude=[peer])
+    if block_height > self_height + 1:
+        synch_node()
+    
+    elif block_height == self_height + 1:
+        if validateBlock(block_bytes) == True:
+            addBlock(block_bytes)
+            send_block_to_peers(block,peers_to_exclude=[peer])
+            
+        #UPDATE make sure it didn't not validate because of something wrong, but rather different chain (prior block different)
+        else:
+            synch_node()
+            
+        
         
     #UPDATE - put in logic if the block is invalid but ahead of the current block, it should validate if its a valid separate chain and update accordingly
     

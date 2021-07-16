@@ -23,13 +23,16 @@ app.register_blueprint(documented_endpoint)
 app.register_blueprint(peer)
 
 #start mining if true
-run_mining = True
+run_mining = False
 if run_mining == True:
     t2 = threading.Thread(target=mining_process,daemon=True)
     t2.start()
     print('started mining', flush=True)
     
 #start node ongoing functions (managing peers, pinging, garbage collecting transactions)
+run_node = False
+#if run_node == True:
+#    t3 = threading.Thread(target=mining_process,daemon=True)
 
 if __name__ == "__main__":
     

@@ -277,13 +277,11 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
                 exclude_peer = True
         
         if exclude_peer == False and peer_status == 'connected':
-            print(peers[i][0])   
             url = "http://" + peer_ip_address + ":" + str(peer_port) + endpoint
-            print(url)
             headers = {
                 'Content-type': 'application/json', 
                 'Accept': 'application/json', 
-                'Authorization': token #'2acb8c08-e51b-11eb-bead-579de5eb0138'
+                'Authorization': token 
             }
             print(headers)
             
@@ -316,8 +314,11 @@ def message_peer(endpoint, peer_ip_address, payload='', rest_type='get'):
     peer = query_peer(peer_ip_address)
 
     url = "http://" + peer_ip_address + ":" + str(peer.port) + endpoint
-    print(url)
-    headers = {'Content-type': 'application/json', 'Accept': 'application/json', 'Authorization': '2acb8c08-e51b-11eb-bead-579de5eb0138'}
+    headers = {
+        'Content-type': 'application/json', 
+        'Accept': 'application/json', 
+        'Authorization': peer.self_auth_key 
+    }
 
     if rest_type == 'get':
         try:
