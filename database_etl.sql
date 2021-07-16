@@ -26,6 +26,9 @@ create table bitland.block (
   nonce bigint
  );
 
+insert into bitland.block(id, header_hash) values
+(0, '0000000000000000000000000000000000000000000000000000000000000000');
+
 --select * from bitland.block
 
 drop table if exists bitland.transaction cascade;

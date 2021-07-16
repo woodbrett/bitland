@@ -96,7 +96,8 @@ def deserialize_block_header(header, start_pos=0):
     nonce = header[counter:(counter + nonce_bytes)]
     counter = counter + nonce_bytes
     counter_bytes = counter.to_bytes(4, byteorder = 'big')
-        
+    
+    #change this to dict i think, lots of downstream calls on it though
     return(        
         version,
         prev_block, 
