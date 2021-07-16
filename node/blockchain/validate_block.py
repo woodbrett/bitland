@@ -12,11 +12,13 @@ from node.blockchain.queries import *
 from collections import Counter
 
 
-def validateBlock(block):
-    
+def validateBlock(block, realtime_validation=True):
+#realtime validation indicates if it is validating the head of the chain in realtime
+#which impacts some of the timing elements that it analyzes vs synching old blocks
+
     valid_block = True
     
-    validate_block = validateBlockHeader(block)
+    validate_block = validateBlockHeader(block, realtime_validation)
     print(validate_block)
     
     valid_block = validate_block[0]
@@ -27,7 +29,7 @@ def validateBlock(block):
     return valid_block
 
 
-def validateBlockHeader(block):
+def validateBlockHeader(block, realtime_validation=True):
 
     header = deserialize_block_header(block)
         
@@ -74,12 +76,12 @@ def validateBlockHeader(block):
             failure_reason = 'invalid merkle root'
             
     if (valid_header == True):
-        valid_header = validateTime(time_)    
+        valid_header = validateTime(time_, realtime_validation)    
         if(valid_header == False):
             failure_reason = 'invalid timestamp'
     
     if (valid_header == True):
-        valid_header = validateBitcoinBlock(bitcoin_height)    
+        valid_header = validateBitcoinBlock(bitcoin_height, realtime_validation)    
         if(valid_header == False):
             failure_reason = 'invalid bitcoin block height'
     
@@ -101,6 +103,8 @@ def validateBlockHeader(block):
     return valid_header, failure_reason
 
 
+#UPDATE think this can be removed
+'''
 def validateBlockHeaderSynch(header):
 
     header = deserialize_block_header(header)
@@ -129,12 +133,10 @@ def validateBlockHeaderSynch(header):
         if(valid_header == False):
             failure_reason = 'invalid previous block'
     
-    ''' can't validate merkle root without full block
     if (valid_header == True):
         valid_header = validateMrklRoot(mrkl_root, serialized_transactions)   
         if(valid_header == False):
             failure_reason = 'invalid merkle root'
-    '''
             
     if (valid_header == True):
         valid_header = validateTimeHistorical(time_)    
@@ -163,6 +165,7 @@ def validateBlockHeaderSynch(header):
             failure_reason = 'invalid header hash' 
      
     return valid_header, failure_reason
+'''
 
 
 def validateTransactions(block):

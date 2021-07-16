@@ -234,8 +234,8 @@ def addParcelOutput(transaction_id, output_version, pub_key, vout, planet_id, sh
     vout = str(vout)
     planet_id = str(planet_id)
     shape = str(shape)
-    
-    query_insert_parcel_output = ("insert into output_parcel (transaction_id, output_version, pub_key, vout,planet_id, geom) values "
+        
+    query_insert_parcel_output = ("insert into bitland.output_parcel (transaction_id, output_version, pub_key, vout,planet_id, geom) values "
                 "(" + transaction_id + ","
                  + output_version + ","
                 "'" + pub_key + "',"
@@ -244,6 +244,8 @@ def addParcelOutput(transaction_id, output_version, pub_key, vout, planet_id, sh
                  + "ST_GeomFromText('" + shape +"',4326)"
                 + ") RETURNING id;"
                 )    
+    
+    print(query_insert_parcel_output)
     
     try:
         parcel_id = executeSql(query_insert_parcel_output)[0]

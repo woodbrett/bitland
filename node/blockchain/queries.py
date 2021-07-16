@@ -8,7 +8,7 @@ from collections import namedtuple
     
 def getBlockCount():
     
-    query = ("select count(*) from bitland.block b")
+    query = ("select count(*) from bitland.block b where id > 0")
     block_count = executeSql(query)[0]
     return block_count
 

@@ -326,6 +326,8 @@ def message_peer(endpoint, peer_ip_address, payload='', rest_type='get'):
         except Exception as error:
             print('error calling peer ' + peer_ip_address)
             r = 'error calling peer'
+    
+    print(r)
 
     return r
 
