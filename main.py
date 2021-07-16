@@ -33,10 +33,6 @@ if run_mining == True:
 
 if __name__ == "__main__":
     
-<<<<<<< Updated upstream
     app.run(port=peering_port,host=peering_host)
-=======
-    app.run(port=8334,host="0.0.0.0")
->>>>>>> Stashed changes
     
     
