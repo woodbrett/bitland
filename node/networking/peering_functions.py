@@ -284,6 +284,7 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
                 'Authorization': token 
             }
             print(headers)
+            print(json.dumps(payload))
             
             if rest_type == 'get':
                 print('trying get')
@@ -296,6 +297,13 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
             if rest_type == 'post':
                 try:
                     r = requests.post(url, data=json.dumps(payload), headers=headers).json()
+                except Exception as error:
+                    print('error calling peer ' + peer_ip_address)
+                    r = 'error calling peer'
+            
+            if rest_type == 'put':
+                try:
+                    r = requests.put(url, data=json.dumps(payload), headers=headers).json()
                 except Exception as error:
                     print('error calling peer ' + peer_ip_address)
                     r = 'error calling peer'
