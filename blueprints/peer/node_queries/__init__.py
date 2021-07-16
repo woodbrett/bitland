@@ -13,6 +13,7 @@ from node.networking.node_query_functions import (
     get_blocks_start_end,
     get_block_by_height
     )
+import json
 
 namespace = Namespace('node_queries', 'Node Queries')
 
@@ -81,10 +82,11 @@ class get_blocks(Resource):
             namespace.abort(400, 'Not authenticated as peer')
         
         blocks = get_blocks_start_end(start_block, end_block)
-
+        print(blocks[1])
+        
         return {
             'start_block_height': blocks[0],
-            'blocks': blocks[1]
+            'blocks': json.dumps(blocks[1])
         }
 
 
