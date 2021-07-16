@@ -10,6 +10,10 @@ from blueprints.documented_endpoints import blueprint as documented_endpoint
 from blueprints.peer import blueprint as peer
 import threading
 from mining.mining_functions import mining_process
+from system_variables import (
+    peering_port,
+    peering_host
+    )
 
 app = Flask(__name__)
 app.config['RESTPLUS_MASK_SWAGGER'] = False
@@ -29,6 +33,6 @@ if run_mining == True:
 
 if __name__ == "__main__":
     
-    app.run(port=8336,host="0.0.0.0")
+    app.run(port=peering_port,host=peering_host)
     
     
