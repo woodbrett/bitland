@@ -255,6 +255,8 @@ def attempt_to_connect_to_new_peer(version, port, timestamp, peer_ip_address, pe
 #UPDATE 
 #add threading
 #currently hardcoded to the structure of the peers query
+#very inelegant with the post/get/etc rest type
+#hardcoded auth
 def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_exclude=[]):
 
     peers = query_peers()
@@ -277,12 +279,22 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
             print(peers[i][0])   
             url = "http://" + peer_ip_address + ":" + str(peer_port) + endpoint
             print(url)
-            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-            try:
-                r = requests.post(url, data=json.dumps(payload), headers=headers).json()
-            except Exception as error:
-                print('error calling peer ' + peer_ip_address)
-                r = 'error calling peer'
+            headers = {'Content-type': 'application/json', 'Accept': 'application/json', 'Authorization': '2acb8c08-e51b-11eb-bead-579de5eb0138'}
+            
+            if rest_type == 'get':
+                print('trying get')
+                try:
+                    r = requests.get(url, headers=headers).json()
+                except Exception as error:
+                    print('error calling peer ' + peer_ip_address)
+                    r = 'error calling peer'
+            
+            if rest_type == 'post':
+                try:
+                    r = requests.post(url, data=json.dumps(payload), headers=headers).json()
+                except Exception as error:
+                    print('error calling peer ' + peer_ip_address)
+                    r = 'error calling peer'
                 
             responses.append([peer_ip_address,r])
 
@@ -291,23 +303,38 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
 
 #UPDATE 
 #currently hardcoded to the structure of the peers query
+#very inelegant with the post/get/etc rest type
+#hardcoded auth
 def message_peer(endpoint, peer_ip_address, payload='', rest_type='get'):
 
     peer = query_peer(peer_ip_address)
 
     url = "http://" + peer_ip_address + ":" + str(peer.port) + endpoint
     print(url)
-    headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-    try:
-        r = requests.post(url, data=json.dumps(payload), headers=headers).json()
-    except Exception as error:
-        print('error calling peer ' + peer_ip_address)
-        r = 'error calling peer'
+    headers = {'Content-type': 'application/json', 'Accept': 'application/json', 'Authorization': '2acb8c08-e51b-11eb-bead-579de5eb0138'}
+
+    if rest_type == 'get':
+        try:
+            r = requests.get(url, headers=headers).json()
+        except Exception as error:
+            print('error calling peer ' + peer_ip_address)
+            r = 'error calling peer'
+    
+    if rest_type == 'post':
+        try:
+            r = requests.post(url, data=json.dumps(payload), headers=headers).json()
+        except Exception as error:
+            print('error calling peer ' + peer_ip_address)
+            r = 'error calling peer'
+    
+    print(r)
 
     return r
 
     
 if __name__ == '__main__':
+    
+    #x = attempt_to_connect_to_new_peer(1, 8336, 1, '76.179.199.85', 8334)
     
     #connect_to_peer("abc", 100, 100, 'localhost' , 8334)
     #new_peer = add_peer('99.99.99.99',1000,'connected')
@@ -315,7 +342,7 @@ if __name__ == '__main__':
     #new_peer = add_peer('99.99.99.97',1000,'connected')
     #new_peer = add_peer('99.99.99.96',1000,'connected')
 
-    print(message_all_connected_peers(endpoint='abc',peers_to_exclude=['99.99.99.98']))
+    #print(message_all_connected_peers(endpoint='abc',peers_to_exclude=['99.99.99.98']))
     
     #UNIT TESTS    
     '''

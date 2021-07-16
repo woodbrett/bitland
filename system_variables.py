@@ -13,6 +13,6 @@ global database_settings_file_location
 block_height_url = 'https://blockstream.info/api/blocks/tip/height'
 address_search_url = 'https://blockstream.info/api/address/:address/txs'
 max_peer_count = 5
-peering_port = 8334
+peering_port = 8336
 database_settings_file_location = 'C:/other/database.ini'
 

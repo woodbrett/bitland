@@ -58,66 +58,46 @@ def validateMrklRoot(mrkl_root, transactions):
     return is_valid
 
 
-def validateTime(time_):
+def validateTime(time_,realtime_validation=True):
     
     if getBlockCount() == 0:
-        average_time_last_11 = (datetime.utcnow().timestamp() - 60*60)
+    #skip this validation if first block
+        is_valid = True
+        return is_valid
     
     else:
         average_time_last_11 = getMedianBlockTime11()
     
-    #UPDATE to connect to nodes
-    network_adjusted_time = datetime.utcnow().timestamp()
-    time_int = int.from_bytes(time_, byteorder='big')
-    
-    is_valid = (time_int > average_time_last_11 and time_int < (network_adjusted_time + 60*60*2))
+        #UPDATE to connect to nodes
+        network_adjusted_time = datetime.utcnow().timestamp()
+        time_int = int.from_bytes(time_, byteorder='big')
+        
+        if realtime_validation==True:
+            is_valid = (time_int > average_time_last_11 and time_int < (network_adjusted_time + 60*60*2))
+        else: 
+            is_valid = (time_int > average_time_last_11 )
     
     return is_valid
 
-
-#different than when validating at the tip since you're not interested in how it compares to the current time when synching
-def validateTimeSynch(time_):
+    
+def validateBitcoinBlock(block_height,realtime_validation=True):
     
     if getBlockCount() == 0:
-        average_time_last_11 = (datetime.utcnow().timestamp() - 60*60)
-    
-    else:
-        average_time_last_11 = getMedianBlockTime11()
-    
-    time_int = int.from_bytes(time_, byteorder='big')
-    
-    is_valid = time_int > average_time_last_11
-    
-    return is_valid
-    
-    
-def validateBitcoinBlock(block_height):
-    
-    if getBlockCount() == 0:
-        prior_bitcoin_block_height = getCurrentBitcoinBlockHeight() - 6
+        #prior_bitcoin_block_height = getCurrentBitcoinBlockHeight() - 6
+        is_valid = True
+        return is_valid
     
     else:
         prior_bitcoin_block_height = queryGetPrevBitcoinBlock()
-    
-    calculated_block_height = getCurrentBitcoinBlockHeight()
-    block_height_int = int.from_bytes(block_height, byteorder='big')
-    is_valid = abs(calculated_block_height - block_height_int) <= 6 and block_height_int >= prior_bitcoin_block_height
-    
-    return is_valid    
-
-
-#different than when validating at the tip since you're not interested in how it compares to the current block when synching
-def validateBitcoinBlockSynch(block_height):
-    
-    if getBlockCount() == 0:
-        prior_bitcoin_block_height = getCurrentBitcoinBlockHeight() - 6
-    
-    else:
-        prior_bitcoin_block_height = queryGetPrevBitcoinBlock()
-    
-    block_height_int = int.from_bytes(block_height, byteorder='big')
-    is_valid = block_height_int >= prior_bitcoin_block_height
-    
+        calculated_block_height = getCurrentBitcoinBlockHeight()
+        block_height_int = int.from_bytes(block_height, byteorder='big')
+        
+        #UPDATE should we have margin of a few bitcoin blocks? don't think so
+        if realtime_validation==True:
+            is_valid = abs(calculated_block_height - block_height_int) <= 6 and block_height_int >= prior_bitcoin_block_height
+        else:
+            is_valid = block_height_int >= prior_bitcoin_block_height
+        
     return is_valid    
     
     
