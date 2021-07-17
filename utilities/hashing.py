@@ -7,6 +7,17 @@ import codecs
 from binascii import unhexlify, hexlify
 from utilities.serialization import deserialize_text, serialize_text
 from hashlib import sha256
+from node.blockchain.block_serialization import deserialize_block
+from node.blockchain.header_serialization import deserialize_block_header
+
+def calculateHeaderHashFromBlock(block):
+    
+    header_byte = deserialize_block(block)[0]
+    headerhash_byte = sha256(sha256(header_byte).digest()).digest()
+    headerhash_hex = hexlify(headerhash_byte).decode("utf-8")
+    
+    return headerhash_byte 
+
 
 def calculateHeaderHash(
         version,

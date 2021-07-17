@@ -29,11 +29,12 @@ def validateVer(version):
     
     return is_valid
     
-def validatePrevBlock(prev_block):
+def validatePrevBlock(prev_block, prev_block_input=None):
     
-    node_prev_block = getPrevBlock()
+    if prev_block_input == None:
+        prev_block_input = getPrevBlock()
         
-    is_valid = node_prev_block == prev_block
+    is_valid = prev_block_input == prev_block
     return is_valid  
 
 

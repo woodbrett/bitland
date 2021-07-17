@@ -45,7 +45,7 @@ def analyze_new_block_from_peer(block_height,block,peer):
     elif block_height == self_height + 1:
         if validateBlock(block_bytes) == True:
             addBlock(block_bytes)
-            send_block_to_peers(block,peers_to_exclude=[peer])
+            send_block_to_peers(block_height,block,peers_to_exclude=[peer])
             
         #UPDATE make sure it didn't not validate because of something wrong, but rather different chain (prior block different)
         else:
@@ -59,10 +59,13 @@ def analyze_new_block_from_peer(block_height,block,peer):
 
 
 #UPDATE - send block to peers when its validated and added, don't send it back to peer who you received it from
-def send_block_to_peers(block,peers_to_exclude=[]):
+def send_block_to_peers(block_height,block,peers_to_exclude=[]):
     
     endpoint = '/peer/node_updates/sendNewBlock'
-    payload = {"block":block}
+    payload = {
+        "block_height":block_height,
+        "block":block
+        }
     rest_type = 'put'
     
     send_block = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    

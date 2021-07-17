@@ -12,13 +12,14 @@ from node.blockchain.queries import *
 from collections import Counter
 
 
-def validateBlock(block, realtime_validation=True):
+def validateBlock(block, realtime_validation=True, prev_block_input=None):
 #realtime validation indicates if it is validating the head of the chain in realtime
 #which impacts some of the timing elements that it analyzes vs synching old blocks
+#prev_block_input allows you to submit the previous block as an input rather than fetching from the database
 
     valid_block = True
     
-    validate_block = validateBlockHeader(block, realtime_validation)
+    validate_block = validateBlockHeader(block, realtime_validation, prev_block_input)
     print(validate_block)
     
     valid_block = validate_block[0]
@@ -29,7 +30,7 @@ def validateBlock(block, realtime_validation=True):
     return valid_block
 
 
-def validateBlockHeader(block, realtime_validation=True):
+def validateBlockHeader(block, realtime_validation=True, prev_block_input=None):
 
     header = deserialize_block_header(block)
         
@@ -66,7 +67,7 @@ def validateBlockHeader(block, realtime_validation=True):
             failure_reason = 'invalid version'
     
     if (valid_header == True):
-        valid_header = validatePrevBlock(prev_block)
+        valid_header = validatePrevBlock(prev_block, prev_block_input)
         if(valid_header == False):
             failure_reason = 'invalid previous block'
     

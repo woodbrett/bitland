@@ -110,6 +110,29 @@ def addDeserializedBlock(block, block_height):
     return block_height
 
 
+def removeBlock(block_height):
+    
+    max_block = getMaxBlockHeight()
+    
+    if block_height == max_block:
+        remove_block_query = ("select * from bitland.rollback_block(" + block_height + ");")
+        return True
+    
+    else:
+        return False
+
+
+def removeBlocks(low_block_height, high_block_height):
+    
+    for i in range(low_block_height, high_block_height):
+        
+        remove = removeBlock(high_block_height - i)
+        if remove == False:
+            return False
+    
+    return True
+
+
 def addTransactions(transaction_set, block_height):
 
     transaction_count = len(transaction_set)

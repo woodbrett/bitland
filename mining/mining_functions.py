@@ -52,6 +52,7 @@ def findValidHeader(
     
     start_time = datetime.now()
     status = 'running'
+    new_block_height = 0
     
     while headerhash_byte > difficulty_byte:
         nonce = nonce + 1
@@ -75,6 +76,7 @@ def findValidHeader(
             break
         nonce_hex = hexlify(nonce_byte)
         status = 'found valid block'
+        new_block_height = current_block_height + 1
 
     print(hexlify(header_byte).decode('utf-8'))
     
@@ -82,7 +84,7 @@ def findValidHeader(
     print(end_time - start_time)
     print(int.from_bytes(time_byte,'big'))
     
-    return (header_byte, status)
+    return (header_byte, status,new_block_height)
         
 
 #UPDATE add transactions into this
@@ -124,6 +126,7 @@ def mining_process():
     
     header = mine[0]
     status = mine[1]
+    block_height = mine[2]
     
     print('mining status: ' + status)
     
@@ -131,7 +134,7 @@ def mining_process():
     if status == 'found valid block':
         serialized_block = serialize_block(header, transactions)
         block_hex = hexlify(serialized_block).decode('utf-8')
-        queue_new_block_from_peer(block_hex)
+        queue_new_block_from_peer(block_height,block_hex)
     
     return mining_process()
             
