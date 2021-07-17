@@ -511,6 +511,77 @@ def validateSignature(message, public_key, signature):
     return valid_signature
 
 
+def addTransactionToMempool(transaction):
+
+    deserialized_transaction = deserialize_transaction(transaction)
+
+    version = int.from_bytes(deserialize_transaction(transaction)[0],'big')
+    miner_fee_sats = int.from_bytes(deserialize_transaction(transaction)[3][0] ,'big')
+    miner_fee_blocks = int.from_bytes(deserialize_transaction(transaction)[3][1] ,'big')
+    transfer_fee_sats = int.from_bytes(deserialize_transaction(transaction)[3][2] ,'big')
+    transfer_fee_blocks = int.from_bytes(deserialize_transaction(transaction)[3][3] ,'big')
+    transfer_fee_address = deserialize_transaction(transaction)[3][4].decode('utf-8')
+    
+    #UPDATE as new transactions are added
+    is_landbase = version == 1
+
+    '''    
+    inputs = deserialize_transaction(transaction)[1]
+    inputs_len = len(inputs)
+    outputs = deserialize_transaction(transaction)[2]
+    outputs_len = len(outputs)
+    claim_input_id = 0
+    
+    for i in range(0, inputs_len):
+        input = inputs[i]
+        input_version = int.from_bytes(input[0],'big')
+        input_transaction_hash = hexlify(input[1]).decode('utf-8')
+        input_transaction_id = getTransactionIdByHash(input_transaction_hash)[0]
+        vout = int.from_bytes(input[2],'big')
+        vin = i
+        output_parcel_id = getOutputParcelByTransactionVout(input_transaction_hash, vout)[3]
+        sig = hexlify(input[3]).decode('utf-8')
+        
+        if input_version != 3:
+            input_parcel_id = addParcelInput(transaction_id,vin, input_version,input_transaction_hash,input_transaction_id,vout,output_parcel_id,sig)
+
+            #mark any invalidated claims
+            #UPDATE can make this way more efficient by doing all transactions at once probably            
+            override_claim_id = getClaimByOutputParcelId(output_parcel_id)
+            if override_claim_id != 'no_claim':
+                updateClaimInvalidate(override_claim_id, block_height, input_parcel_id)
+            
+        if input_version == 3:
+            claim_input_id = output_parcel_id
+        
+    for i in range(0, outputs_len):
+        output = outputs[i]
+        
+        output_version = int.from_bytes(output[0],'big')
+        planet_id = int.from_bytes(output[1],'big')
+        shape = output[2].decode('utf-8')
+        pub_key = hexlify(output[3]).decode('utf-8')
+        
+        parcel_id = addParcelOutput(transaction_id, output_version, pub_key, i, planet_id, shape)
+        
+        if output_version == 3:
+            #add new claims to DB
+            leading_claim = 'true'
+            invalidated_claim = 'false'
+            add_claim = addClaimToDb(claim_input_id, parcel_id, miner_fee_sats, block_height, leading_claim, invalidated_claim, block_height)
+        
+            #mark superceded claims
+            override_claim_id = getClaimByOutputParcelId(output_parcel_id)
+            if override_claim_id != 'no_claim':
+                updateClaimLeading(override_claim_id, block_height)
+
+    if (is_landbase):
+        updateDbLandbase(parcel_id, block_height)
+    '''
+
+    return transaction_id
+
+
 if __name__ == '__main__':
 
     transaction = '00020101b0bcaa0b93e0802533596449a9efa39f7137895c51baba2fa3eefe38cab8fff60040718458a4d630315618b7e311399c5d58fe9ab3474548023821f05975533b354eb7bc394aba99982281cac0a5984699b36feec3dd3c8394480553a925765d6985020101002c504f4c59474f4e2828302039302c302038392e37343637342c2d39302038392e37343637342c30203930292940879dfac7e96660b71f93abdfbd09a8f15d056b3b6149aab233381150b42088c5d03cff0d51178990d08c1d94924abdfdd234837f3b370a435e2b631e33d51edc02010030504f4c59474f4e28282d39302038392e37343637342c2d39302039302c302039302c2d39302038392e37343637342929401bf9fd16296aeda8f680a86ce5505fb52239d14109c9c84e9d84a5be403c9e727144a8b41f1f6cfe6ad2d85268a934c37dd85b895c0f8082bc6ee3a2b7613a4500000000271007d000000007a12001902a626331716571723335646c723266616d6870797738763939767972707834376d67707378726c67786378'

@@ -12,6 +12,7 @@ from binascii import unhexlify
 from node.networking.peering_functions import message_all_connected_peers
 from node.information.blocks import getMaxBlockHeight
 from node.processing.synching import synch_node
+from node.blockchain.transaction_operations import validateTransaction
 
 action_queue = []
 
@@ -48,12 +49,9 @@ def analyze_new_block_from_peer(block_height,block,peer):
             send_block_to_peers(block_height,block,peers_to_exclude=[peer])
             
         #UPDATE make sure it didn't not validate because of something wrong, but rather different chain (prior block different)
+        #right now it just sends it to synch node to handle, but this should be integrated more directly
         else:
             synch_node()
-            
-        
-        
-    #UPDATE - put in logic if the block is invalid but ahead of the current block, it should validate if its a valid separate chain and update accordingly
     
     action_queue.remove(threading.get_ident())
 
@@ -72,6 +70,36 @@ def send_block_to_peers(block_height,block,peers_to_exclude=[]):
     
     return send_block
 
+
+def queue_new_transaction_from_peer(transaction,peer=''):
+    
+    t1 = threading.Thread(target=analyze_new_transaction_from_peer,args=(transaction,peer,),daemon=True)
+    t1.start()
+
+    print('thread started, exiting function')
+
+    return True
+
+
+def analyze_new_transaction_from_peer(transaction,peer):
+    
+    action_queue.append(threading.get_ident())
+    print(action_queue)
+    
+    print(threading.get_ident())
+    time.sleep(5)
+
+    while action_queue[0] != threading.get_ident():
+        time.sleep(1)        
+        
+    transaction_bytes = unhexlify(transaction)
+
+    if validateTransaction(transaction_bytes) == True:
+        addTransactionToMempool(block_bytes)
+        #send_block_to_peers(block_height,block,peers_to_exclude=[peer])
+        
+    action_queue.remove(threading.get_ident())
+    
 
 if __name__ == '__main__':
 

@@ -12,8 +12,9 @@ from node.blockchain.header_serialization import deserialize_block_header
 
 def calculateHeaderHashFromBlock(block):
     
-    header_byte = deserialize_block(block)[0]
-    headerhash_byte = sha256(sha256(header_byte).digest()).digest()
+    block_byte = unhexlify(block)
+    header_byte = deserialize_block(block_byte)[0]
+    headerhash_byte = calculateHeaderHash(header_byte[0],header_byte[1],header_byte[2],header_byte[3],header_byte[4],header_byte[5],header_byte[6],header_byte[7])
     headerhash_hex = hexlify(headerhash_byte).decode("utf-8")
     
     return headerhash_byte 

@@ -619,7 +619,6 @@ create table bitland.claim(
   CONSTRAINT claim_block_height_fkey FOREIGN KEY (claim_block_height) REFERENCES bitland.block(id)
 );
 
-
 drop table if exists bitland.miner_fee_transaction cascade;
 create table bitland.miner_fee_transaction(
   id  SERIAL primary key, 
@@ -714,6 +713,18 @@ create table networking.peer (
   peer_auth_key uuid default uuid_generate_v1() 
 );
   
-  
+drop table if exists bitland.transaction_mempool cascade;
+create table bitland.transaction_mempool (
+  id SERIAL PRIMARY key, 
+  transaction_hash varchar,
+  version int,
+  is_landbase bool,
+  miner_fee_sats int,
+  miner_fee_blocks int, 
+  transfer_fee_sats int, 
+  transfer_fee_blocks int,
+  transfer_fee_address varchar
+ );
+
 
 

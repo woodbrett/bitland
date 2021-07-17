@@ -17,8 +17,14 @@ from node.networking.peering_functions import (
     message_peer
     )
 from node.blockchain.block_serialization import deserialize_block
-from node.blockchain.validate_block import validateBlock
-from node.blockchain.block_operations import addBlock
+from node.blockchain.validate_block import (
+    validateBlock,
+    validateBlockHeader
+    )
+from node.blockchain.block_operations import (
+    addBlock,
+    removeBlocks
+    )
 from utilities.hashing import calculateHeaderHashFromBlock
 
 def synch_node():
@@ -45,46 +51,63 @@ def synch_node():
         next_block_prev_block = next_block_header[1]
         
         self_height_hash = unhexlify(getBlockInformation(block_id=self_height).header_hash)
-              
+        
+        blocks_added = 0
+        blocks_removed = 0
+        
+        self_base_hash = unhexlify(getBlockInformation(block_id=start_block_height).header_hash)
+        peer_base_hash = calculateHeaderHashFromBlock(peer_blocks[0])
+        
         if next_block_prev_block == self_height_hash:
             process_blocks(peer_blocks[peer_next_block:])
+            blocks_added = len(peer_blocks[peer_next_block:])
         
         #UPDATE else logic in case the peer has a longer divergent chain
         #haven't tested this yet
-        elif unhexlify(getBlockInformation(block_id=start_block_height).header_hash) == calculateHeaderHashFromBlock(unhexlify(peer_blocks[0])):
+        
+        elif self_base_hash == peer_base_hash: #unhexlify(getBlockInformation(block_id=start_block_height).header_hash) == calculateHeaderHashFromBlock(unhexlify(peer_blocks[0])):
             
             comparison_block_height = start_block_height
             
             #move to function compare_chains_find_split 
-            for i in range(0,(self_height - start_block_height)):
-                if getBlockInformation(block_id=i+start_block_height).header_hash != calculateHeaderHashFromBlock(unhexlify(peer_blocks[i])):
+            for i in range(0,(self_height - start_block_height + 1)):
+                
+                self_hash_i = unhexlify(getBlockInformation(block_id=i+start_block_height).header_hash)
+                peer_hash_i = calculateHeaderHashFromBlock(peer_blocks[i])
+                
+                if self_hash_i != peer_hash_i:
                     peer_blocks_split = peer_blocks[i:]
                     break
                 comparison_block_height = comparison_block_height + 1
             
             prev_block = getBlockInformation(comparison_block_height).prev_block
-            valid_blocks = process_blocks_memory(peer_blocks_split)
+            valid_blocks = process_blocks_memory(peer_blocks_split,prev_block)
             
             if valid_blocks == True:
-                1
+                remove = removeBlocks(comparison_block_height,self_height)
+                blocks_removed = len(peer_blocks_split)
                 
-    return None
+                if remove == True:
+                    process_blocks(peer_blocks_split)
+                    blocks_added = len(peer_blocks_split)
+                
+    return blocks_added, blocks_removed
 
 
 def process_blocks_memory(blocks,start_prev_block):
     
-    prev_block = start_prev_block
+    prev_block = unhexlify(start_prev_block)
     
     for i in range(0,len(blocks)):
         print('analyzing block ' + str(i))
         block_bytes = unhexlify(blocks[i])
-        valid_block = validateBlock(blocks[i], realtime_validation=False, prev_block_input=prev_block)
+        valid_block = validateBlockHeader(block_bytes, realtime_validation=False, prev_block_input=prev_block)[0]
         
         if valid_block == False:
             print('invalid block, stopping analysis')
             break
         
-        prev_block = deserialize_block(unhexlify(blocks[i]))[0][1]
+        prev_block = calculateHeaderHashFromBlock(blocks[i])
         
     return valid_block
 
@@ -129,13 +152,5 @@ def ask_peer_for_blocks(peer, start_block, end_block):
 
 if __name__ == '__main__':
     
-    #x = synch_node()
-    
-    low = 6
-    high = 9
-    
-    for i in range(0, high+1-low):
-        print(high-i)
-    
-    
+    x = synch_node()
     

@@ -12,6 +12,7 @@ from utilities.sqlUtils import executeSql
 from node.blockchain.queries import *
 from utilities.hashing import calculateHeaderHash, calculateTransactionHash
 from node.blockchain.contingency_operations import *
+from node.information.blocks import getMaxBlockHeight
 
 def addBlock(block):
     
@@ -115,7 +116,15 @@ def removeBlock(block_height):
     max_block = getMaxBlockHeight()
     
     if block_height == max_block:
-        remove_block_query = ("select * from bitland.rollback_block(" + block_height + ");")
+        remove_block_query = ("select * from bitland.rollback_block(" + str(block_height) + ");")
+        
+        try:
+            remove = executeSql(remove_block_query)[0]
+            print(remove)
+        
+        except Exception as error:
+            print('error removing block' + str(error))
+            
         return True
     
     else:
@@ -124,7 +133,7 @@ def removeBlock(block_height):
 
 def removeBlocks(low_block_height, high_block_height):
     
-    for i in range(low_block_height, high_block_height):
+    for i in range(0, (high_block_height - low_block_height) + 1):
         
         remove = removeBlock(high_block_height - i)
         if remove == False:
