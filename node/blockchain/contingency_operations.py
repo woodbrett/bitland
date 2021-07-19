@@ -10,7 +10,7 @@ from system_variables import address_search_url
 from node.blockchain.global_variables import *
 
 
-def inspectParcel(transaction, vout, bitcoin_block, bitland_block):
+def inspectParcel(transaction, vout, bitcoin_block_height, bitland_block):
     
     output_parcel = getOutputParcelByTransactionVout(transaction, vout)
     
@@ -20,8 +20,8 @@ def inspectParcel(transaction, vout, bitcoin_block, bitland_block):
     else:
         is_current_utxo = True
         type = output_parcel.output_version
-        miner_fee_status = getMinerFeeStatus(output_parcel.id, bitcoin_block)
-        transfer_fee_status = getTransferFeeStatus(output_parcel.id, bitcoin_block)
+        miner_fee_status = getMinerFeeStatus(output_parcel.id, bitcoin_block_height)
+        transfer_fee_status = getTransferFeeStatus(output_parcel.id, bitcoin_block_height)
         outstanding_claims = getUtxoClaim(output_parcel.id, bitland_block)
         claim_status = getClaimStatus(output_parcel.id, bitland_block)
 

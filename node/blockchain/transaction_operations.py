@@ -19,6 +19,9 @@ import requests
 from utilities.bitcoin_requests import *
 from node.blockchain.contingency_operations import *
 from utilities.hashing import calculateTransactionHash
+from utilities.bitcoin_requests import getCurrentBitcoinBlockHeight
+from node.blockchain.header_serialization import deserialize_block_header
+from node.information.blocks import getMaxBlockHeight
 
 #input version 1 - standard spend (which could be a scuessful collateral)
 #input version 2 - spending as collateral
@@ -32,7 +35,7 @@ from utilities.hashing import calculateTransactionHash
 #input version 4 - n/a
 #input version 5 - n/a
 
-def validateTransaction(transaction):
+def validateTransaction(transaction, block_height=None, block_header=None):
     
     transaction = deserialize_transaction(transaction)
     transaction_state = []
@@ -44,7 +47,7 @@ def validateTransaction(transaction):
       transaction_state = validateTransaction1(transaction)
     
     elif (transaction_type_int == 2):
-      transaction_state = validateTransaction2(transaction)
+      transaction_state = validateTransaction2(transaction, block_height, block_header)
       
     else:
       transaction_state = [False, 'invalid transaction type']
@@ -128,15 +131,17 @@ def validateTransaction1(transaction):
     return valid_transaction, failure_reason
 
 
-def validateTransaction2(transaction, bitcoin_block):
+def validateTransaction2(transaction, block_height, block_header):
     #standard transaction
     inputs = transaction[1]
     outputs = transaction[2]
-    miner_fee_sats = int.from_bytes(transaction[2][0],'big')
+    miner_fee_sats = int.from_bytes(transaction[3][0],'big')
+    valid_transaction = True
+    failure_reason = ''    
     
     try:
         #validate inputs
-        valid_inputs = validateTransactionInputs(inputs,miner_fee_sats)
+        valid_inputs = validateTransactionInputs(inputs, block_height, block_header, miner_fee_sats)
         if valid_inputs[0] == False:
             raise Exception(valid_inputs[0], valid_inputs[1])
        
@@ -154,7 +159,7 @@ def validateTransaction2(transaction, bitcoin_block):
         valid_outputs = validateTransactionOutputs(outputs)
         if valid_outputs[0] == False:
             raise Exception(valid_outputs[0], valid_outputs[1])
-        
+                
         #UPDATE validate contingency values
         #miner fee >= 0
         #miner fee blocks <=12096
@@ -162,11 +167,11 @@ def validateTransaction2(transaction, bitcoin_block):
         #transfer fee blocks <=12096
             
     except Exception as inst: 
-        transaction_status, reason = inst.args  
+        valid_transaction, failure_reason = inst.args  
         print("transaction status: " + str(transaction_status))
         print("reason: " + str(reason))
     
-    return transaction_status, reason
+    return valid_transaction, failure_reason
 
 
 def validateTransactionOutputs(outputs):
@@ -188,7 +193,7 @@ def validateTransactionOutputs(outputs):
     return valid_output, failure_reason
 
 
-def validateTransactionInputs(inputs, bitcoin_block, miner_fee_sats):
+def validateTransactionInputs(inputs, block_height, block_header, miner_fee_sats):
     
     valid_input = True
     failure_reason = ''
@@ -196,7 +201,7 @@ def validateTransactionInputs(inputs, bitcoin_block, miner_fee_sats):
     input_length = len(inputs)
     for i in range(0, input_length):
 
-        validate_input = validateTransactionInput(inputs[i], miner_fee_sats)
+        validate_input = validateTransactionInput(inputs[i],block_height, block_header, miner_fee_sats)
         valid_input = validate_input[0]
         failure_reason = validate_input[1]
 
@@ -328,15 +333,36 @@ def getOutputUnionShape(outputs):
     return output_union_shape, output_union_area
 
 
-def validateTransactionInput(input, bitcoin_block, miner_fee_sats):
+def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
     
     input_version = int.from_bytes(input[0],'big')
     transaction_hash = hexlify(input[1]).decode('utf-8')
     transaction_vout = int.from_bytes(input[2],'big')
     input_signature = input[3]
-    print(transaction_hash, transaction_vout)
     input_utxo = getOutputParcelByTransactionVout(transaction_hash, transaction_vout)
-    inspected_parcel = inspectParcel(transaction_hash, transaction_vout)
+
+    if block_height == None:
+        block_height = getMaxBlockHeight() + 1
+
+    if block_header != None:
+        deserialized_block_header = deserialize_block_header(block_header)
+        bitcoin_block_height = deserialized_block_header[5]
+        
+    else:
+        bitcoin_block_height = getCurrentBitcoinBlockHeight()
+       
+        '''
+        0 version,
+        1 prev_block, 
+        2 mrkl_root ,
+        3 time_ ,
+        4 bits ,
+        5 bitcoin_height,
+        6 miner_bitcoin_address,
+        7 nonce
+        '''
+    
+    inspected_parcel = inspectParcel(transaction_hash, transaction_vout, bitcoin_block_height, block_height)
     
     valid_input = True
     failure_reason = ''
@@ -359,10 +385,10 @@ def validateTransactionInput(input, bitcoin_block, miner_fee_sats):
         #get summary of utxo - what is its transfer fee status, miner fee status
         #UPDATE to pull data from contingency logic
         transfer_fee_status = inspected_parcel.transfer_fee_status
-        miner_fee_status = inspected_parcel.miner_fee_status
         claim_status = inspected_parcel.claim_status
         outstanding_claim = inspected_parcel.outstanding_claims
-
+        miner_fee_status = inspected_parcel.miner_fee_status
+        
         valid_transfer_fee_types = validContingencyStatusSpendTypes(input_version)[0]
         valid_miner_fee_types = validContingencyStatusSpendTypes(input_version)[1]
         valid_claim_types = validContingencyStatusSpendTypes(input_version)[2]
@@ -409,9 +435,11 @@ def validateTransactionInput(input, bitcoin_block, miner_fee_sats):
     #validate signature, but not for making a claim
     if (valid_input == True and input_version != 3):
         resolved_pub_key = getPublicKeySpendTypes(input_version, input_utxo_pub_key, input_utxo_failed_transfer_pub_key, input_utxo_collateral_pub_key)    
-        print(input_version)
-        print(resolved_pub_key)        
-        valid_input = validateSignature(input_utxo_shape, resolved_pub_key, input_signature)
+        
+        input_utxo_shape_bytes = input_utxo_shape.encode('utf-8')
+        resolved_pub_key_bytes = unhexlify(resolved_pub_key)
+         
+        valid_input = validateSignature(input_utxo_shape_bytes, resolved_pub_key_bytes, input_signature)
         if(valid_input == False):
             failure_reason = 'signature failed'  
         
@@ -487,8 +515,10 @@ def validContingencyStatusSpendTypes(spend_type):
         transfer_fee_status = 'error'
         miner_fee_status = 'error'
         claim_status = 'error'
+        outstanding_claim = 'error'
+        input_utxo_type = 'error'
 
-    return transfer_fee_status, miner_fee_status
+    return transfer_fee_status, miner_fee_status, claim_status, outstanding_claim, input_utxo_type
 
 
 def validateClaimAttempt(miner_fee_sats, utxo_current_claim_sats):
@@ -530,16 +560,18 @@ def addTransactionToMempool(transaction):
     transaction_hash = hexlify(transaction_hash).decode('utf-8')
 
     query_insert_transaction_mempool = ("insert into bitland.transaction_mempool(transaction_hash, version, is_landbase, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address) values "
-                "(" + transaction_hash + "',"
-                 + version + ","
-                 + is_landbase + ","
-                 + miner_fee_sats + ","
-                 + miner_fee_blocks + ","
-                 + transfer_fee_sats + ","
-                 + transfer_fee_blocks + ","
+                "('" + transaction_hash + "',"
+                 + str(version) + ","
+                 + str(is_landbase) + ","
+                 + str(miner_fee_sats) + ","
+                 + str(miner_fee_blocks) + ","
+                 + str(transfer_fee_sats) + ","
+                 + str(transfer_fee_blocks) + ","
                  + "'" + transfer_fee_address + "'"
                 + ") RETURNING id;"
                 )    
+    
+    print(query_insert_transaction_mempool)
     
     try:
         transaction_mempool_id = executeSql(query_insert_transaction_mempool)[0]
@@ -552,13 +584,15 @@ def addTransactionToMempool(transaction):
 
 if __name__ == '__main__':
 
-    transaction = '00020101b0bcaa0b93e0802533596449a9efa39f7137895c51baba2fa3eefe38cab8fff60040718458a4d630315618b7e311399c5d58fe9ab3474548023821f05975533b354eb7bc394aba99982281cac0a5984699b36feec3dd3c8394480553a925765d6985020101002c504f4c59474f4e2828302039302c302038392e37343637342c2d39302038392e37343637342c30203930292940879dfac7e96660b71f93abdfbd09a8f15d056b3b6149aab233381150b42088c5d03cff0d51178990d08c1d94924abdfdd234837f3b370a435e2b631e33d51edc02010030504f4c59474f4e28282d39302038392e37343637342c2d39302039302c302039302c2d39302038392e37343637342929401bf9fd16296aeda8f680a86ce5505fb52239d14109c9c84e9d84a5be403c9e727144a8b41f1f6cfe6ad2d85268a934c37dd85b895c0f8082bc6ee3a2b7613a4500000000271007d000000007a12001902a626331716571723335646c723266616d6870797738763939767972707834376d67707378726c67786378'
+    transaction = '000201013c75b4c2a69b3a86e13ac62705a6cf2d8a56d7d8b8d18bf846c621d62478fe060040ebff9ba202e4e182ed5d5fd685e4220279547ce2368f93a9453174def02b454d9c93667c18e65ed24968b181be63a38af117a3c0c5b59e7e94baf8c5b602f7d70101010054504f4c59474f4e28282d33392e3337352038372e373637312c2d33392e3337352038372e36323530382c2d34352038372e36323530382c2d34352038372e373637312c2d33392e3337352038372e37363731292940e3f2ecdefaa8e3f6652e8960dcca0d09d713fe255cbb5920c79e5dfe46f9447971cb2c76c7e6870ec9641924fa7a4ce7955bf911caf8be624cb21e4cfbcbfaf30000000000000000000000000000000000'
     transaction_bytes = unhexlify(transaction)
     deserialized_transaction = deserialize_transaction(transaction_bytes)
     print(deserialized_transaction[3][0])
     input = deserialize_transaction(transaction_bytes)[1][0]
     print(input)
     
+    print(validateTransaction(transaction_bytes))
+    
     #print(getUtxoTransferFeeStatus(6, 700000))
-    print(validateTransactionInput(input, 700000))
+    #print(validateTransactionInput(input, 700000))
     

@@ -29,7 +29,7 @@ def queue_new_block_from_peer(block_height,block,peer=''):
     return True
     
 
-def analyze_new_block_from_peer(block_height,block,peer):
+def analyze_new_block_from_peer(block_height,block,peer=''):
     
     action_queue.append(threading.get_ident())
     print(action_queue)
@@ -83,25 +83,25 @@ def queue_new_transaction_from_peer(transaction,peer=''):
     return True
 
 
-def analyze_new_transaction_from_peer(transaction,peer):
+def analyze_new_transaction_from_peer(transaction,peer=''):
     
     action_queue.append(threading.get_ident())
-    print(action_queue)
-    
-    print(threading.get_ident())
     time.sleep(5)
 
     while action_queue[0] != threading.get_ident():
         time.sleep(1)
-        
+        print('a')
+    
     transaction_bytes = unhexlify(transaction)
+    print(transaction_bytes)
 
-    if validateTransaction(transaction_bytes) == True:
+    if validateTransaction(transaction_bytes)[0] == True:
         addTransactionToMempool(transaction_bytes)
-        #send_block_to_peers(block_height,block,peers_to_exclude=[peer])
+        send_block_to_peers(transaction,peers_to_exclude=[peer])
         
     action_queue.remove(threading.get_ident())
 
+    return True
 
 def send_transaction_to_peers(transaction,peers_to_exclude=[]):
     
@@ -113,7 +113,7 @@ def send_transaction_to_peers(transaction,peers_to_exclude=[]):
     
     send_transaction = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
     
-    return send_transaction
+    return send_transaction 
 
 
 if __name__ == '__main__':
@@ -123,9 +123,9 @@ if __name__ == '__main__':
     print(send_block_to_peers(block))
     '''
     
-    transaction = '000201013c75b4c2a69b3a86e13ac62705a6cf2d8a56d7d8b8d18bf846c621d62478fe0600402d467d428739b91c7d54e2a1fd67d2cac8ec9986305bcec064202ff8ea48fd480321b5ef7f2fda1c174a582e543a5225dfadf837ecd121de80b878ef63163e060101010059504f4c59474f4e2028282d33392e3337352038372e373637312c202d33392e3337352038372e36323530382c202d34352038372e36323530382c202d34352038372e373637312c202d33392e3337352038372e3736373129294081a6e762ea0bf849a72b821f69cec8053342f9526238eaa120254b8dd9dfe4c023fdb3058cfc86175dcb087b1fddb6941959b6b3857305a4515b78a59b18d49c0000000000000000000000000000000000'
-    print(queue_new_transaction_from_peer(transaction))
-    
-    
+    transaction = '000201013c75b4c2a69b3a86e13ac62705a6cf2d8a56d7d8b8d18bf846c621d62478fe060040ebff9ba202e4e182ed5d5fd685e4220279547ce2368f93a9453174def02b454d9c93667c18e65ed24968b181be63a38af117a3c0c5b59e7e94baf8c5b602f7d70101010054504f4c59474f4e28282d33392e3337352038372e373637312c2d33392e3337352038372e36323530382c2d34352038372e36323530382c2d34352038372e373637312c2d33392e3337352038372e37363731292940e3f2ecdefaa8e3f6652e8960dcca0d09d713fe255cbb5920c79e5dfe46f9447971cb2c76c7e6870ec9641924fa7a4ce7955bf911caf8be624cb21e4cfbcbfaf30000000000000000000000000000000000'
+    #x = queue_new_transaction_from_peer(transaction)
+    x = analyze_new_transaction_from_peer(transaction)
+    print(x)
     
     

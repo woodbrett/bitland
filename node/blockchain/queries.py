@@ -208,7 +208,8 @@ def addTransferFeeStatusToDb(transaction_id, bitcoin_block_height, bitcoin_trans
     return miner_fee_status_id
 
 
-def addClaimToDb(claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, leading_claim, invalidated_claim, invalidation_output_parcel_id, from_bitland_block_height):
+#What is invalidation input parcel id?
+def addClaimToDb(claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, leading_claim, invalidated_claim, invalidation_input_parcel_id, from_bitland_block_height):
 
     claimed_output_parcel_id = str(claimed_output_parcel_id)
     claim_action_output_parcel_id = str(claim_action_output_parcel_id)
@@ -445,13 +446,15 @@ def getContingencyStatus(output_id):
 def getClaimInformation(claimed_output_parcel_id = 0, claim_action_output_parcel_id = 0):
     claimed_output_parcel_id = str(claimed_output_parcel_id)
     claim_action_output_parcel_id = str(claim_action_output_parcel_id)
-    select = ("select id, claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, leading_claim, invalidated_claim, invalidation_output_parcel_id"
+    select = ("select id, claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, leading_claim, invalidated_claim, invalidation_input_parcel_id"
               +" from bitland.claim "
               + "where (leading_claim = true and claimed_output_parcel_id = " + claimed_output_parcel_id + ") or claim_action_output_parcel_id = " + claim_action_output_parcel_id + ";")
     
+    print(select)
+    
     try:
         claim_sql = executeSql(select)
-        columns = namedtuple('columns', ['status', 'id', 'claimed_output_parcel_id', 'claim_action_output_parcel_id', 'claim_fee_sats', 'claim_block_height', 'leading_claim', 'invalidated_claim', 'invalidation_output_parcel_id'])
+        columns = namedtuple('columns', ['status', 'id', 'claimed_output_parcel_id', 'claim_action_output_parcel_id', 'claim_fee_sats', 'claim_block_height', 'leading_claim', 'invalidated_claim', 'invalidation_input_parcel_id'])
         claim_output = columns(
                         'identified',
                         claim_sql[0],

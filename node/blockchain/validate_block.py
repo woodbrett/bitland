@@ -10,6 +10,7 @@ from node.blockchain.block_serialization import deserialize_block, serialize_blo
 from node.blockchain.transaction_serialization import serialize_transaction
 from node.blockchain.queries import *
 from collections import Counter
+from node.information.blocks import getMaxBlockHeight
 
 
 def validateBlock(block, realtime_validation=True, prev_block_input=None):
@@ -23,9 +24,10 @@ def validateBlock(block, realtime_validation=True, prev_block_input=None):
     print(validate_block)
     
     valid_block = validate_block[0]
+    new_block_height = getMaxBlockHeight() + 1
     
     if (valid_block == True):
-      valid_block = validateTransactions(block)[0]
+      valid_block = validateTransactions(block, new_block_height)[0]
     
     return valid_block
 
@@ -169,9 +171,11 @@ def validateBlockHeaderSynch(header):
 '''
 
 
-def validateTransactions(block):
+def validateTransactions(block, block_height):
+#block height represents the next block, e.g. the current block hegiht + 1
 
     deserialized_block = deserialize_block(block)
+    header = deserialized_block[0]
     transaction_count = len(deserialized_block[1])
     
     serialized_transactions = []
@@ -187,7 +191,7 @@ def validateTransactions(block):
     all_transaction_type = []
     
     for i in range(0, len(serialized_transactions)):
-        transaction_status = validateTransaction(serialized_transactions[i])
+        transaction_status = validateTransaction(serialized_transactions[i], block_height, header)
         valid_transactions=[transaction_status[0], transaction_status[1], i]
         
         transaction_inputs = deserialize_transaction(serialized_transactions[i])[1]

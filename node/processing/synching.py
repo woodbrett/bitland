@@ -45,7 +45,8 @@ def synch_node():
         
         peer_blocks = json.loads(new_blocks.get('blocks'))
         start_block_height = int(new_blocks.get('start_block_height'))
-        peer_next_block = peer_blocks[self_height - start_block_height + 1]
+        peer_next_block_index = self_height - start_block_height + 1
+        peer_next_block = peer_blocks[peer_next_block_index]
         
         next_block_header = deserialize_block(unhexlify(peer_next_block))[0]
         next_block_prev_block = next_block_header[1]
@@ -59,8 +60,8 @@ def synch_node():
         peer_base_hash = calculateHeaderHashFromBlock(peer_blocks[0])
         
         if next_block_prev_block == self_height_hash:
-            process_blocks(peer_blocks[peer_next_block:])
-            blocks_added = len(peer_blocks[peer_next_block:])
+            process_blocks(peer_blocks[peer_next_block_index:])
+            blocks_added = len(peer_blocks[peer_next_block_index:])
         
         #UPDATE else logic in case the peer has a longer divergent chain
         #haven't tested this yet
