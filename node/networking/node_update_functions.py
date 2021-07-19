@@ -36,9 +36,14 @@ def analyze_new_block_from_peer(block_height,block,peer=''):
     
     print(threading.get_ident())
     time.sleep(5)
+    sleep_time = 0
 
     while action_queue[0] != threading.get_ident():
-        time.sleep(1)        
+        time.sleep(1)   
+        sleep_time = sleep_time + 1
+        print('thread: ' + str(threading.get_ident() + '; sleep: ' + str(sleep_time)))
+        if sleep_time > 100:
+            return False
 
     self_height = getMaxBlockHeight()
     block_bytes = unhexlify(block)
@@ -57,6 +62,8 @@ def analyze_new_block_from_peer(block_height,block,peer=''):
             synch_node()
     
     action_queue.remove(threading.get_ident())
+    
+    return True
 
 
 def send_block_to_peers(block_height,block,peers_to_exclude=[]):
