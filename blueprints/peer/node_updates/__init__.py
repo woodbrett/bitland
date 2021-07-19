@@ -8,7 +8,10 @@ from flask import request
 from flask_restplus import Namespace, Resource, fields, Api
 from http import HTTPStatus
 from node.networking.peering_functions import authenticate_peer
-from node.networking.node_update_functions import queue_new_block_from_peer
+from node.networking.node_update_functions import (
+    queue_new_block_from_peer,
+    queue_new_transaction_from_peer
+    )
 
 namespace = Namespace('node_updates', 'Node Updates')
 
