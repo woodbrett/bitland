@@ -14,7 +14,8 @@ from node.information.blocks import getMaxBlockHeight
 from node.processing.synching import synch_node
 from node.blockchain.transaction_operations import (
     validateTransaction, 
-    addTransactionToMempool
+    addTransactionToMempool,
+    validateMempoolTransaction
     )
 
 action_queue = []
@@ -102,9 +103,12 @@ def analyze_new_transaction_from_peer(transaction,peer=''):
     transaction_bytes = unhexlify(transaction)
     print(transaction_bytes)
 
-    if validateTransaction(transaction_bytes)[0] == True:
+    if validateMempoolTransaction(transaction_bytes)[0] == True:
         addTransactionToMempool(transaction_bytes)
         send_transaction_to_peers(transaction,peers_to_exclude=[peer])
+        
+    else:
+        return False
         
     action_queue.remove(threading.get_ident())
 
@@ -117,6 +121,8 @@ def send_transaction_to_peers(transaction,peers_to_exclude=[]):
         "transaction":transaction
         }
     rest_type = 'put'
+    
+    print(payload)
     
     send_transaction = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
     

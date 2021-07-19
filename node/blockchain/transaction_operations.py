@@ -22,6 +22,7 @@ from utilities.hashing import calculateTransactionHash
 from utilities.bitcoin_requests import getCurrentBitcoinBlockHeight
 from node.blockchain.header_serialization import deserialize_block_header
 from node.information.blocks import getMaxBlockHeight
+from node.information.mempool import getMempoolInformation
 
 #input version 1 - standard spend (which could be a scuessful collateral)
 #input version 2 - spending as collateral
@@ -34,6 +35,24 @@ from node.information.blocks import getMaxBlockHeight
 #input version 3 - make claim
 #input version 4 - n/a
 #input version 5 - n/a
+
+def validateMempoolTransaction(transaction):
+    
+    transaction_hash_hex = hexlify(calculateTransactionHash(transaction)).decode('utf-8') 
+
+    mempool_state = []
+    
+    mempool_search = getMempoolInformation(transaction_hash=transaction_hash_hex)
+    print(mempool_search)
+    if mempool_search != 'no_transaction_found':
+        mempool_state = [False,'hash already exists in mempool']
+        
+    if mempool_state[0] == True:
+        valid_transaction = validateTransaction(transaction)
+        mempool_state = [valid_transaction,'invalid transaction']
+    
+    return mempool_state
+    
 
 def validateTransaction(transaction, block_height=None, block_header=None):
     
