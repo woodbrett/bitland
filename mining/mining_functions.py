@@ -134,6 +134,7 @@ def mining_process():
     if status == 'found valid block':
         serialized_block = serialize_block(header, transactions)
         block_hex = hexlify(serialized_block).decode('utf-8')
+        print(block_hex)
         queue_new_block_from_peer(block_height,block_hex)
     
     return mining_process()
