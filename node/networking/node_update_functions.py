@@ -97,7 +97,7 @@ def analyze_new_transaction_from_peer(transaction,peer=''):
 
     if validateTransaction(transaction_bytes)[0] == True:
         addTransactionToMempool(transaction_bytes)
-        send_block_to_peers(transaction,peers_to_exclude=[peer])
+        send_transaction_to_peers(transaction,peers_to_exclude=[peer])
         
     action_queue.remove(threading.get_ident())
 
