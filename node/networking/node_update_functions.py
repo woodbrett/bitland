@@ -12,7 +12,10 @@ from binascii import unhexlify
 from node.networking.peering_functions import message_all_connected_peers
 from node.information.blocks import getMaxBlockHeight
 from node.processing.synching import synch_node
-from node.blockchain.transaction_operations import validateTransaction
+from node.blockchain.transaction_operations import (
+    validateTransaction, 
+    addTransactionToMempool
+    )
 
 action_queue = []
 
@@ -56,7 +59,6 @@ def analyze_new_block_from_peer(block_height,block,peer):
     action_queue.remove(threading.get_ident())
 
 
-#UPDATE - send block to peers when its validated and added, don't send it back to peer who you received it from
 def send_block_to_peers(block_height,block,peers_to_exclude=[]):
     
     endpoint = '/peer/node_updates/sendNewBlock'
@@ -90,36 +92,39 @@ def analyze_new_transaction_from_peer(transaction,peer):
     time.sleep(5)
 
     while action_queue[0] != threading.get_ident():
-        time.sleep(1)        
+        time.sleep(1)
         
     transaction_bytes = unhexlify(transaction)
 
     if validateTransaction(transaction_bytes) == True:
-        addTransactionToMempool(block_bytes)
+        addTransactionToMempool(transaction_bytes)
         #send_block_to_peers(block_height,block,peers_to_exclude=[peer])
         
     action_queue.remove(threading.get_ident())
+
+
+def send_transaction_to_peers(transaction,peers_to_exclude=[]):
     
+    endpoint = '/peer/node_updates/sendNewTransaction'
+    payload = {
+        "transaction":transaction
+        }
+    rest_type = 'put'
+    
+    send_transaction = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
+    
+    return send_transaction
+
 
 if __name__ == '__main__':
 
-    #block = '0001000000072b91bab08c8290d50c6cac2620155c143485765ba9c91593bc62d48f20a8599eb2a32d8c558df5a97c8198043e1b8f3bffbf0293fc45f0762e68692e0060ecd9751d0ffff0000a8a363331333534653737353536623734356137343334366235373464346337313462333535313463373237383431346435313631373037393635343637383431363933363638000016e50001000100010059504f4c59474f4e28282d32382e3132352038382e36393036382c2d32382e3132352038382e3436312c2d33332e37352038382e3436312c2d33332e37352038382e36393036382c2d32382e3132352038382e363930363829294046238ced0d9a9316196ca2bb32cffc70c3ec28f15d0b2fa4c38a592d0424f1cfc67793797bd23629b7ac49783756cc170db2e0393ae1bed6911f4584ecfa654a0000000000000000000000000000000000'
+    '''
     block = '000100000003a09e9a6d785fff0afbe74ce4546cd344f109883493b84014032e9a7181efd66d1754361d3aaa4175a2a6fe9c884fce3347469b34eff28988ae4598e20060f219211d0ffff0000a8c783331333534653737353536623734356137343334366235373464346337313462333535313463373237383431346435313631373037393635343637383431363933363638071125910001000100010061504f4c59474f4e28282d37352e393337352038312e343531382c2d37352e393337352038312e323939372c2d37372e33343337352038312e323939372c2d37372e33343337352038312e343531382c2d37352e393337352038312e34353138292940bb06c7262838a7a800e425cfe83b25bb9cf98ef14a1443d5550a874400e5652710f4ee6852df1e0d5ec850d1073d65ca27b861e401884d1f3199ca37479d41030000000000000000000000000000000000'
-    
     print(send_block_to_peers(block))
-    
     '''
-    block_bytes = unhexlify(block)
     
-    #print(validateBlock(block_bytes))
-    
-    x = queue_new_block_from_peer(block)
-    
-    if validateBlock(block_bytes)[0] == True:
-        addBlock(block_bytes)    
-    
-    print(validateBlock(block_bytes))
-    '''
+    transaction = '000201013c75b4c2a69b3a86e13ac62705a6cf2d8a56d7d8b8d18bf846c621d62478fe0600402d467d428739b91c7d54e2a1fd67d2cac8ec9986305bcec064202ff8ea48fd480321b5ef7f2fda1c174a582e543a5225dfadf837ecd121de80b878ef63163e060101010059504f4c59474f4e2028282d33392e3337352038372e373637312c202d33392e3337352038372e36323530382c202d34352038372e36323530382c202d34352038372e373637312c202d33392e3337352038372e3736373129294081a6e762ea0bf849a72b821f69cec8053342f9526238eaa120254b8dd9dfe4c023fdb3058cfc86175dcb087b1fddb6941959b6b3857305a4515b78a59b18d49c0000000000000000000000000000000000'
+    print(queue_new_transaction_from_peer(transaction))
     
     
     

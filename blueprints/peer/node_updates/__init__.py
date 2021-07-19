@@ -12,7 +12,7 @@ from node.networking.node_update_functions import queue_new_block_from_peer
 
 namespace = Namespace('node_updates', 'Node Updates')
 
-block_model = namespace.model('Blockchain', {
+block_model = namespace.model('Blocks', {
     'block_height': fields.Integer(
         required=True,
         description='Block height'
@@ -20,6 +20,13 @@ block_model = namespace.model('Blockchain', {
     'block': fields.String(
         required=True,
         description='Encoded block'
+    )
+})
+
+transaction_model = namespace.model('Transaction', {
+    'transaction': fields.String(
+        required=True,
+        description='Encoded transaction'
     )
 })
 
@@ -52,6 +59,28 @@ class send_new_block(Resource):
 
 
 #UPDATE
-#send transaction
+@namespace.route('/sendNewTransaction')
+class send_new_transaction(Resource):
+
+    @namespace.response(500, 'Internal Server error')
+    @namespace.expect(block_model)
+    @namespace.doc(security='Bearer')   
+    def put(self):
+        
+        if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
+            namespace.abort(400, 'Not authenticated as peer')
+        
+        transaction = request.json['transaction']
+        ip_address = request.remote_addr
+        
+        x = queue_new_transaction_from_peer(transaction,ip_address)
+        print(x)
+        
+        status = 'received'
+
+        return {
+            'status': status
+        }
+
 
 

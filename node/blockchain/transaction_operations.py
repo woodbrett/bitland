@@ -18,6 +18,7 @@ from system_variables import address_search_url
 import requests
 from utilities.bitcoin_requests import *
 from node.blockchain.contingency_operations import *
+from utilities.hashing import calculateTransactionHash
 
 #input version 1 - standard spend (which could be a scuessful collateral)
 #input version 2 - spending as collateral
@@ -524,62 +525,29 @@ def addTransactionToMempool(transaction):
     
     #UPDATE as new transactions are added
     is_landbase = version == 1
-
-    '''    
-    inputs = deserialize_transaction(transaction)[1]
-    inputs_len = len(inputs)
-    outputs = deserialize_transaction(transaction)[2]
-    outputs_len = len(outputs)
-    claim_input_id = 0
     
-    for i in range(0, inputs_len):
-        input = inputs[i]
-        input_version = int.from_bytes(input[0],'big')
-        input_transaction_hash = hexlify(input[1]).decode('utf-8')
-        input_transaction_id = getTransactionIdByHash(input_transaction_hash)[0]
-        vout = int.from_bytes(input[2],'big')
-        vin = i
-        output_parcel_id = getOutputParcelByTransactionVout(input_transaction_hash, vout)[3]
-        sig = hexlify(input[3]).decode('utf-8')
-        
-        if input_version != 3:
-            input_parcel_id = addParcelInput(transaction_id,vin, input_version,input_transaction_hash,input_transaction_id,vout,output_parcel_id,sig)
+    transaction_hash = calculateTransactionHash(transaction)
+    transaction_hash = hexlify(transaction_hash).decode('utf-8')
 
-            #mark any invalidated claims
-            #UPDATE can make this way more efficient by doing all transactions at once probably            
-            override_claim_id = getClaimByOutputParcelId(output_parcel_id)
-            if override_claim_id != 'no_claim':
-                updateClaimInvalidate(override_claim_id, block_height, input_parcel_id)
-            
-        if input_version == 3:
-            claim_input_id = output_parcel_id
-        
-    for i in range(0, outputs_len):
-        output = outputs[i]
-        
-        output_version = int.from_bytes(output[0],'big')
-        planet_id = int.from_bytes(output[1],'big')
-        shape = output[2].decode('utf-8')
-        pub_key = hexlify(output[3]).decode('utf-8')
-        
-        parcel_id = addParcelOutput(transaction_id, output_version, pub_key, i, planet_id, shape)
-        
-        if output_version == 3:
-            #add new claims to DB
-            leading_claim = 'true'
-            invalidated_claim = 'false'
-            add_claim = addClaimToDb(claim_input_id, parcel_id, miner_fee_sats, block_height, leading_claim, invalidated_claim, block_height)
-        
-            #mark superceded claims
-            override_claim_id = getClaimByOutputParcelId(output_parcel_id)
-            if override_claim_id != 'no_claim':
-                updateClaimLeading(override_claim_id, block_height)
-
-    if (is_landbase):
-        updateDbLandbase(parcel_id, block_height)
-    '''
-
-    return transaction_id
+    query_insert_transaction_mempool = ("insert into bitland.transaction_mempool(transaction_hash, version, is_landbase, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address) values "
+                "(" + transaction_hash + "',"
+                 + version + ","
+                 + is_landbase + ","
+                 + miner_fee_sats + ","
+                 + miner_fee_blocks + ","
+                 + transfer_fee_sats + ","
+                 + transfer_fee_blocks + ","
+                 + "'" + transfer_fee_address + "'"
+                + ") RETURNING id;"
+                )    
+    
+    try:
+        transaction_mempool_id = executeSql(query_insert_transaction_mempool)[0]
+    
+    except Exception as error:
+        print('error inserting transaction to mempool' + str(error))
+    
+    return transaction_mempool_id
 
 
 if __name__ == '__main__':

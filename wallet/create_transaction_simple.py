@@ -4,11 +4,12 @@ Created on Feb 26, 2021
 @author: brett_wood
 '''
 from utilities.sqlUtils import executeSql
-from blockchain.transaction_serialization import serialize_transaction,\
+from node.blockchain.transaction_serialization import (
+    serialize_transaction,
     deserialize_transaction
+)
 from wallet.key_generation import *
 import ecdsa
-
 
 def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_private_key, input_public_key, polygon, planet_id):
     
@@ -82,21 +83,19 @@ def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_pr
 
 if __name__ == '__main__':
 
-    input_public_key = '420ba701f7a3c31c919395f45f701d78180c334f6e6328c90510232098030826664e80278ec0315bf4cf9335681d311dfaab0a4fd50d4deb151ef45656fa2d6d'
-    input_private_key = 'd41ade7bba34f46935cae8902920bab387a8ebc92bb7a5667ed97d87fd3f3854'
-    polygon = 'POLYGON((0 90,0 89.74674,-90 89.74674,-90 90,0 90))'
+    input_public_key = '2f499fc81d1fac1018ecc5e35d971f5e38c9507de0a3faa78da21cd5f22deb130ea38f96bbccc791c1b91765442a157a92142f8cd5ccf135bbcb7a20d05f5322'
+    input_private_key = '403c06b0f058d7f242aca5901ecb951ae4d41a9c02ff2ca96ca29c71c130f29c'
+    polygon = 'POLYGON ((-39.375 87.7671, -39.375 87.62508, -45 87.62508, -45 87.7671, -39.375 87.7671))'
     planet_id = 1
     vout = 0
-    input_transaction_hash = '36242eb7bb49e133a31a0df59c16d5281e435acf3b4530cb8522e4405aa0e84c'
+    input_transaction_hash = '3c75b4c2a69b3a86e13ac62705a6cf2d8a56d7d8b8d18bf846c621d62478fe06'
     
     simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id)
     print(hexlify(simple_transaction).decode('utf-8'))
     
     print(deserialize_transaction(simple_transaction))
+    
+    
 
-    '''
-    select *, st_astext((st_dump(st_split(geom, st_setsrid(st_makeline(st_makepoint(st_xmax(geom), st_ymax(geom)), st_makepoint(st_xmin(geom), st_ymin(geom))),4326)))).geom)
-    from bitland.utxo
-    '''
     
     
