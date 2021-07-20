@@ -210,8 +210,8 @@ def validateTransaction2(transaction, block_height, block_header):
             
     except Exception as inst: 
         valid_transaction, failure_reason = inst.args  
-        print("transaction status: " + str(transaction_status))
-        print("reason: " + str(reason))
+        print("transaction status: " + str(valid_transaction))
+        print("reason: " + str(failure_reason))
     
     if failure_reason != '':
         print('validating transaction: ' + failure_reason)
@@ -576,6 +576,11 @@ def validateClaimAttempt(miner_fee_sats, utxo_current_claim_sats):
 def validateSignature(message, public_key, signature):
     
     public_key_encoded = ecdsa.VerifyingKey.from_string(public_key,curve=ecdsa.SECP256k1)
+    
+    print(public_key_encoded)
+    print(message)
+    #signature = b'\x03z^8\xe70\x07&\x18(\xfbO\xc34zR\x02#\x96\xb4.s\x1e#\x99-\x97\x7f\x00T\x03H&~\x86\xcf\x19s\xf9)\xa3\xa8i\xe5\xa0\x16`\xb8\x80\x81.\xb1z\xcaHO\xa4\x05h\x9c\x18x\xcc\x01'
+    print(public_key_encoded.verify(signature, message))
     
     try:
         valid_signature = public_key_encoded.verify(signature, message)

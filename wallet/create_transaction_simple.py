@@ -24,6 +24,7 @@ def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_pr
     #print(public_key)
     
     polygon = polygon.replace(", ","," ) # remove all spaces
+    polygon = polygon.replace(" (","(" ) # remove all spaces
     polygon_bytes = polygon.encode('utf-8')
     
     signature = private_key_encoded.sign(polygon_bytes)

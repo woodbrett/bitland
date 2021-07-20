@@ -55,36 +55,42 @@ def send_block_to_peers(block_height,block,peers_to_exclude=[]):
     return send_block
 
 
-def queue_new_transaction_from_peer(transaction,peer=''):
+def queue_new_transaction_from_peer(transaction_hex,peer='',threaded=True):
     
-    t1 = threading.Thread(target=analyze_new_transaction_from_peer,args=(transaction,peer,),daemon=True)
-    t1.start()
+    if threaded == True:
+        t1 = threading.Thread(target=analyze_new_transaction_from_peer,args=(transaction_hex,peer,threaded,),daemon=True)
+        t1.start()
+        print('thread started, exiting function')
 
-    print('thread started, exiting function')
+    else:
+        analyze_new_transaction_from_peer(transaction_hex,peer='',threaded=False)
 
     return True
 
 
-def analyze_new_transaction_from_peer(transaction,peer=''):
+def analyze_new_transaction_from_peer(transaction_hex,peer='',threaded=True):
     
-    action_queue.append(threading.get_ident())
-    time.sleep(5)
+    if threaded == True:
+        action_queue.append(threading.get_ident())
+        time.sleep(5)
 
-    while action_queue[0] != threading.get_ident():
-        time.sleep(1)
-        print('a')
+        while action_queue[0] != threading.get_ident():
+            time.sleep(1)
+            print('a')
     
-    transaction_bytes = unhexlify(transaction)
+    transaction_bytes = unhexlify(transaction_hex)
     print(transaction_bytes)
 
     if validateMempoolTransaction(transaction_bytes)[0] == True:
         addTransactionToMempool(transaction_bytes)
-        send_transaction_to_peers(transaction,peers_to_exclude=[peer])
+        send_transaction_to_peers(transaction_hex,peers_to_exclude=[peer])
         
     else:
         return False
-        
-    action_queue.remove(threading.get_ident())
+    
+    if threaded == True:
+        action_queue.remove(threading.get_ident())
+        print('removed thread')
 
     return True
 
