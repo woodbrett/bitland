@@ -6,6 +6,7 @@ Created on Feb 24, 2021
 from utilities.sqlUtils import executeSql
 from node.blockchain.transaction_serialization import serialize_transaction
 from wallet.key_generation import *
+from system_variables import mining_path
 
 def getLandbaseTransaction():
     
@@ -14,7 +15,7 @@ def getLandbaseTransaction():
 
 def desiredLandbase():
 
-    path = 'LINESTRING(-24.32582123586823 89.84080925775434, -74.62860694880915 82.52182923327297, -91.10241210722151 75.38399911209015, -95.0423241796008 66.86026257852093, -100.6851598368639 54.57263922226819)'
+    path = mining_path
     
     query_find_desired_landbase = ("select st_astext(geom) as landbase "
         + "from bitland.landbase_enum le "

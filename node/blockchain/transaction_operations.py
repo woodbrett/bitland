@@ -40,7 +40,7 @@ def validateMempoolTransaction(transaction):
     
     transaction_hash_hex = hexlify(calculateTransactionHash(transaction)).decode('utf-8') 
 
-    mempool_state = []
+    mempool_state = [True,'']
     
     mempool_search = getMempoolInformation(transaction_hash=transaction_hash_hex)
     print(mempool_search)
@@ -49,7 +49,7 @@ def validateMempoolTransaction(transaction):
         
     if mempool_state[0] == True:
         valid_transaction = validateTransaction(transaction)
-        mempool_state = [valid_transaction,'invalid transaction']
+        mempool_state = valid_transaction
     
     return mempool_state
     
@@ -577,8 +577,11 @@ def addTransactionToMempool(transaction):
     
     transaction_hash = calculateTransactionHash(transaction)
     transaction_hash = hexlify(transaction_hash).decode('utf-8')
+    
+    transaction_hex = hexlify(transaction).decode('utf-8')
+    transaction_bytes = len(transaction)    
 
-    query_insert_transaction_mempool = ("insert into bitland.transaction_mempool(transaction_hash, version, is_landbase, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address) values "
+    query_insert_transaction_mempool = ("insert into bitland.transaction_mempool(transaction_hash, version, is_landbase, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address, transaction_serialized, byte_size) values "
                 "('" + transaction_hash + "',"
                  + str(version) + ","
                  + str(is_landbase) + ","
@@ -586,7 +589,9 @@ def addTransactionToMempool(transaction):
                  + str(miner_fee_blocks) + ","
                  + str(transfer_fee_sats) + ","
                  + str(transfer_fee_blocks) + ","
-                 + "'" + transfer_fee_address + "'"
+                 + "'" + transfer_fee_address + "',"
+                 + "'" + transaction_hex + "',"
+                 + str(transaction_bytes) 
                 + ") RETURNING id;"
                 )    
     

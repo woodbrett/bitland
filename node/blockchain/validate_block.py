@@ -171,24 +171,28 @@ def validateBlockHeaderSynch(header):
 '''
 
 
-def validateTransactions(block, block_height):
+def validateTransactions(block=b'', block_height=None, transactions=[]):
 #block height represents the next block, e.g. the current block hegiht + 1
 
-    deserialized_block = deserialize_block(block)
-    header = deserialized_block[0]
-    transaction_count = len(deserialized_block[1])
+    if transactions != []:
+        header = None
+
+    transaction_count = len(transactions)
+    print(len(transactions))
     
     serialized_transactions = []
     for i in range(0, transaction_count):
-        transaction_version = deserialized_block[1][i][0]
-        transaction_inputs = deserialized_block[1][i][1]
-        transaction_outputs = deserialized_block[1][i][2]
-        transaction_contingencies = deserialized_block[1][i][3]
+        transaction_version = transactions[i][0]
+        transaction_inputs = transactions[i][1]
+        transaction_outputs = transactions[i][2]
+        transaction_contingencies = transactions[i][3]
         serialized_transactions.append(serialize_transaction(transaction_version, transaction_inputs, transaction_outputs, transaction_contingencies))
     
     valid_transactions = [True, '', 0]
     transaction_input_utxo = []
     all_transaction_type = []
+    
+    print(serialized_transactions)
     
     for i in range(0, len(serialized_transactions)):
         transaction_status = validateTransaction(serialized_transactions[i], block_height, header)

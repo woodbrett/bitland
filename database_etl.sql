@@ -539,8 +539,90 @@ drop table bitland.int_join;
 drop table bitland.geography_definition;
 drop table if exists bitland.address;
 
-drop function if exists bitland.rollback_block (rollback_block_id int);
+drop table if exists bitland.claim cascade;
+create table bitland.claim(
+  id SERIAL primary key, 
+  claimed_output_parcel_id int, 
+  claim_action_output_parcel_id int,
+  claim_fee_sats int,
+  claim_block_height int,
+  leading_claim boolean,
+  invalidated_claim boolean,
+  invalidation_input_parcel_id int,
+  from_bitland_block_height int,
+  to_bitland_block_height int,
+  CONSTRAINT claimed_output_parcel_id_fkey FOREIGN KEY (claimed_output_parcel_id) REFERENCES bitland.output_parcel(id),
+  CONSTRAINT claim_action_output_parcel_id_fkey FOREIGN KEY (claim_action_output_parcel_id) REFERENCES bitland.output_parcel(id),
+  CONSTRAINT claim_block_height_fkey FOREIGN KEY (claim_block_height) REFERENCES bitland.block(id)
+);
 
+drop table if exists bitland.miner_fee_transaction cascade;
+create table bitland.miner_fee_transaction(
+  id  SERIAL primary key, 
+  transaction_id int, 
+  bitcoin_block_height int,
+  bitcoin_transaction_hash varchar, 
+  bitcoin_address varchar, 
+  sats int,
+  status varchar,
+  bitland_block_height int,
+  CONSTRAINT miner_fee_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES bitland.transaction(id)
+);
+
+drop table if exists bitland.transfer_fee_transaction cascade;
+create table bitland.transfer_fee_transaction(
+  id SERIAL primary key, 
+  transaction_id int, 
+  bitcoin_block_height int,
+  bitcoin_transaction_hash varchar, 
+  bitcoin_address varchar, 
+  sats int,
+  status varchar,
+  bitland_block_height int,
+  CONSTRAINT transfer_fee_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES bitland.transaction(id)
+);
+
+create schema networking;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+drop table if exists networking.peer;
+create table networking.peer (
+  ip_address varchar,
+  port int,
+  status varchar,
+  connected_time time default now(),
+  last_ping time default now(),
+  self_auth_key uuid,
+  peer_auth_key uuid default uuid_generate_v1() 
+);
+  
+drop table if exists bitland.transaction_mempool cascade;
+create table bitland.transaction_mempool (
+  id SERIAL PRIMARY key, 
+  transaction_hash varchar,
+  version int,
+  is_landbase bool,
+  miner_fee_sats int,
+  miner_fee_blocks int, 
+  transfer_fee_sats int, 
+  transfer_fee_blocks int,
+  transfer_fee_address varchar,
+  transaction_serialized varchar,
+  byte_size int  
+ );
+
+
+--
+--INITIALIZING DATA
+--
+
+
+
+--
+--VIEWS AND FUNCTIONS
+--
+
+drop function if exists bitland.rollback_block (rollback_block_id int);
 create function bitland.rollback_block (rollback_block_id int)
 returns int
 language plpgsql
@@ -602,49 +684,6 @@ begin
 end;
 $$;
 
-drop table if exists bitland.claim cascade;
-create table bitland.claim(
-  id SERIAL primary key, 
-  claimed_output_parcel_id int, 
-  claim_action_output_parcel_id int,
-  claim_fee_sats int,
-  claim_block_height int,
-  leading_claim boolean,
-  invalidated_claim boolean,
-  invalidation_input_parcel_id int,
-  from_bitland_block_height int,
-  to_bitland_block_height int,
-  CONSTRAINT claimed_output_parcel_id_fkey FOREIGN KEY (claimed_output_parcel_id) REFERENCES bitland.output_parcel(id),
-  CONSTRAINT claim_action_output_parcel_id_fkey FOREIGN KEY (claim_action_output_parcel_id) REFERENCES bitland.output_parcel(id),
-  CONSTRAINT claim_block_height_fkey FOREIGN KEY (claim_block_height) REFERENCES bitland.block(id)
-);
-
-drop table if exists bitland.miner_fee_transaction cascade;
-create table bitland.miner_fee_transaction(
-  id  SERIAL primary key, 
-  transaction_id int, 
-  bitcoin_block_height int,
-  bitcoin_transaction_hash varchar, 
-  bitcoin_address varchar, 
-  sats int,
-  status varchar,
-  bitland_block_height int,
-  CONSTRAINT miner_fee_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES bitland.transaction(id)
-);
-
-drop table if exists bitland.transfer_fee_transaction cascade;
-create table bitland.transfer_fee_transaction(
-  id SERIAL primary key, 
-  transaction_id int, 
-  bitcoin_block_height int,
-  bitcoin_transaction_hash varchar, 
-  bitcoin_address varchar, 
-  sats int,
-  status varchar,
-  bitland_block_height int,
-  CONSTRAINT transfer_fee_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES bitland.transaction(id)
-);
-
 drop view if exists bitland.utxo;
 create view bitland.utxo as 
 select op.*, t.transaction_hash, t.block_id, t.miner_fee_sats, t.miner_fee_blocks, t.transfer_fee_sats, t.transfer_fee_blocks, t.transfer_fee_address, b.bitcoin_block_height, b.miner_bitcoin_address, opl.pub_key as miner_landbase_address, ipop.pub_key as transfer_fee_failover_address, c.claim_fee_sats, c.claim_block_height, mft.status as miner_fee_status, tft.status as transfer_fee_status, mft.bitcoin_block_height as miner_fee_status_block_height, tft.bitcoin_block_height as transfer_fee_status_block_height
@@ -668,6 +707,9 @@ from bitland.transaction t
 left join bitland.miner_fee_transaction mft on t.id = mft.transaction_id 
 left join bitland.transfer_fee_transaction tft on t.id = tft.transaction_id;
 
+--
+--OTHER
+--
 
 /*
 drop table if exists bitland.contingency_status;
@@ -698,33 +740,6 @@ update landbase_enum set valid_claim = true, valid_enabled_block = 0 where y_id 
 --	truncate wallet.addresses;
  */
 
-
-create schema networking;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
-drop table if exists networking.peer;
-create table networking.peer (
-  ip_address varchar,
-  port int,
-  status varchar,
-  connected_time time default now(),
-  last_ping time default now(),
-  self_auth_key uuid,
-  peer_auth_key uuid default uuid_generate_v1() 
-);
-  
-drop table if exists bitland.transaction_mempool cascade;
-create table bitland.transaction_mempool (
-  id SERIAL PRIMARY key, 
-  transaction_hash varchar,
-  version int,
-  is_landbase bool,
-  miner_fee_sats int,
-  miner_fee_blocks int, 
-  transfer_fee_sats int, 
-  transfer_fee_blocks int,
-  transfer_fee_address varchar
- );
 
 
 

@@ -114,6 +114,7 @@ def analyze_new_transaction_from_peer(transaction,peer=''):
 
     return True
 
+
 def send_transaction_to_peers(transaction,peers_to_exclude=[]):
     
     endpoint = '/peer/node_updates/sendNewTransaction'
@@ -121,8 +122,6 @@ def send_transaction_to_peers(transaction,peers_to_exclude=[]):
         "transaction":transaction
         }
     rest_type = 'put'
-    
-    print(payload)
     
     send_transaction = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
     

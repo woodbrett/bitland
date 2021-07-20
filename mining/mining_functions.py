@@ -24,6 +24,12 @@ from system_variables import block_height_url
 from node.blockchain.header_operations import getPrevBlock
 from node.blockchain.block_serialization import serialize_block
 from node.blockchain.global_variables import bitland_version
+from utilities.sqlUtils import (
+    executeSql,
+    executeSqlMultipleRows
+    )
+from node.blockchain.validate_block import validateTransactions
+from node.blockchain.transaction_serialization import deserialize_transaction
 
 #UPDATE - give ability to pull these from a node rather than inside the code
 
@@ -85,13 +91,78 @@ def findValidHeader(
     print(int.from_bytes(time_byte,'big'))
     
     return (header_byte, status,new_block_height)
+
+
+def getTransactionsFromMempool(max_size_bytes=4000000):
+    
+    query = (
+        "WITH RECURSIVE i AS ( " +
+       "SELECT *, row_number() OVER (ORDER BY miner_fee_sats desc) AS rn " +
+       "FROM bitland.transaction_mempool " +
+       ") " +
+       ", r AS ( " +
+       "SELECT i.transaction_serialized, id, byte_size, byte_size AS byte_size_total, 2 AS rn " +
+       "FROM   i " +
+       "WHERE  rn = 1 " +
+       "UNION ALL " +
+       "SELECT i.transaction_serialized, i.id, i.byte_size, r.byte_size_total + i.byte_size, r.rn + 1 " +
+       "FROM   r " +
+       "JOIN   i USING (rn) " +
+       "WHERE  r.byte_size_total < " + str(max_size_bytes) +
+       ")" +
+       "SELECT transaction_serialized " +
+       "FROM   r;" 
+    )
+    
+    print(query)
+    
+    try:
+        transactions = executeSqlMultipleRows(query)
+    
+    except Exception as error:
+        print("no transactions to include")
+        transactions = 'no transactions to include'
         
+    return transactions
+
+
+#UPDATE this to throw out individual bad transactions rather than get rid of the whole thing
+def validateMempoolTransactions():
+
+    mempool_transactions = getTransactionsFromMempool()
+    
+    transaction_byte_list = []
+    transaction_serialized_list = []
+    
+    if mempool_transactions != "no transactions to include":
+        
+        print(len(mempool_transactions))
+        for i in range(0,len(mempool_transactions)):
+            transaction_byte_list.append(unhexlify(mempool_transactions[i][0]))
+            transaction_serialized_list.append(deserialize_transaction(unhexlify(mempool_transactions[i][0])))
+        
+        print(transaction_serialized_list)
+        valid_transactions = validateTransactions(transactions=transaction_serialized_list)
+        
+        print(valid_transactions)
+        
+        if valid_transactions[0] != True:
+            transaction_byte_list = []
+    
+    return transaction_byte_list
+
 
 #UPDATE add transactions into this
 def mining_process():
     
-    transaction_1_bytes = getLandbaseTransaction()
-    transactions = [transaction_1_bytes]
+    
+    mempool_transactions = validateMempoolTransactions()
+    transactions = mempool_transactions
+    
+    landbase_transaction_bytes = getLandbaseTransaction()
+    transactions.append(landbase_transaction_bytes)
+
+    print(transactions)
     
     version = bitland_version
     time_ = int(round(datetime.utcnow().timestamp(),0))
@@ -145,59 +216,9 @@ if __name__ == '__main__':
     x = mining_process();
     
     
-    '''
-    transaction_1 = '000100010133504f4c59474f4e2828302039302c302038392e37343637342c2d39302038392e37343637342c2d39302039302c30203930292940ea032a860b9b4cc136ca208e14865839bb300a76237d816f45c587ae37a01355577aebbb4f810ba062ef1352b25feb62257d86f59f967e4c8587c867a3756afa0000'
-    transaction_1_bytes = unhexlify(transaction_1)
-    transaction_set_bytes = [transaction_1_bytes]
-
-    merkle_root = calculateMerkleRoot(transaction_set_bytes) 
-    print(merkle_root)   
-    print(hexlify(merkle_root))  
-    print(hexlify(merkle_root).decode('utf-8'))
-    
-    version = 1
-    prev_block = '0000000000000000000000000000000000000000000000000000000000000000'
-    #mrkl_root = merkle_root
-    time_ = int(round(datetime.utcnow().timestamp(),0))
-    bits = 0x1d0ffff0 
-    bitcoin_height = 671842
-    miner_bitcoin_address = '31354e77556b745a74346b574d4c714b35514c7278414d5161707965467841693668'
-    start_nonce = 0
-    
-    version_bytes = version.to_bytes(2, byteorder = 'big')
-    prev_block_bytes = unhexlify(prev_block)
-    mrkl_root_bytes = merkle_root
-    time_bytes = time_.to_bytes(5, byteorder = 'big')
-    bits_bytes = get_bits_current_block()
-    bitcoin_height_bytes = bitcoin_height.to_bytes(4, byteorder = 'big')
-    miner_bitcoin_address_bytes = unhexlify(miner_bitcoin_address)
-    start_nonce_bytes = start_nonce.to_bytes(4, byteorder = 'big')    
     
     
-    header = findValidHeader(
-        version_bytes,
-        prev_block_bytes, 
-        mrkl_root_bytes,
-        time_bytes,
-        bits_bytes,
-        bitcoin_height_bytes,
-        miner_bitcoin_address_bytes,
-        start_nonce_bytes
-        )
     
-    print(header)
     
-    print('000000000ffff000000000000000000000000000000000000000000000000000' > '00000000ffff0000000000000000000000000000000000000000000000000000')
-    print('0000000ffff00000000000000000000000000000000000000000000000000000' > '00000000ffff0000000000000000000000000000000000000000000000000000')
     
-    #'0ffff00000000000000000000000000000000000000000000000000000000000' 3
-    #'00ffff0000000000000000000000000000000000000000000000000000000000' 109 - 0:00.000995
-    #'000ffff000000000000000000000000000000000000000000000000000000000' 3538 - 0:00.010970
-    #'0000ffff00000000000000000000000000000000000000000000000000000000' 34,254 - 0:00.085773
-    #'00000ffff0000000000000000000000000000000000000000000000000000000' 2,244,265 - 0:05
-    #'000000ffff000000000000000000000000000000000000000000000000000000' 26,126,655 - 1:09
-    #'0000000ffff00000000000000000000000000000000000000000000000000000' 356,511,692 - 16:47
-    #'00000000ffff0000000000000000000000000000000000000000000000000000' 500,000,000?? #original
     
-    difficulty = '0000000ffff00000000000000000000000000000000000000000000000000000'
-    '''
