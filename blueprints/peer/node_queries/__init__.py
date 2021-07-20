@@ -105,7 +105,7 @@ class get_block(Resource):
         block = get_block_by_height(block_height)
 
         return {
-            'blocks': blocks
+            'blocks': block
         }
 
         

@@ -169,6 +169,9 @@ def validateTransactions(block=b'', block_height=None, transactions=[]):
             transaction_input_utxo.append(input_utxo_id)
         
         if (valid_transactions[0] == False):
+            current_transaction_hash = calculateTransactionHash(serialized_transactions[i])
+            print(current_transaction_hash)
+            valid_transactions = [False, 'invalid transaction ' + str(hexlify(current_transaction_hash).decode('utf-8')), 0]
             break
     
     #UPDATE validate that inputs aren't in multiple transactions in the block    

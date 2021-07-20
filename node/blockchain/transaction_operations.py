@@ -415,6 +415,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
     #validate it is an outstanding utxo
     if (valid_input == True):
         valid_input = input_utxo != 'no matched utxo'
+        print(valid_input)
         if(valid_input == False):
             failure_reason = 'no matched utxo'
     

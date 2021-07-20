@@ -16,6 +16,11 @@ def inspectParcel(transaction, vout, bitcoin_block_height, bitland_block):
     
     if output_parcel == 'no matched utxo':
         is_current_utxo = False
+        type = None
+        miner_fee_status = None
+        transfer_fee_status = None
+        outstanding_claims = None
+        claim_status = None
     
     else:
         is_current_utxo = True
