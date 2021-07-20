@@ -42,6 +42,13 @@ connection_info_model = namespace.model('Connection Results', {
     )
 })
 
+pong_model = namespace.model('Pong', {
+    'message': fields.String(
+        required=True,
+        description='Message'
+    )
+})
+
 
 @namespace.route('/connect')
 class connect(Resource):
@@ -75,7 +82,7 @@ class ping(Resource):
     '''Ping peers to keep connection'''
 
     @namespace.response(500, 'Internal Server error')
-    @namespace.marshal_with(block_height_model)
+    @namespace.marshal_with(pong_model)
     @namespace.doc(security='Bearer')   
     def get(self):
         
@@ -83,8 +90,7 @@ class ping(Resource):
             namespace.abort(401, 'Not authenticated as peer')
         
         return {
-            'message': 'pong',
-            'block_hash': block_hash
+            'message': 'pong'
         }
 
 

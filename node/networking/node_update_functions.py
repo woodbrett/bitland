@@ -11,7 +11,7 @@ from node.blockchain.block_operations import addBlock
 from binascii import unhexlify
 from node.networking.peering_functions import message_all_connected_peers
 from node.information.blocks import getMaxBlockHeight
-from node.processing.synching import synch_node
+from node.processing.synching import check_peer_blocks
 from node.blockchain.transaction_operations import (
     validateTransaction, 
     addTransactionToMempool,
@@ -50,7 +50,7 @@ def analyze_new_block_from_peer(block_height,block,peer=''):
     block_bytes = unhexlify(block)
 
     if block_height > self_height + 1:
-        synch_node()
+        check_peer_blocks()
     
     elif block_height == self_height + 1:
         if validateBlock(block_bytes) == True:

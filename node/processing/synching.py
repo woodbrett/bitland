@@ -27,18 +27,25 @@ from node.blockchain.block_operations import (
     )
 from utilities.hashing import calculateHeaderHashFromBlock
 import time
+import threading
 
-def run_node():
+def start_node():
     
     #pingPeers()
     #findPeers()
     check_peer_blocks()
+    t3 = threading.Thread(target=run_node,daemon=True)
+    t3.start()
+    
+    return True
+
+
+def run_node():
     
     while True:
         time.sleep(60)
         check_peer_blocks()
-    
-    return True
+        print('checking peer blocks')
 
 
 def pingPeers():
@@ -54,6 +61,8 @@ def check_peer_blocks():
     self_height = getMaxBlockHeight()
     max_height = self_height
     max_height_peer = 'self'
+    blocks_added = 0
+    blocks_removed = 0
     
     for i in range(0,len(peer_heights)):
         if peer_heights[i][1].get('block_height') > max_height:
@@ -73,10 +82,7 @@ def check_peer_blocks():
         next_block_prev_block = next_block_header[1]
         
         self_height_hash = unhexlify(getBlockInformation(block_id=self_height).header_hash)
-        
-        blocks_added = 0
-        blocks_removed = 0
-        
+                
         self_base_hash = unhexlify(getBlockInformation(block_id=start_block_height).header_hash)
         peer_base_hash = calculateHeaderHashFromBlock(peer_blocks[0])
         
