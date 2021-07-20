@@ -61,8 +61,15 @@ def check_peer_blocks():
     blocks_added = 0
     blocks_removed = 0
     
+    print(peer_heights)
+    
     for i in range(0,len(peer_heights)):
-        if peer_heights[i][1].get('block_height') > max_height:
+        
+        #UPDATE handle the errors from peers more elegantly
+        if peer_heights[i][1] == 'error calling peer':
+            None
+        
+        elif peer_heights[i][1].get('block_height') > max_height:
             max_height= peer_heights[i][1].get('block_height')
             max_height_peer = peer_heights[i][0]
     
@@ -70,11 +77,12 @@ def check_peer_blocks():
         #UPDATE to only ask for max of X blocks, 50?
         new_blocks = ask_peer_for_blocks(max_height_peer, max(self_height - 5,1), min(max_height-self_height,50)+self_height)
         
-    t1 = threading.Thread(target=processPeerBlocks,args=(new_blocks,),daemon=True)
-    t1.start()
-    t1.join()
+        t1 = threading.Thread(target=processPeerBlocks,args=(new_blocks,),daemon=True)
+        t1.start()
+        t1.join()
 
     return True
+
 
 def ask_peers_for_height():
     
@@ -97,5 +105,5 @@ def ask_peer_for_blocks(peer, start_block, end_block):
 
 if __name__ == '__main__':
     
-    x = synch_node()
+    x = check_peer_blocks()
     
