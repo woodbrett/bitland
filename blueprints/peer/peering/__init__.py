@@ -7,7 +7,8 @@ Created on Mar 28, 2021
 from flask import request
 from flask_restplus import Namespace, Resource, fields
 from http import HTTPStatus
-from node.networking.peering_functions import evaluate_connection_request
+from node.networking.peering_functions import evaluate_connection_request,\
+    authenticate_peer
 
 namespace = Namespace('peering', 'Peering')
 
@@ -69,9 +70,21 @@ class connect(Resource):
             'token': token
         }
 
-#UPDATE
-#ping pong
+@namespace.route('/ping')
+class ping(Resource):
+    '''Ping peers to keep connection'''
 
-
+    @namespace.response(500, 'Internal Server error')
+    @namespace.marshal_with(block_height_model)
+    @namespace.doc(security='Bearer')   
+    def get(self):
+        
+        if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
+            namespace.abort(401, 'Not authenticated as peer')
+        
+        return {
+            'message': 'pong',
+            'block_hash': block_hash
+        }
 
 

@@ -26,8 +26,29 @@ from node.blockchain.block_operations import (
     removeBlocks
     )
 from utilities.hashing import calculateHeaderHashFromBlock
+import time
 
-def synch_node():
+def run_node():
+    
+    #pingPeers()
+    #findPeers()
+    check_peer_blocks()
+    
+    while True:
+        time.sleep(60)
+        check_peer_blocks()
+    
+    return True
+
+
+def pingPeers():
+
+    ping = message_all_connected_peers('/peer/node_queries/getBlockHeight', rest_type='get')
+    
+    return True
+    
+
+def check_peer_blocks():
     
     peer_heights = ask_peers_for_height()
     self_height = getMaxBlockHeight()

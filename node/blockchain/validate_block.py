@@ -20,14 +20,17 @@ def validateBlock(block, realtime_validation=True, prev_block_input=None):
 
     valid_block = True
     
+    print('validating block header')
     validate_block = validateBlockHeader(block, realtime_validation, prev_block_input)
-    print(validate_block)
     
     valid_block = validate_block[0]
+    print("block header valid: " + str(valid_block))
     new_block_height = getMaxBlockHeight() + 1
     
     if (valid_block == True):
-      valid_block = validateTransactions(block, new_block_height)[0]
+        print('validating transactions')
+        valid_block = validateTransactions(block, new_block_height)[0]
+        print("transactions valid: " + str(valid_block))
     
     return valid_block
 
@@ -58,8 +61,6 @@ def validateBlockHeader(block, realtime_validation=True, prev_block_input=None):
         transaction_contingencies = deserialized_block[1][i][3]
         serialized_transactions.append(serialize_transaction(transaction_version, transaction_inputs, transaction_outputs, transaction_contingencies))
         
-    print(serialized_transactions)    
-    
     valid_header = True
     failure_reason = ''
     
@@ -67,108 +68,62 @@ def validateBlockHeader(block, realtime_validation=True, prev_block_input=None):
         valid_header = validateVer(version)
         if(valid_header == False):
             failure_reason = 'invalid version'
+        else:
+            print('validating block header: valid version')
     
     if (valid_header == True):
         valid_header = validatePrevBlock(prev_block, prev_block_input)
         if(valid_header == False):
             failure_reason = 'invalid previous block'
+        else:
+            print('validating block header: valid previous block')
     
     if (valid_header == True):
         valid_header = validateMrklRoot(mrkl_root, serialized_transactions)   
         if(valid_header == False):
             failure_reason = 'invalid merkle root'
+        else:
+            print('validating block header: valid merkle root')
             
     if (valid_header == True):
         valid_header = validateTime(time_, realtime_validation)    
         if(valid_header == False):
             failure_reason = 'invalid timestamp'
+        else:
+            print('validating block header: valid timestamp')
     
     if (valid_header == True):
         valid_header = validateBitcoinBlock(bitcoin_height, realtime_validation)    
         if(valid_header == False):
             failure_reason = 'invalid bitcoin block height'
+        else:
+            print('validating block header: valid bitcoin block height')
     
     if (valid_header == True):
         valid_header = validateBits(bits)    
         if(valid_header == False):
             failure_reason = 'invalid bits'
+        else:
+            print('validating block header: valid bits')
     
     if (valid_header == True):
         valid_header = validateBitcoinAddress(miner_bitcoin_address)      
         if(valid_header == False):
             failure_reason = 'invalid bitcoin address'   
+        else:
+            print('validating block header: valid bitcoin address')
       
     if (valid_header == True):
         valid_header = validateHeaderHash(version ,prev_block, mrkl_root ,time_,bits ,bitcoin_height ,miner_bitcoin_address,nonce )  
         if(valid_header == False):
             failure_reason = 'invalid header hash' 
-     
-    return valid_header, failure_reason
-
-
-#UPDATE think this can be removed
-'''
-def validateBlockHeaderSynch(header):
-
-    header = deserialize_block_header(header)
+        else:
+            print('validating block header: valid header hash')
+    
+    if failure_reason != '':
+        print ('validating block header: ' + failure_reason)
         
-    version = header[0]
-    prev_block = header[1]
-    mrkl_root = header[2]
-    time_ = header[3]
-    bits = header[4]
-    bitcoin_height = header[5]
-    miner_bitcoin_address = header[6]
-    nonce = header[7]
-    
-    header_serialized = serialize_block_header(version, prev_block, mrkl_root, time_, bits, nonce, bitcoin_height, miner_bitcoin_address)
-    
-    valid_header = True
-    failure_reason = ''
-    
-    if (valid_header == True):
-        valid_header = validateVer(version)
-        if(valid_header == False):
-            failure_reason = 'invalid version'
-    
-    if (valid_header == True):
-        valid_header = validatePrevBlock(prev_block)
-        if(valid_header == False):
-            failure_reason = 'invalid previous block'
-    
-    if (valid_header == True):
-        valid_header = validateMrklRoot(mrkl_root, serialized_transactions)   
-        if(valid_header == False):
-            failure_reason = 'invalid merkle root'
-            
-    if (valid_header == True):
-        valid_header = validateTimeHistorical(time_)    
-        if(valid_header == False):
-            failure_reason = 'invalid timestamp'
-    
-    if (valid_header == True):
-        valid_header = validateBitcoinBlockHistorical(bitcoin_height)    
-        if(valid_header == False):
-            failure_reason = 'invalid bitcoin block height'
-    
-    #will need to make this historical
-    if (valid_header == True):
-        valid_header = validateBits(bits)    
-        if(valid_header == False):
-            failure_reason = 'invalid bits'
-    
-    if (valid_header == True):
-        valid_header = validateBitcoinAddress(miner_bitcoin_address)      
-        if(valid_header == False):
-            failure_reason = 'invalid bitcoin address'   
-      
-    if (valid_header == True):
-        valid_header = validateHeaderHash(version ,prev_block, mrkl_root ,time_,bits ,bitcoin_height ,miner_bitcoin_address,nonce )  
-        if(valid_header == False):
-            failure_reason = 'invalid header hash' 
-     
     return valid_header, failure_reason
-'''
 
 
 def validateTransactions(block=b'', block_height=None, transactions=[]):
@@ -176,9 +131,14 @@ def validateTransactions(block=b'', block_height=None, transactions=[]):
 
     if transactions != []:
         header = None
+        
+    else:
+        deserialized_block = deserialize_block(block)
+        header = deserialized_block[0]
+        transactions = deserialized_block[1]
 
     transaction_count = len(transactions)
-    print(len(transactions))
+    print('transaction count: ' + str(transaction_count))
     
     serialized_transactions = []
     for i in range(0, transaction_count):
@@ -192,15 +152,13 @@ def validateTransactions(block=b'', block_height=None, transactions=[]):
     transaction_input_utxo = []
     all_transaction_type = []
     
-    print(serialized_transactions)
-    
     for i in range(0, len(serialized_transactions)):
+        print('validating transaction ' + str(i))
         transaction_status = validateTransaction(serialized_transactions[i], block_height, header)
         valid_transactions=[transaction_status[0], transaction_status[1], i]
         
         transaction_inputs = deserialize_transaction(serialized_transactions[i])[1]
         transaction_type = deserialize_transaction(serialized_transactions[i])[0]
-        print(transaction_inputs)
         
         all_transaction_type.append(transaction_type)
         
@@ -216,7 +174,6 @@ def validateTransactions(block=b'', block_height=None, transactions=[]):
     #UPDATE validate that inputs aren't in multiple transactions in the block    
     if (valid_transactions[0] == True): 
         utxo_count_list = Counter(transaction_input_utxo)
-        print(utxo_count_list)
         greater_one_utxo = 0
         
         for key in utxo_count_list: 
@@ -241,10 +198,12 @@ def validateTransactions(block=b'', block_height=None, transactions=[]):
 
 if __name__ == '__main__':
 
-    block = '000100000005ab13d277f22aab57a694f8e38dc900a2ba373ebe9fbba919c93aa74ab0bcaa0b93e0802533596449a9efa39f7137895c51baba2fa3eefe38cab8fff600603db5521d0ffff0000a43f031354e77556b745a74346b574d4c714b35514c7278414d51617079654678416936680946fe420001000101010052504f4c59474f4e28282d32322e352038392e333638322c2d32322e352038392e313436382c2d33332e37352038392e313436382c2d33332e37352038392e333638322c2d32322e352038392e33363832292940fddb35232e67e57e896fc91e81435564777ee5e78291ee1bbf708a80aeff9fa7ff6d82de884cec86f35932774b2eabfed527e1d0b0278c23e2e22fe6e9887b160000000000000000000000000000000000000201010bc06709774a5c7a5dd292c451ededbee378340df618351f4abbdf077cd3d18f00401247cfe2a12d96481d8136d82264b9d127aaffcdd0fa611acfcaa1cc820ea83e661a4735328c91a53e90407b737a76693a9a257eeb0b7d876a564f1aabfe633d020101002c504f4c59474f4e2828302039302c302038392e37343637342c2d39302038392e37343637342c302039302929409a19a65bc5b1fe8c3c4a60d5b2dbcbde27af0505b62a5ed46b3dc73e777202e8dbd6226eca1bb60bafdea37efc09a6faddf95bf22f699628b539948ddc372a8b02010030504f4c59474f4e28282d39302038392e37343637342c2d39302039302c302039302c2d39302038392e37343637342929401e410b1ecfb51fea3cd62bdf82107e54dddaf93629163b0365aba0b69406a987ac1bc3f5fd1cf812e4bfca854cfc3ec068402b7ec8ee2c73a66b1dd63032ebb800000000271007d000000007a12001902a626331716571723335646c723266616d6870797738763939767972707834376d67707378726c67786378'
+    block = '00010000000139f0f33e7b91a8b4677ca26d197c07bbfd2ed07b2e63727389bca78dfaf9e440f83bddd83d8ce63bcd654706ed62448e4ae4b9a73d824a8decde95f00060f72a591d0ffff0000a8eae3331333534653737353536623734356137343334366235373464346337313462333535313463373237383431346435313631373037393635343637383431363933363638123d212e000201013c75b4c2a69b3a86e13ac62705a6cf2d8a56d7d8b8d18bf846c621d62478fe060040ebff9ba202e4e182ed5d5fd685e4220279547ce2368f93a9453174def02b454d9c93667c18e65ed24968b181be63a38af117a3c0c5b59e7e94baf8c5b602f7d70101010054504f4c59474f4e28282d33392e3337352038372e373637312c2d33392e3337352038372e36323530382c2d34352038372e36323530382c2d34352038372e373637312c2d33392e3337352038372e37363731292940e3f2ecdefaa8e3f6652e8960dcca0d09d713fe255cbb5920c79e5dfe46f9447971cb2c76c7e6870ec9641924fa7a4ce7955bf911caf8be624cb21e4cfbcbfaf300000000000000000000000000000000000001000100010060504f4c59474f4e28282d37382e37352038302e34333731342c2d37382e37352038302e33303038382c2d38302e31353632352038302e33303038382c2d38302e31353632352038302e34333731342c2d37382e37352038302e3433373134292940351a334d094730fbfc0d98a285fd8d5698c636e62c9ba5c3b5edc376d55dfc94a503ff10d926590ffc44e3ac414309ede0806b6ce1e0a9cfae071e039816aa7f0000000000000000000000000000000000'
     block_bytes = unhexlify(block)
     
-    print(validateTransactions(block_bytes))
+    x = validateBlock(block_bytes)
+    
+    #print(validateTransactions(block_bytes))
     
     
     

@@ -13,13 +13,18 @@ from node.blockchain.queries import *
 from utilities.hashing import calculateHeaderHash, calculateTransactionHash
 from node.blockchain.contingency_operations import *
 from node.information.blocks import getMaxBlockHeight
+from node.blockchain.mempool_operations import removeTransactionsFromMempool
 
 def addBlock(block):
     
     block_height = getBlockCount() + 1
+    print('saving block to database: ' + str(block_height))
     
     addSerializedBlock(block, block_height)
+    print('added serialized block')
+    
     addDeserializedBlock(block, block_height)
+    print('added deserialized block')
 
     deserialized_block = deserialize_block(block)
     transaction_count = len(deserialized_block[1])
@@ -37,7 +42,13 @@ def addBlock(block):
     bitcoin_block = int.from_bytes(deserialized_block[0][5],'big')
     
     updateMinerFeeList(bitcoin_block, block_height)
+    print('updated miner fee list')
+    
     updateTransferFeeList(bitcoin_block, block_height)
+    print('updated transfer fee list')
+    
+    removeTransactionsFromMempool(block_height)
+    print('removed transactions from mempool')
     
     return(block_height)
 
@@ -147,8 +158,8 @@ def addTransactions(transaction_set, block_height):
     transaction_count = len(transaction_set)
     
     for i in range(0, transaction_count):
-        print(transaction_set[i])
         addTransaction(transaction_set[i], block_height)
+        print('added transaction ' + str(i))
     
     return transaction_count
 
@@ -184,7 +195,7 @@ def addTransaction(transaction, block_height):
         
         if input_version != 3:
             input_parcel_id = addParcelInput(transaction_id,vin, input_version,input_transaction_hash,input_transaction_id,vout,output_parcel_id,sig)
-
+            
             #mark any invalidated claims
             #UPDATE can make this way more efficient by doing all transactions at once probably            
             override_claim_id = getClaimByOutputParcelId(output_parcel_id)
@@ -288,7 +299,7 @@ def addParcelOutput(transaction_id, output_version, pub_key, vout, planet_id, sh
     return parcel_id
 
 
-def addParcelInput(transaction_id, input_version,input_transaction_hash,input_transaction_id,vout,output_parcel_id,sig):
+def addParcelInput(transaction_id, vin, input_version,input_transaction_hash,input_transaction_id,vout,output_parcel_id,sig):
     
     transaction_id = str(transaction_id)
     vin = str(vin)
@@ -440,27 +451,9 @@ def updateDbLandbase(parcel_id, block_height):
 
 if __name__ == '__main__':
     
-    print(updateMinerFeeList(700000,4))
-    print(updateTransferFeeList(700000,4))
-    
-    '''
-    block = '0001000000000000000000000000000000000000000000000000000000000000000045cdd9a625301abded768599cbaa8bc321b8c744699940fbf954f78af934872300603b3c0d1d0ffff0000a42f931354e77556b745a74346b574d4c714b35514c7278414d51617079654678416936680c0d56b00001000101010033504f4c59474f4e2828302039302c302038392e37343637342c2d39302038392e37343637342c2d39302039302c3020393029298064663865373761643166393165313261313435616661646130393737373239396332396234656332323535376465376266643737626261306163663836306137633735373766666130313238313638396363346530396330646439636361343734323336656264653364633134623430333234346365366532393763643531360000000000000000000000000000000000'
+    block = '00010000000139f0f33e7b91a8b4677ca26d197c07bbfd2ed07b2e63727389bca78dfaf9e440f83bddd83d8ce63bcd654706ed62448e4ae4b9a73d824a8decde95f00060f72a591d0ffff0000a8eae3331333534653737353536623734356137343334366235373464346337313462333535313463373237383431346435313631373037393635343637383431363933363638123d212e000201013c75b4c2a69b3a86e13ac62705a6cf2d8a56d7d8b8d18bf846c621d62478fe060040ebff9ba202e4e182ed5d5fd685e4220279547ce2368f93a9453174def02b454d9c93667c18e65ed24968b181be63a38af117a3c0c5b59e7e94baf8c5b602f7d70101010054504f4c59474f4e28282d33392e3337352038372e373637312c2d33392e3337352038372e36323530382c2d34352038372e36323530382c2d34352038372e373637312c2d33392e3337352038372e37363731292940e3f2ecdefaa8e3f6652e8960dcca0d09d713fe255cbb5920c79e5dfe46f9447971cb2c76c7e6870ec9641924fa7a4ce7955bf911caf8be624cb21e4cfbcbfaf300000000000000000000000000000000000001000100010060504f4c59474f4e28282d37382e37352038302e34333731342c2d37382e37352038302e33303038382c2d38302e31353632352038302e33303038382c2d38302e31353632352038302e34333731342c2d37382e37352038302e3433373134292940351a334d094730fbfc0d98a285fd8d5698c636e62c9ba5c3b5edc376d55dfc94a503ff10d926590ffc44e3ac414309ede0806b6ce1e0a9cfae071e039816aa7f0000000000000000000000000000000000'
     block_bytes = unhexlify(block)
 
-    #addBlock(block_bytes)
-    
-    deserialized_block = deserialize_block(block_bytes)
-    transaction_count = len(deserialized_block[1])
-    
-    serialized_transactions = []
-    for i in range(0, transaction_count):
-        transaction_version = deserialized_block[1][i][0]
-        transaction_inputs = deserialized_block[1][i][1]
-        transaction_outputs = deserialized_block[1][i][2]
-        transaction_contingencies = deserialized_block[1][i][3]
-        serialized_transactions.append(serialize_transaction(transaction_version, transaction_inputs, transaction_outputs, transaction_contingencies))
-    
-    print(addTransactions(serialized_transactions, 1))
-    '''
+    x = addBlock(block_bytes)
     
     

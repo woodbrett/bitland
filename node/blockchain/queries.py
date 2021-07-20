@@ -357,7 +357,7 @@ def AddParcel(
 
 
 def getMaxBlock():
-    print('getting max block')
+
     return executeSql('select * from bitland.max_block;')[0]
 
 
@@ -450,8 +450,6 @@ def getClaimInformation(claimed_output_parcel_id = 0, claim_action_output_parcel
               +" from bitland.claim "
               + "where (leading_claim = true and claimed_output_parcel_id = " + claimed_output_parcel_id + ") or claim_action_output_parcel_id = " + claim_action_output_parcel_id + ";")
     
-    print(select)
-    
     try:
         claim_sql = executeSql(select)
         columns = namedtuple('columns', ['status', 'id', 'claimed_output_parcel_id', 'claim_action_output_parcel_id', 'claim_fee_sats', 'claim_block_height', 'leading_claim', 'invalidated_claim', 'invalidation_input_parcel_id'])
@@ -468,7 +466,7 @@ def getClaimInformation(claimed_output_parcel_id = 0, claim_action_output_parcel
                         )
         
     except Exception as error:
-        print('no claim found for id' + str(error))
+        #print('no claim found for id' + str(error))
         columns = namedtuple('columns', ['status'])
         claim_output = columns(
                         'unidentified')

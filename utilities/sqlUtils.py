@@ -33,7 +33,7 @@ def executeSql (sql_statement):
         # close communication with the database
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+        print("sql error: " + error)
     finally:
         if conn is not None:
             conn.close()

@@ -4,7 +4,8 @@ Created on Dec 23, 2020
 @author: brett_wood
 '''
 
-from node.blockchain.transaction_serialization import deserialize_transaction
+from node.blockchain.transaction_serialization import deserialize_transaction,\
+    serialize_transaction
 from utilities.serialization import deserialize_text
 from utilities.sqlUtils import executeSql
 import psycopg2
@@ -43,7 +44,6 @@ def validateMempoolTransaction(transaction):
     mempool_state = [True,'']
     
     mempool_search = getMempoolInformation(transaction_hash=transaction_hash_hex)
-    print(mempool_search)
     if mempool_search != 'no_transaction_found':
         mempool_state = [False,'hash already exists in mempool']
         
@@ -97,24 +97,32 @@ def validateTransaction1(transaction):
         valid_transaction = inputs == []
         if(valid_transaction == False):
             failure_reason = '>0 inputs in landbase transaction'
+        else:
+            print('validating landbase transaction: valid inputs (0)')
     
     #check only 1 output
     if (valid_transaction == True):
         valid_transaction = output_length == 1
         if(valid_transaction == False):
             failure_reason = 'outputs <> 1 in landbase transaction'
+        else:
+            print('validating landbase transaction: valid outputs (1)')
             
     #check output is version 4
     if (valid_transaction == True):
         valid_transaction = output_version == 0
         if(valid_transaction == False):
             failure_reason = 'wrong output version, needs to be 0 for landbase'
+        else:
+            print('validating landbase transaction: valid output version')
         
     #check only planet id 1
     if (valid_transaction == True):
         valid_transaction = planet_id == 1
         if(valid_transaction == False):
             failure_reason = 'planet_id <> 1'
+        else:
+            print('validating landbase transaction: valid planet')
     
     #check that its a valid reward
     if (valid_transaction == True):
@@ -131,6 +139,8 @@ def validateTransaction1(transaction):
             
             if(valid_transaction == False):
                 failure_reason = 'invalid landbase reward geography'
+            else:
+                print('validating landbase transaction: valid geography')
         
         except Exception as error:
             valid_transaction = False
@@ -146,6 +156,11 @@ def validateTransaction1(transaction):
             and transfer_fee_address == '' )
         if(valid_transaction == False):
             failure_reason = 'landbase contingency violation'
+        else:
+            print('validating landbase transaction: valid contingencies')
+    
+    if failure_reason != '':
+        print('validating landbase transaction: ' + failure_reason)
             
     return valid_transaction, failure_reason
 
@@ -163,21 +178,29 @@ def validateTransaction2(transaction, block_height, block_header):
         valid_inputs = validateTransactionInputs(inputs, block_height, block_header, miner_fee_sats)
         if valid_inputs[0] == False:
             raise Exception(valid_inputs[0], valid_inputs[1])
+        else:
+            print('validating transaction: valid inputs')
        
         #validate input claims match output claims
         valid_outputs = validateInputOutputClaims(inputs, outputs)
         if valid_outputs[0] == False:
             raise Exception(valid_outputs[0], valid_outputs[1])
+        else:
+            print('validating transaction: valid claims')
         
         #validate shapes
         valid_shapes = validateShapes(inputs, outputs)
         if valid_shapes[0] == False:
             raise Exception(valid_shapes[0], valid_shapes[1])
+        else:
+            print('validating transaction: valid shapes')
         
         #UPDATE logic to check for planets when it expands beyond 1
         valid_outputs = validateTransactionOutputs(outputs)
         if valid_outputs[0] == False:
             raise Exception(valid_outputs[0], valid_outputs[1])
+        else:
+            print('validating transaction: valid outputs')
                 
         #UPDATE validate contingency values
         #miner fee >= 0
@@ -189,6 +212,9 @@ def validateTransaction2(transaction, block_height, block_header):
         valid_transaction, failure_reason = inst.args  
         print("transaction status: " + str(transaction_status))
         print("reason: " + str(reason))
+    
+    if failure_reason != '':
+        print('validating transaction: ' + failure_reason)
     
     return valid_transaction, failure_reason
 

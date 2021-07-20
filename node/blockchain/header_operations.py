@@ -10,7 +10,9 @@ from binascii import unhexlify, hexlify
 from hashlib import sha256
 import requests
 from system_variables import block_height_url
-from node.blockchain.global_variables import *
+from node.blockchain.global_variables import (
+    bitcoin_block_range
+    )
 from utilities.difficulty import get_bits_current_block
 import base58
 from utilities.serialization import deserialize_text, serialize_text
@@ -93,9 +95,11 @@ def validateBitcoinBlock(block_height,realtime_validation=True):
         calculated_block_height = getCurrentBitcoinBlockHeight()
         block_height_int = int.from_bytes(block_height, byteorder='big')
         
+        #print(block_height_int)
+        
         #UPDATE should we have margin of a few bitcoin blocks? don't think so
         if realtime_validation==True:
-            is_valid = abs(calculated_block_height - block_height_int) <= 6 and block_height_int >= prior_bitcoin_block_height
+            is_valid = abs(calculated_block_height - block_height_int) <= bitcoin_block_range and block_height_int >= prior_bitcoin_block_height
         else:
             is_valid = block_height_int >= prior_bitcoin_block_height
         

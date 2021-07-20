@@ -29,3 +29,5 @@ claim_blocks = 105000  # number of blocks from when a claim is made until it win
 max_headers_send = 2000
 
 bitland_version = 1
+
+bitcoin_block_range = 6 #when validating a new block coming in, the bitcoin block it has in header has to be within this many of the node's calculated bitcoin block height
