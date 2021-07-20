@@ -14,6 +14,8 @@ from utilities.hashing import calculateHeaderHash, calculateTransactionHash
 from node.blockchain.contingency_operations import *
 from node.information.blocks import getMaxBlockHeight
 from node.blockchain.mempool_operations import removeTransactionsFromMempool
+import threading
+from node.blockchain.validate_block import validateBlock, validateBlockHeader
 
 def addBlock(block):
     

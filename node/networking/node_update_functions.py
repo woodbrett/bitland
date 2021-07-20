@@ -6,8 +6,6 @@ Created on Jul 12, 2021
 import threading
 import time
 import queue
-from node.blockchain.validate_block import validateBlock
-from node.blockchain.block_operations import addBlock
 from binascii import unhexlify
 from node.networking.peering_functions import message_all_connected_peers
 from node.information.blocks import getMaxBlockHeight
@@ -17,6 +15,7 @@ from node.blockchain.transaction_operations import (
     addTransactionToMempool,
     validateMempoolTransaction
     )
+from node.blockchain.block_adding_queueing import validateAddBlock
 
 action_queue = []
 
@@ -30,41 +29,16 @@ def queue_new_block_from_peer(block_height,block,peer=''):
     return True
     
 
+#UPDATE
 def analyze_new_block_from_peer(block_height,block,peer=''):
     
-    action_queue.append(threading.get_ident())
-    print(action_queue)
-    
-    print(threading.get_ident())
-    time.sleep(5)
-    sleep_time = 0
-
-    while action_queue[0] != threading.get_ident():
-        time.sleep(1)   
-        sleep_time = sleep_time + 1
-        print('thread: ' + str(threading.get_ident() + '; sleep: ' + str(sleep_time)))
-        if sleep_time > 100:
-            return False
-
-    self_height = getMaxBlockHeight()
     block_bytes = unhexlify(block)
-
-    if block_height > self_height + 1:
-        check_peer_blocks()
+    add_block = validateAddBlock(block_bytes, block_height)
     
-    elif block_height == self_height + 1:
-        if validateBlock(block_bytes) == True:
-            addBlock(block_bytes)
-            send_block_to_peers(block_height,block,peers_to_exclude=[peer])
-            
-        #UPDATE make sure it didn't not validate because of something wrong, but rather different chain (prior block different)
-        #right now it just sends it to synch node to handle, but this should be integrated more directly
-        else:
-            synch_node()
+    if add_block == True:
+        send_block_to_peers(block_height,block,peers_to_exclude=[peer])
     
-    action_queue.remove(threading.get_ident())
-    
-    return True
+    return add_block
 
 
 def send_block_to_peers(block_height,block,peers_to_exclude=[]):

@@ -30,6 +30,8 @@ from utilities.sqlUtils import (
     )
 from node.blockchain.validate_block import validateTransactions
 from node.blockchain.transaction_serialization import deserialize_transaction
+import threading
+from node.blockchain.block_adding_queueing import validateAddBlock
 
 #UPDATE - give ability to pull these from a node rather than inside the code
 
@@ -155,7 +157,6 @@ def validateMempoolTransactions():
 #UPDATE add transactions into this
 def mining_process():
     
-    
     mempool_transactions = validateMempoolTransactions()
     transactions = mempool_transactions
     
@@ -206,7 +207,10 @@ def mining_process():
         serialized_block = serialize_block(header, transactions)
         block_hex = hexlify(serialized_block).decode('utf-8')
         print(block_hex)
-        queue_new_block_from_peer(block_height,block_hex)
+        
+        t1 = threading.Thread(target=validateAddBlock,args=(serialized_block,),daemon=True)
+        t1.start()
+        t1.join()
     
     return mining_process()
             
