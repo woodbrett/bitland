@@ -123,6 +123,8 @@ def processPeerBlocks(new_blocks_hex):
             if remove == True:
                 validateAddBlocksAlreadyQueue(peer_blocks_split)
                 blocks_added = len(peer_blocks_split)
+
+    block_queue.remove(threading.get_ident())
                 
     return blocks_added, blocks_removed
 

@@ -11,19 +11,19 @@ from node.blockchain.transaction_operations import validateMempoolTransaction
 
 def broadcast_transaction(transaction):
     
-    queue_new_transaction_from_peer(transaction,threaded=False)
+    queue_new_transaction_from_peer(transaction)
 
     return True
 
 
 if __name__ == '__main__':
 
-    input_public_key = '0fcc5c84f971522179472d1dd1e9063acc90d6787d5f01c1aafd44ae640062396b263aa7c8ab59163f375d1cd161f4f7e9a8d724a8905a3db84aa1b3e8a743a9'
-    input_private_key = '279f87d4961ff7f607b38f6c70197b34453b4656207c2b3de3a8732213a8f357'
-    polygon = 'POLYGON ((-50.625 86.0697, -50.625 85.90662, -53.4375 85.90662, -53.4375 86.0697, -50.625 86.0697))'
+    input_public_key = '3bc16bd3f696e736cda684f2ab831c759d237025d92789f0139e1c0e87cad170c78e4d992fe63e49e9f82822a549d5210fbcd32c490791b083833cb54007227f'
+    input_private_key = 'ee706f0ad2a53f7eb8f6f0b35b9af6dec481af2c781f54c91da8d5dee6c80af1'
+    polygon = 'POLYGON ((-47.8125 86.60538, -47.8125 86.418, -50.625 86.418, -50.625 86.60538, -47.8125 86.60538))'
     planet_id = 1
     vout = 0
-    input_transaction_hash = '4dd77f5b032bd8c8d37a633eb82b8e04bb077cb86a1a101e45174e0eee279027'
+    input_transaction_hash = 'c4a1a627ebf4994e7aa3c6544c2614f5eb5d55c52c84d3b1f4384ee5531bd883'
     
     simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id)
     transaction_hex = hexlify(simple_transaction).decode('utf-8')
@@ -31,3 +31,4 @@ if __name__ == '__main__':
     x = broadcast_transaction(transaction_hex)
     
     #print(validateMempoolTransaction(simple_transaction))
+    
