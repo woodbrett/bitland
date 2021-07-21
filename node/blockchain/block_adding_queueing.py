@@ -28,7 +28,7 @@ def waitInBlockQueue():
     while block_queue[0] != threading.get_ident():
         time.sleep(1)   
         sleep_time = sleep_time + 1
-        print('thread: ' + str(threading.get_ident() + '; sleep: ' + str(sleep_time)))
+        print('thread: ' + str(threading.get_ident()) + '; sleep: ' + str(sleep_time))
         if sleep_time > 100:
             return False    
     
