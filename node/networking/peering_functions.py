@@ -6,7 +6,8 @@ Created on Jul 11, 2021
 from utilities.sqlUtils import *
 from system_variables import (
     max_peer_count,
-    peering_port
+    peering_port,
+    local_api_password
     )
 from collections import namedtuple
 import threading
@@ -69,6 +70,14 @@ def authenticate_peer(ip_address, token):
         return True
     
     else: 
+        return False
+
+
+def authenticateLocalUser(ip_address, password):
+    
+    if password == local_api_password and ip_address == '127.0.0.1':
+        return True
+    else:
         return False
 
 

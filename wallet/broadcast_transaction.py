@@ -7,9 +7,9 @@ from node.networking.node_update_functions import queue_new_transaction_from_pee
 from wallet.create_transaction_simple import createSimpleTransactionTransfer
 from binascii import hexlify
 from node.blockchain.transaction_operations import validateMempoolTransaction
+import socket
 
-
-def broadcast_transaction(transaction):
+def broadcastTransaction(transaction):
     
     queue_new_transaction_from_peer(transaction, threaded=False)
 
@@ -19,15 +19,6 @@ def broadcast_transaction(transaction):
 if __name__ == '__main__':
 
     '''
-    input_public_key = '24ac87325c1c45bdb82e6c767626e52853b324922632b1623ae41ec1a7f9587bc9b40c85b0203471262920d4b06342edaaffb21652394e82ce78ef34ddf6d1c1'
-    input_private_key = '1446851f34a4e9658806678127c3c71973641673c4828f670b80d8aa1437ae66'
-    polygon = 'POLYGON ((-74.53125 82.089, -74.53125 81.92502, -75.9375 81.92502, -75.9375 82.089, -74.53125 82.089))'
-    planet_id = 1
-    vout = 0
-    input_transaction_hash = '039d9da1d0f4dc09b442e5cf7323f653edf1f50ecf7c072958a6b19c90a0f567'
-    '''
-    
-    '''
     select 
     '["' || pub_key || '","' || private_key || '","' || st_astext(geom) || '",' || planet_id::varchar || ',' || vout::varchar || ',"' || transaction_hash || '"]',
         block_id
@@ -36,7 +27,8 @@ if __name__ == '__main__':
     order by block_id desc
     '''
     
-    inputs = ["5720ac9e0ae28a1920c7d42bb2dfc1c18662d5d4786283effedc784a6603dec6894ad8eca810af9926a127f978e3c8a4265c6a521954fa22a7737e3e2f8f8094","ba1a0b987d658f385d2a2d739b93820dc127fa822dccf6ccb2a5a6aa78d9c940","POLYGON((-81.5625 79.64586,-81.5625 79.39512,-82.265625 79.39512,-82.265625 79.64586,-81.5625 79.64586))",1,0,"541c89cea43e37cd372e74da2c80c57eff0dcdd4aa25cca31e479f7a5e1f6dca"]
+    '''
+    inputs = ["4055aba9fdc64318b585a41fe66a1101efeec0d5f7794dea2a55df356e9deea1597c4e00eea023122f98e1c5b9fbea2ee02b19973cd442e10d7dbe526753b251","7b7442d3622f3c48d005f45680385d5dafe383f0662f523bb3d184e9f7900042","POLYGON((-28.125 88.69068,-28.125 88.461,-33.75 88.461,-33.75 88.69068,-28.125 88.69068))",1,0,"46da56ee09a208af6badf28fe8a4bdb300c651ab270980c0fe4d7dcb804a57ae"]
     
     input_public_key = inputs[0]
     input_private_key = inputs[1]
@@ -48,8 +40,14 @@ if __name__ == '__main__':
     simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id)
     transaction_hex = hexlify(simple_transaction).decode('utf-8')
     
-    x = broadcast_transaction(transaction_hex)
+    x = broadcastTransaction(transaction_hex)
+    '''
     
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    
+    print(hostname)
+    print(local_ip)
     
     
     
