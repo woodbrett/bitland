@@ -16,6 +16,7 @@ from node.blockchain.transaction_operations import (
     validateMempoolTransaction
     )
 from node.blockchain.block_adding_queueing import validateAddBlock
+from node.blockchain.transaction_adding_queueing import validateAddTransactionMempool
 
 action_queue = []
 
@@ -63,36 +64,20 @@ def queue_new_transaction_from_peer(transaction_hex,peer='',threaded=True):
         print('thread started, exiting function')
 
     else:
-        analyze_new_transaction_from_peer(transaction_hex,peer='',threaded=False)
+        analyze_new_transaction_from_peer(transaction_hex,peer,threaded)
 
-    return True
+    return None
 
 
 def analyze_new_transaction_from_peer(transaction_hex,peer='',threaded=True):
     
-    if threaded == True:
-        action_queue.append(threading.get_ident())
-        time.sleep(5)
-
-        while action_queue[0] != threading.get_ident():
-            time.sleep(1)
-            print('a')
-    
     transaction_bytes = unhexlify(transaction_hex)
-    print(transaction_bytes)
+    validate_transaction = validateAddTransactionMempool(transaction_bytes, threaded)
 
-    if validateMempoolTransaction(transaction_bytes)[0] == True:
-        addTransactionToMempool(transaction_bytes)
+    if validate_transaction == True:
         send_transaction_to_peers(transaction_hex,peers_to_exclude=[peer])
-        
-    else:
-        return False
-    
-    if threaded == True:
-        action_queue.remove(threading.get_ident())
-        print('removed thread')
 
-    return True
+    return validate_transaction
 
 
 def send_transaction_to_peers(transaction,peers_to_exclude=[]):

@@ -25,12 +25,15 @@ from utilities.hashing import calculateHeaderHashFromBlock
 import time
 import threading
 from node.blockchain.block_adding_queueing import processPeerBlocks
+from node.blockchain.mempool_operations import garbageCollectMempool
 
 def start_node():
     
     #pingPeers()
     #findPeers()
     check_peer_blocks()
+    garbageCollectMempool()
+    
     t3 = threading.Thread(target=run_node,daemon=True)
     t3.start()
     

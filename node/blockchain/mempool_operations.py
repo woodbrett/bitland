@@ -3,11 +3,27 @@ Created on Jul 20, 2021
 
 @author: brett_wood
 '''
-from utilities.sqlUtils import executeSql
+from utilities.sqlUtils import executeSqlDeleteUpdate
 
 def garbageCollectMempool():
     
-    return True
+    query = ("delete from bitland.transaction_mempool " +
+                "where id in (" +
+                "select m.id " +
+                "from bitland.transaction t " +
+                "join bitland.transaction_mempool m on t.transaction_hash = m.transaction_hash );"
+                )
+
+    print(query)
+
+    try:
+        delete = executeSqlDeleteUpdate(query)
+        
+    except Exception as error:
+        #print('error deleting mempool transactions' )
+        delete = 'none deleted'
+    
+    return delete
 
 
 def removeTransactionsFromMempool(block_id):
@@ -22,7 +38,7 @@ def removeTransactionsFromMempool(block_id):
     print(query)
 
     try:
-        delete = executeSql(query)
+        delete = executeSqlDeleteUpdate(query)
         
     except Exception as error:
         #print('error deleting mempool transactions' )
@@ -30,4 +46,8 @@ def removeTransactionsFromMempool(block_id):
     
     return delete
 
+
+if __name__ == '__main__':
+
+    print(garbageCollectMempool())
 
