@@ -29,7 +29,7 @@ from node.blockchain.mempool_operations import garbageCollectMempool
 
 def start_node():
     
-    #pingPeers()
+    pingPeers()
     #findPeers()
     check_peer_blocks()
     garbageCollectMempool()

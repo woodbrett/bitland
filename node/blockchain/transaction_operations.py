@@ -31,11 +31,9 @@ from node.information.mempool import getMempoolInformation
 #input version 4 - spend failed transfer
 #input version 5 - spend successful claim
 
-#input version 1 - standard 
-#input version 2 - spending as collateral
-#input version 3 - make claim
-#input version 4 - n/a
-#input version 5 - n/a
+#output version 1 - standard 
+#output version 2 - collateral
+#output version 3 - make claim
 
 def validateMempoolTransaction(transaction):
     

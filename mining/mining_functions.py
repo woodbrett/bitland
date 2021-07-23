@@ -154,7 +154,7 @@ def validateMempoolTransactions():
     return transaction_byte_list
 
 
-#UPDATE add transactions into this
+#UPDATE figure out if node is synching before starting to try to mine
 def mining_process():
     
     mempool_transactions = validateMempoolTransactions()
