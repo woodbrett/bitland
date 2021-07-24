@@ -702,10 +702,11 @@ where ip.id is null;
 
 drop view if exists bitland.transaction_contingency;
 create view bitland.transaction_contingency as 
-select t.*, mft.status as miner_fee_status, tft.status as transfer_fee_status, mft.bitcoin_block_height as miner_fee_status_block_height, tft.bitcoin_block_height as transfer_fee_status_block_height
+select t.*, b.bitcoin_block_height, mft.status as miner_fee_status, tft.status as transfer_fee_status, mft.bitcoin_block_height as miner_fee_status_block_height, tft.bitcoin_block_height as transfer_fee_status_block_height
 from bitland.transaction t
 left join bitland.miner_fee_transaction mft on t.id = mft.transaction_id 
-left join bitland.transfer_fee_transaction tft on t.id = tft.transaction_id;
+left join bitland.transfer_fee_transaction tft on t.id = tft.transaction_id
+join bitland.block b on t.block_id = b.id;
 
 --
 --OTHER

@@ -98,7 +98,7 @@ def addDeserializedBlock(block, block_height):
     time_ = str(int.from_bytes(time_, 'big'))
     bits = str(int.from_bytes(bits, 'big'))
     bitcoin_height = str(int.from_bytes(bitcoin_height, 'big'))
-    miner_bitcoin_address = str(unhexlify(miner_bitcoin_address).decode('utf-8'))
+    miner_bitcoin_address = miner_bitcoin_address.decode('utf-8')
     nonce = str(int.from_bytes(nonce, 'big'))
     
     query_insert_deserialized_block = ("insert into bitland.block(id, header_hash, version, prev_block, mrkl_root, time, bits, bitcoin_block_height, miner_bitcoin_address, nonce) values "

@@ -219,7 +219,7 @@ def calculateMinerFeeStatusTransaction(transaction_id, bitcoin_block):
     transaction_info = getTransactionInformation(id = transaction_id)
     miner_fee_sats = transaction_info.miner_fee_sats
     miner_bitcoin_address = transaction_info.miner_bitcoin_address
-    miner_fee_expiration_block = transaction_info.block_id + transaction_info.miner_fee_blocks
+    miner_fee_expiration_block = transaction_info.bitcoin_block_height + transaction_info.miner_fee_blocks
     
     miner_fee = getLowestBlockAddressFee(miner_bitcoin_address, miner_fee_sats)
     miner_fee_status = miner_fee[0]
@@ -276,7 +276,7 @@ def calculateTransferFeeStatusTransaction(transaction_id, bitcoin_block):
     transaction_info = getTransactionInformation(id = transaction_id)
     transfer_fee_sats = transaction_info.transfer_fee_sats
     transfer_fee_bitcoin_address = transaction_info.transfer_fee_address
-    transfer_fee_expiration_block = transaction_info.block_id + transaction_info.transfer_fee_blocks
+    transfer_fee_expiration_block = transaction_info.bitcoin_block_height + transaction_info.transfer_fee_blocks #transaction_info.block_id + transaction_info.transfer_fee_blocks
     
     transfer_fee = getLowestBlockAddressFee(transfer_fee_bitcoin_address, transfer_fee_sats)
     transfer_fee_status = transfer_fee[0]
@@ -299,9 +299,10 @@ def calculateTransferFeeStatusTransaction(transaction_id, bitcoin_block):
     return status
     
 
-def getLowestBlockAddressFee(address, fee):
+def getLowestBlockAddressFee(address_hex, fee):
     
-    address_search_url_sub = address_search_url.replace(':address', address)
+    address_utf8 = unhexlify(address_hex).decode('utf-8')
+    address_search_url_sub = address_search_url.replace(':address', address_utf8)
     print(address_search_url_sub)
     
     address_info = requests.get(address_search_url_sub).json()
@@ -321,7 +322,7 @@ def getLowestBlockAddressFee(address, fee):
         for j in range(0, vout_len):     
             vout_address = vout[j].get('scriptpubkey_address')
             value = vout[j].get('value')
-            if vout_address == address and value == fee:
+            if vout_address == address_utf8 and value == fee:
                 transactions.append([txid, block_height, j, vout_address, value])
     
     matched_transactions = len(transactions)

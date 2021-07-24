@@ -407,12 +407,12 @@ def getBlockHeaders(start_block_height, end_block_height):
 
 #UPDATE - may be more elegant to get transactions from that table vs distincting UTXOs
 def getExpiringCollateralTransactions(bitcoin_block_id):
-    select = ("select id from bitland.transaction_contingency where miner_fee_sats <> 0 and miner_fee_status is null and block_id + miner_fee_blocks < " + str(bitcoin_block_id) + ";")
+    select = ("select id from bitland.transaction_contingency where miner_fee_sats <> 0 and miner_fee_status is null and bitcoin_block_height + miner_fee_blocks < " + str(bitcoin_block_id) + ";")
     return executeSqlMultipleRows(select)
 
 
 def getExpiringTransferFeeTransactions(bitcoin_block_id):
-    select = ("select id from bitland.transaction_contingency where transfer_fee_sats <> 0 and transfer_fee_status is null and block_id + miner_fee_blocks < " + str(bitcoin_block_id) + ";")
+    select = ("select id from bitland.transaction_contingency where transfer_fee_sats <> 0 and transfer_fee_status is null and bitcoin_block_height + miner_fee_blocks < " + str(bitcoin_block_id) + ";")
     return executeSqlMultipleRows(select)
     
 

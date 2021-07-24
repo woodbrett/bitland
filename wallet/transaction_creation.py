@@ -10,6 +10,8 @@ from node.blockchain.transaction_serialization import (
 )
 from wallet.key_generation import *
 import ecdsa
+from node.information.transaction import getUtxoInfo
+import json
 
 def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_private_key, input_public_key, polygon, planet_id):
     
@@ -75,51 +77,62 @@ def createTransaction1(transaction_version, inputs, outputs, contingencies):
     #outputs [output_version, planet, shape, public_script (address)]
     #contingencies [miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address]
     
-    print(inputs)
+    inputs_processed = []
+    outputs_processed = []
+    transaction_version = 2
+    transaction_version = transaction_version.to_bytes(2, byteorder = 'big')
     
     for i in range(0,len(inputs)):  
     
+        input_version = inputs[i][0]
+        input_transaction_hash = inputs[i][1]
+        input_vout = inputs[i][2]
+        input_public_key = inputs[i][3]
+        input_private_key = inputs[i][4]
+        
+        coordinates = getUtxoInfo(transaction_hash=input_transaction_hash, vout=input_vout).shape
+        coordinates = coordinates.replace(", ","," ) # remove all spaces
+        coordinates = coordinates.replace(" (","(" ) # remove all spaces
+        
         private_key_encoded = ecdsa.SigningKey.from_string(unhexlify(input_private_key),curve=ecdsa.SECP256k1)
         public_key_encoded = ecdsa.VerifyingKey.from_string(unhexlify(input_public_key),curve=ecdsa.SECP256k1)
         
         public_key_check = private_key_encoded.verifying_key
-        
-        #logic to remove spaces that can happen from copying
-        polygon = polygon.replace(", ","," ) # remove all spaces
-        polygon = polygon.replace(" (","(" ) # remove all spaces
-        polygon_bytes = polygon.encode('utf-8')
-        
-        signature = private_key_encoded.sign(polygon_bytes)
+        signature = private_key_encoded.sign(coordinates.encode('utf-8'))
 
         #input 1 - standard
         type = 1 #standard
         transaction_hash = input_transaction_hash
         vout = input_vout
         signature = signature
-        input_1 = [type.to_bytes(1, byteorder = 'big'), unhexlify(transaction_hash), vout.to_bytes(1, byteorder = 'big'), signature]
+        input = [type.to_bytes(1, byteorder = 'big'), unhexlify(transaction_hash), vout.to_bytes(1, byteorder = 'big'), signature]
         
-        inputs = [input_1]
+        inputs_processed.append(input)
 
+    
     for i in range(0,len(outputs)):
-    
-        output_keys = generateRandomKeys()
-        output_private_key = output_keys[0]
-        output_public_key = output_keys[1]
-    
-        savePublicPrivateKeysDb(output_private_key, output_public_key)
         
-        transaction_version = 2
-        transaction_version = transaction_version.to_bytes(2, byteorder = 'big')
-
-        #output 1 - standard
-        type = 1
-        planet_id = planet_id
-        coordinates = polygon
-        public_key = output_public_key
-        output_1 = [type.to_bytes(1, byteorder = 'big'), planet_id.to_bytes(1, byteorder = 'big'), coordinates.encode('utf-8'), unhexlify(public_key)]
+        output_version = outputs[i][0]
+        planet_id = outputs[i][1]
+        coordinates = outputs[i][2]
+        address = outputs[i][3]
     
-        outputs = [output_1]
+        #logic to remove spaces that can happen from copying
+        coordinates = coordinates.replace(", ","," ) # remove all spaces
+        coordinates = coordinates.replace(" (","(" ) # remove all spaces      
+    
+        if address == None:
+            output_keys = generateRandomKeys()
+            output_private_key = output_keys[0]
+            address = output_keys[1]
+    
+            savePublicPrivateKeysDb(output_private_key, address)
 
+        output = [output_version.to_bytes(1, byteorder = 'big'), planet_id.to_bytes(1, byteorder = 'big'), coordinates.encode('utf-8'), unhexlify(address)]
+    
+        outputs_processed.append(output)
+        
+    
     #contingencies
     miner_fee_sats = contingencies[0]
     miner_fee_blocks = contingencies[1] #12960 max
@@ -133,7 +146,7 @@ def createTransaction1(transaction_version, inputs, outputs, contingencies):
                      transfer_fee_address.encode('utf-8')
                      ]
 
-    serialized_transaction = serialize_transaction(transaction_version, inputs, outputs, contingencies)
+    serialized_transaction = serialize_transaction(transaction_version, inputs_processed, outputs_processed, contingencies)
     
     return serialized_transaction
     
@@ -217,8 +230,10 @@ if __name__ == '__main__':
     #contingencies [miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address]
     transfer_fee_address_1 = '1GX28yLjVWux7ws4UQ9FB4MnLH4UKTPK2z'
     contingencies = [50000,100,50000,100,hexlify(transfer_fee_address_1.encode('utf-8')).decode('utf-8')]
-    print(contingencies)
+        
+    #complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
+    #print(hexlify(complex_transaction).decode('utf-8'))
+    #print(deserialize_transaction(complex_transaction))
     
-    complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
-    print(complex_transaction)
+    '000203015133603c845ab7d0268c85bec310e002aefdedf9bd83fb189dc79c2fc3abbfaf004066264218daad0dac040412be6dda4d862c58a8a3d3491acfe0c77bf58b12859d1b0699a5a79d8d921a9f0eb21540d921f742dbcda02f5238a41d69bd033901fc015814c128aff69a595762d1ce28ded5f86e0ae840951bcc61e493bd6aa6878d2e004076251c18337b5ad0649bdcb02aac257e6cd57a7abc9762629b7c049874fe71539fdcc4c15771b6a0b59c66e81ccfad6967622fcfbfc3e5eb72634db7fc041c70019f6870bf482a445cf102596a55efd1ff1a35edec9dcd425cf0f3cf4478aa2e2500406f208cf7d15ed71e052b14e9bf23187ce69b3d122a278a8a1b1e9066c26dd0abd5c7cdddfaff67f6e57a2b0721a19844e3793a35fb33a223e2eeb61e008a76e00301010141504f4c59474f4e28282d38382e35393337352037362e33353336362c2d38382e35393337352037362e32363235353137363537393836392c2d38382e3731343032373430353635382037362e3236373036323136383531312c2d38382e37313037333137313238393233332037362e313631362c2d38392e3239363837352037362e313631362c2d38392e3239363837352037362e33353336362c2d38392e3239363837352037362e3437383534383938343931372c2d38392e31353632323731313236392037362e3437383534383938343931372c2d38392e31343932343030313131383133352037362e35343834322c2d38382e35393337352037362e35343834322c2d38372e3839303632352037362e35343834322c2d38372e3839303632352037362e33353336362c2d38382e35393337352037362e33353336362929408df9560d48f67fe122679245430635553b37f6860a3b261ef504a4df19286f90c46a6452606a56fa569db1edd85a282df3513afce43aaef9eb87f97bb457789c01010090504f4c59474f4e28282d38382e35393337352037362e32363235353137363537393836392c2d38382e35393337352037362e313631362c2d38382e37313037333137313238393233332037362e313631362c2d38382e3731343032373430353635382037362e3236373036323136383531312c2d38382e35393337352037362e32363235353137363537393836392929400cffde9bb11a7778d10b32582a208a4674fef749bbcc815c9fa9297b4d54025134dd56ba003697ff57f0493debd003e45431d275aabb9fdf2f8f4a3fb46c358402010090504f4c59474f4e28282d38392e3239363837352037362e3437383534383938343931372c2d38392e3239363837352037362e35343834322c2d38392e31343932343030313131383133352037362e35343834322c2d38392e31353632323731313236392037362e3437383534383938343931372c2d38392e3239363837352037362e343738353438393834393137292940f10bdaab7272758c8d8507e337bf8f4f917716c5852dc61419832a39c2ec96a6a770142d44ff2cba814caf201f781b0c9232d4ed918b1d07a0ef5e837fc55f7b00000000c350006400000000c3500064443331343735383332333837393463366135363537373537383337373737333334353535313339343634323334346436653463343833343535346235343530346233323761'
     
