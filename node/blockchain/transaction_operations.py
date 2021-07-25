@@ -393,8 +393,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
         block_height = getMaxBlockHeight() + 1
 
     if block_header != None:
-        deserialized_block_header = deserialize_block_header(block_header)
-        bitcoin_block_height = deserialized_block_header[5]
+        bitcoin_block_height = int.from_bytes(block_header[5],'big')
         
     else:
         bitcoin_block_height = getCurrentBitcoinBlockHeight()

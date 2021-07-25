@@ -1,20 +1,18 @@
 *****transactions*****
-- send transaction with transfer fee - TESTED 7/24
-- send transaction claim
+	- send transaction with transfer fee - TESTED 7/24
+	- send transaction claim
+	- reject double spend
 
 *****transactions - miner fees*****
-- send transaction with miner fee - TESTED 7/24
-- reject spending utxo collateral as user before miner fee paid
-- reject spending utxo collateral as user after it has expired and no payment has been made
-- reject spending utxo collateral as user after it has expired and payment was made after expiration period
-- reject spending utxo collateral as miner before time is up
-- reject spending utxo collateral within the validation (10 blocks) period of paying
-- accept spending utxo collateral as user after miner fee paid
-- accept spending utxo collateral as miner after it has expired and no payment has been made - TESTING 7/25
-- accept spending utxo collateral as miner after it has expired and payment was made after expiration period
-- accept spending utxo non-collateral as user after mining fee has expired 
+	- send transaction with miner fee - TESTED 7/24
+		transaction = 00020102677d5fc4a0b96d8978fbc50b60ea1b36f53906e26bd83384a2bcd38354f41e4e0240decdae58adf8fce02f2cf2f8073db49ee2a7b2ef056f5013f1e33cf047ef30fb47a7d2ce76547f70129ac12dc606bb67ffc1cb6a1d6bf58665a42a9030d064900101010070504f4c59474f4e28282d38392e3239363837352037362e3437383534392c2d38392e3239363837352037362e35343834322c2d38392e31343932342037362e35343834322c2d38392e3135363232372037362e3437383534392c2d38392e3239363837352037362e343738353439292940d0394277127fede9f032d2f4b2454c875b341b6fb87fff81f6e4f45ed7a50c4d5e635c221a2713bcea9a8bde513ccfebbfdab55e8ce74d182365e82c5991d9a20000000000000000000000000000000000
+	- reject spending utxo collateral as user before miner fee paid
+	- reject spending utxo collateral as user after it has expired and no payment has been made
+	- reject spending utxo collateral as user after it has expired and payment was made after expiration period
+	- reject spending utxo collateral as miner before time is up
+	- reject spending utxo collateral within the validation (10 blocks) period of paying
+	- accept spending utxo collateral as user after miner fee paid
+	- accept spending utxo collateral as miner after it has expired and no payment has been made - TESTING 7/25
+	- accept spending utxo collateral as miner after it has expired and payment was made after expiration period
+	- accept spending utxo non-collateral as user after mining fee has expired 
 
-
-
-pub: 84beff2a5219da491b7d45e84d5d7b952f3e119c4bddf391a0bdb4057b5b4ab9130268149567fa3fd2efd156c58af230480c9f95fd6c70334c98055800453e9f
-private: 72a0d46570821837955faaf49f83a8be0a0652fbd17ca6113762b300c8efea0c
