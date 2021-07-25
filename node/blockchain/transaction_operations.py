@@ -447,7 +447,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
         valid_input_utxo_types = validContingencyStatusSpendTypes(input_version)[4]
         
         transfer_fee_status_valid = ((transfer_fee_status in valid_transfer_fee_types) or valid_transfer_fee_types == [])
-        miner_fee_status_valid = ((miner_fee_status in valid_miner_fee_types) or valid_transfer_fee_types == [])
+        miner_fee_status_valid = ((miner_fee_status in valid_miner_fee_types) or valid_miner_fee_types == [])
         claim_status_valid = ((claim_status in valid_claim_types) or valid_claim_types == [])
         outstanding_claim_valid = ((outstanding_claim in valid_claim_types) or valid_claim_types == [])
         input_utxo_type_valid = ((input_utxo_version in valid_input_utxo_types) or valid_input_utxo_types == [])

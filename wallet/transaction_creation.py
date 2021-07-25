@@ -37,7 +37,7 @@ def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_pr
     transaction_version = transaction_version.to_bytes(2, byteorder = 'big')
         
     #input 1 - standard
-    type = 1 #standard
+    type = 4 #standard
     transaction_hash = input_transaction_hash
     vout = input_vout
     signature = signature
@@ -163,12 +163,12 @@ if __name__ == '__main__':
     order by block_id desc
     '''
     
-    input_public_key = '2f499fc81d1fac1018ecc5e35d971f5e38c9507de0a3faa78da21cd5f22deb130ea38f96bbccc791c1b91765442a157a92142f8cd5ccf135bbcb7a20d05f5322'
-    input_private_key = '403c06b0f058d7f242aca5901ecb951ae4d41a9c02ff2ca96ca29c71c130f29c'
-    polygon = 'POLYGON((-39.375 87.7671, -39.375 87.62508323123, -45 87.62508, -45 87.7671, -39.375 87.7671))'
+    input_public_key = '700e4f461437fb74f1f0a6fd87b7b7ef3f9311183c71650bef977593d79a49d030bda18cdda096b074218e226694c5e00591b01681c5ff9f44b714ce9848edc3'
+    input_private_key = 'f5bfb2b7e46e575dedbfd29be1d2258e5918d35bdd2d210a6d907f01bba5bf40'
+    polygon = 'POLYGON((-88.59375 76.35366,-88.59375 76.262552,-88.714027 76.267062,-88.710732 76.1616,-89.296875 76.1616,-89.296875 76.35366,-89.296875 76.478549,-89.156227 76.478549,-89.14924 76.54842,-88.59375 76.54842,-87.890625 76.54842,-87.890625 76.35366,-88.59375 76.35366))'
     planet_id = 1
     vout = 0
-    input_transaction_hash = '3c75b4c2a69b3a86e13ac62705a6cf2d8a56d7d8b8d18bf846c621d62478fe06'
+    input_transaction_hash = '677d5fc4a0b96d8978fbc50b60ea1b36f53906e26bd83384a2bcd38354f41e4e'
     
     simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id)
     print(hexlify(simple_transaction).decode('utf-8'))
