@@ -286,6 +286,20 @@ def queryPolygonEquality(polygon1, polygon2):
     return equal_polygons 
 
 
+def queryPolygonRules(outputs):
+    
+    valid_polygon_decimals = True
+    
+    for i in range(0,len(outputs)):
+        output_shape = outputs[i][2].decode('utf-8')
+        query = "select st_astext(st_geomfromtext('" + output_shape + "',4326),6) = '" + output_shape + "';"
+        valid_polygon_decimals = executeSql(query)[0]
+        if valid_polygon_decimals == False:
+            break
+    
+    return valid_polygon_decimals
+
+
 def queryPolygonAreaMeters (polygon):
     
     polygon = str(polygon)
