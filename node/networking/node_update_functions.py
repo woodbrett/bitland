@@ -56,23 +56,23 @@ def send_block_to_peers(block_height,block,peers_to_exclude=[]):
     return send_block
 
 
-def queue_new_transaction_from_peer(transaction_hex,peer='',threaded=True):
+def queue_new_transaction_from_peer(transaction_hex,use_threading=True,peer=''):
     
-    if threaded == True:
-        t1 = threading.Thread(target=analyze_new_transaction_from_peer,args=(transaction_hex,peer,threaded,),daemon=True)
+    if use_threading == True:
+        t1 = threading.Thread(target=analyze_new_transaction_from_peer,args=(transaction_hex,peer,use_threading,),daemon=True)
         t1.start()
         print('thread started, exiting function')
 
     else:
-        analyze_new_transaction_from_peer(transaction_hex,peer,threaded)
+        analyze_new_transaction_from_peer(transaction_hex,peer,use_threading)
 
     return None
 
 
-def analyze_new_transaction_from_peer(transaction_hex,peer='',threaded=True):
+def analyze_new_transaction_from_peer(transaction_hex,peer='',use_threading=True):
     
     transaction_bytes = unhexlify(transaction_hex)
-    validate_transaction = validateAddTransactionMempool(transaction_bytes, threaded)
+    validate_transaction = validateAddTransactionMempool(transaction_bytes, use_threading)
 
     if validate_transaction == True:
         send_transaction_to_peers(transaction_hex,peers_to_exclude=[peer])

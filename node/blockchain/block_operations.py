@@ -161,6 +161,7 @@ def addTransactions(transaction_set, block_height):
     
     for i in range(0, transaction_count):
         addTransaction(transaction_set[i], block_height)
+        #addSerializedTransaction()
         print('added transaction ' + str(i))
     
     return transaction_count
@@ -232,6 +233,12 @@ def addTransaction(transaction, block_height):
         updateDbLandbase(parcel_id, block_height)
 
     return transaction_id
+
+
+#UPDATE save the serialized transaction - should I do this?
+def addSerializedTransaction():
+    
+    return None
 
 
 def addTransactionHash(transaction, block_height, version, is_landbase, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address):

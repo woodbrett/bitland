@@ -30,11 +30,11 @@ def waitInTransactionQueue():
     return threading.get_ident()
     
 
-def validateAddTransactionMempool(transaction_bytes, threaded=True):
+def validateAddTransactionMempool(transaction_bytes, use_threading=True):
     
     add_transaction = True
     
-    if threaded == True:
+    if use_threading == True:
         waitInTransactionQueue()
     
     if validateMempoolTransaction(transaction_bytes)[0] == True:
@@ -43,7 +43,7 @@ def validateAddTransactionMempool(transaction_bytes, threaded=True):
     else:
         add_transaction = False
     
-    if threaded == True:
+    if use_threading == True:
         transaction_queue.remove(threading.get_ident())
         print('removed thread')
 

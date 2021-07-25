@@ -35,6 +35,8 @@ from node.information.mempool import getMempoolInformation
 #output version 2 - collateral
 #output version 3 - make claim
 
+#UPDATE limit lat/long to 6 decimal places
+
 def validateMempoolTransaction(transaction):
     
     transaction_hash_hex = hexlify(calculateTransactionHash(transaction)).decode('utf-8') 
@@ -324,6 +326,9 @@ def validateShapes(inputs, outputs):
         valid_shapes = output_union_area == sum_output_area
         if(valid_shapes == False):
             failure_reason = 'sum of individual outputs not equal to unioned output'
+    
+    #UPDATE
+    #validate that no more than 6 decimals are used
     
     return valid_shapes, failure_reason
 
