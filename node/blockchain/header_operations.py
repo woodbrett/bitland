@@ -83,7 +83,7 @@ def validateTime(time_,realtime_validation=True):
     return is_valid
 
     
-def validateBitcoinBlock(block_height,realtime_validation=True):
+def validateBitcoinBlock(block_height,prev_block,realtime_validation=True,prior_block_bitcoin_height=None):
     
     if getBlockCount() == 0:
         #prior_bitcoin_block_height = getCurrentBitcoinBlockHeight() - 6
@@ -91,14 +91,14 @@ def validateBitcoinBlock(block_height,realtime_validation=True):
         return is_valid
     
     else:
-        prior_bitcoin_block_height = queryGetPrevBitcoinBlock()
-        calculated_block_height = getCurrentBitcoinBlockHeight()
+        #prior_bitcoin_block_height = queryGetPrevBitcoinBlock()
+        prev_block_str = hexlify(prev_block).decode('utf-8')
+        prior_bitcoin_block_height = getBlockInformation(block_header=prev_block_str).bitcoin_block_height
         block_height_int = int.from_bytes(block_height, byteorder='big')
-        
-        #print(block_height_int)
         
         #UPDATE should we have margin of a few bitcoin blocks? don't think so
         if realtime_validation==True:
+            calculated_block_height = getCurrentBitcoinBlockHeight()
             is_valid = abs(calculated_block_height - block_height_int) <= bitcoin_block_range and block_height_int >= prior_bitcoin_block_height
         else:
             is_valid = block_height_int >= prior_bitcoin_block_height

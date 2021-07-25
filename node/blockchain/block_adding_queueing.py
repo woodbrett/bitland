@@ -69,12 +69,14 @@ def validateAddBlock(block_bytes, block_height=0):
 
 
 #QUEUED PROCESS
-def processPeerBlocks(new_blocks_hex):
+def processPeerBlocks(new_blocks_hex, threading=True):
     
     blocks_added = 0
     blocks_removed = 0
     
-    thread_id = waitInBlockQueue()
+    if threading==True:
+        thread_id = waitInBlockQueue()
+    
     self_height = getMaxBlockHeight()
     
     peer_blocks = json.loads(new_blocks_hex.get('blocks'))
@@ -89,7 +91,7 @@ def processPeerBlocks(new_blocks_hex):
             
     self_base_hash = unhexlify(getBlockInformation(block_id=start_block_height).header_hash)
     peer_base_hash = calculateHeaderHashFromBlock(peer_blocks[0])
-    
+        
     if next_block_prev_block == self_height_hash:
         validateAddBlocksAlreadyQueue(peer_blocks[peer_next_block_index:])
         blocks_added = len(peer_blocks[peer_next_block_index:])
@@ -123,15 +125,17 @@ def processPeerBlocks(new_blocks_hex):
             if remove == True:
                 validateAddBlocksAlreadyQueue(peer_blocks_split)
                 blocks_added = len(peer_blocks_split)
-
-    block_queue.remove(threading.get_ident())
+    
+    if threading==True:
+        block_queue.remove(threading.get_ident())
                 
     return blocks_added, blocks_removed
 
 
-def validateBlocksMemory(blocks,start_prev_block):
+def validateBlocksMemory(blocks,start_prev_block,start_prev_block_header):
     
     prev_block = unhexlify(start_prev_block)
+    prev_block_header = start_prev_block_header
     
     for i in range(0,len(blocks)):
         print('analyzing block ' + str(i))
@@ -152,7 +156,7 @@ def validateAddBlocksAlreadyQueue(blocks):
     for i in range(0,len(blocks)):
         print('analyzing block ' + str(i))
         block_bytes = unhexlify(blocks[i])
-        valid_block = validateBlock(block_bytes, False)
+        valid_block = validateBlock(block_bytes, realtime_validation=False)
         print(valid_block)
         
         if valid_block == True:

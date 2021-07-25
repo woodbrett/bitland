@@ -93,7 +93,7 @@ def validateBlockHeader(block, realtime_validation=True, prev_block_input=None):
             print('validating block header: valid timestamp')
     
     if (valid_header == True):
-        valid_header = validateBitcoinBlock(bitcoin_height, realtime_validation)    
+        valid_header = validateBitcoinBlock(bitcoin_height, prev_block, realtime_validation)    
         if(valid_header == False):
             failure_reason = 'invalid bitcoin block height'
         else:
