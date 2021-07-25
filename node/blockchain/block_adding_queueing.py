@@ -144,7 +144,7 @@ def validateBlocksMemory(blocks,start_prev_block,start_prior_block):
     for i in range(0,len(blocks)):
         print('analyzing block ' + str(i))
         block_bytes = unhexlify(blocks[i])
-        valid_block = validateBlockHeader(block_bytes, realtime_validation=False, prev_block_input=prev_block, prior_block=prior_block_bytes)[0]
+        valid_block = validateBlockHeader(block_bytes, realtime_validation=False, prior_block=prior_block_bytes)[0]
         
         if valid_block == False:
             print('invalid block, stopping analysis')

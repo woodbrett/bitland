@@ -81,7 +81,7 @@ def validateTime(time_,realtime_validation=True):
     return is_valid
 
     
-def validateBitcoinBlock(block_height,prev_block, prior_block_bitcoin_height, realtime_validation=True):
+def validateBitcoinBlock(block_height, prior_block_bitcoin_height, realtime_validation=True):
     
     if getBlockCount() == 0:
         #prior_bitcoin_block_height = getCurrentBitcoinBlockHeight() - 6

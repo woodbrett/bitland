@@ -113,5 +113,5 @@ def ask_peer_for_blocks(peer, start_block, end_block):
 
 if __name__ == '__main__':
     
-    x = start_node(threading=False)
+    x = check_peer_blocks(use_threading=False)
     

@@ -10,14 +10,16 @@ from hashlib import sha256
 from node.blockchain.block_serialization import deserialize_block
 from node.blockchain.header_serialization import deserialize_block_header
 
-def calculateHeaderHashFromBlock(block):
+def calculateHeaderHashFromBlock(block_hex=None,block_bytes=None):
     
-    block_byte = unhexlify(block)
-    header_byte = deserialize_block(block_byte)[0]
-    headerhash_byte = calculateHeaderHash(header_byte[0],header_byte[1],header_byte[2],header_byte[3],header_byte[4],header_byte[5],header_byte[6],header_byte[7])
-    headerhash_hex = hexlify(headerhash_byte).decode("utf-8")
+    if block_bytes == None:
+        block_bytes = unhexlify(block_hex)
+
+    header_bytes = deserialize_block(block_bytes)[0]
+    headerhash_bytes = calculateHeaderHash(header_bytes[0],header_bytes[1],header_bytes[2],header_bytes[3],header_bytes[4],header_bytes[5],header_bytes[6],header_bytes[7])
+    headerhash_hex = hexlify(headerhash_bytes).decode("utf-8")
     
-    return headerhash_byte 
+    return headerhash_bytes 
 
 
 def calculateHeaderHash(

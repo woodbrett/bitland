@@ -87,7 +87,7 @@ def getTransactionInformation (transaction_hash = '', id = 0):
     transaction_hash = str(transaction_hash)
     id = str(id)
     
-    query = ("select id, block_id, transaction_hash, version, is_landbase, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address, miner_fee_status, transfer_fee_status, miner_fee_status_block_height, transfer_fee_status_block_height, miner_bitcoin_address " +
+    query = ("select id, block_id, transaction_hash, version, is_landbase, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address, bitcoin_block_height, miner_fee_status, transfer_fee_status, miner_fee_status_block_height, transfer_fee_status_block_height, miner_bitcoin_address " +
              "from bitland.transaction_contingency " +
              "where (transaction_hash = '" + transaction_hash + "' or id = " + id +");"
              )
@@ -96,7 +96,7 @@ def getTransactionInformation (transaction_hash = '', id = 0):
     
     try:
         transaction = executeSql(query)
-        columns = namedtuple('columns', ['id', 'block_id', 'transaction_hash', 'version', 'is_landbase', 'miner_fee_sats', 'miner_fee_blocks', 'transfer_fee_sats', 'transfer_fee_blocks', 'transfer_fee_address', 'miner_fee_status', 'transfer_fee_status', 'miner_fee_status_block_height', 'transfer_fee_status_block_height', 'miner_bitcoin_address'])
+        columns = namedtuple('columns', ['id', 'block_id', 'transaction_hash', 'version', 'is_landbase', 'miner_fee_sats', 'miner_fee_blocks', 'transfer_fee_sats', 'transfer_fee_blocks', 'transfer_fee_address', 'bitcoin_block_height','miner_fee_status', 'transfer_fee_status', 'miner_fee_status_block_height', 'transfer_fee_status_block_height', 'miner_bitcoin_address'])
         utxo_output = columns(
                         transaction[0],
                         transaction[1],
@@ -112,7 +112,8 @@ def getTransactionInformation (transaction_hash = '', id = 0):
                         transaction[11],
                         transaction[12],
                         transaction[13],
-                        transaction[14]
+                        transaction[14],
+                        transaction[15]
                         )
 
     except Exception as error:
@@ -372,9 +373,9 @@ def getBlockById(block_id):
     return executeSql(select)
 
 
-def getBlockInformation(block_id = 0, block_header = ''):
+def getBlockInformation(block_id = -1, header_hash = ''):
     select = ("select id, header_hash , version, prev_block , mrkl_root , time, bits, bitcoin_block_height , miner_bitcoin_address, nonce from bitland.block b "
-              +" where id = " + str(block_id) + " or header_hash = '" + str(block_header) + "' ;")
+              +" where id = " + str(block_id) + " or header_hash = '" + str(header_hash) + "' ;")
     
     try:
         db_block = executeSql(select)
