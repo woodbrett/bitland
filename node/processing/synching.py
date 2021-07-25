@@ -31,7 +31,7 @@ def start_node():
     
     pingPeers()
     #findPeers()
-    check_peer_blocks(threading=threading)
+    check_peer_blocks()
     print('checked peers')
     garbageCollectMempool()
     
