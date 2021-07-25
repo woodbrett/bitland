@@ -27,11 +27,12 @@ import threading
 from node.blockchain.block_adding_queueing import processPeerBlocks
 from node.blockchain.mempool_operations import garbageCollectMempool
 
-def start_node(threading=True):
+def start_node():
     
     pingPeers()
     #findPeers()
     check_peer_blocks(threading=threading)
+    print('checked peers')
     garbageCollectMempool()
     
     t3 = threading.Thread(target=run_node,daemon=True)
@@ -55,7 +56,7 @@ def pingPeers():
     return True
     
 
-def check_peer_blocks(threading=True):
+def check_peer_blocks(use_threading=True):
     
     peer_heights = ask_peers_for_height()
     self_height = getMaxBlockHeight()
@@ -80,12 +81,12 @@ def check_peer_blocks(threading=True):
         #UPDATE to only ask for max of X blocks, 50?
         new_blocks = ask_peer_for_blocks(max_height_peer, max(self_height - 5,1), min(max_height-self_height,50)+self_height)
         
-        if threading==True:
-            t1 = threading.Thread(target=processPeerBlocks,args=(new_blocks,),daemon=True)
+        if use_threading==True:
+            t1 = threading.Thread(target=processPeerBlocks,args=(new_blocks,use_threading,),daemon=True)
             t1.start()
             t1.join()
         else:
-            processPeerBlocks(new_blocks,threading=threading)
+            processPeerBlocks(new_blocks,use_threading=use_threading)
             
 
     return True

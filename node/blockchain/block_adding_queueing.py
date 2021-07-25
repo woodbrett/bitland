@@ -70,12 +70,12 @@ def validateAddBlock(block_bytes, block_height=0):
 
 
 #QUEUED PROCESS
-def processPeerBlocks(new_blocks_hex, threading=True):
+def processPeerBlocks(new_blocks_hex, use_threading=True):
     
     blocks_added = 0
     blocks_removed = 0
     
-    if threading==True:
+    if use_threading==True:
         thread_id = waitInBlockQueue()
     
     self_height = getMaxBlockHeight()
@@ -129,7 +129,7 @@ def processPeerBlocks(new_blocks_hex, threading=True):
                 validateAddBlocksAlreadyQueue(peer_blocks_split)
                 blocks_added = len(peer_blocks_split)
     
-    if threading==True:
+    if use_threading==True:
         block_queue.remove(threading.get_ident())
                 
     return blocks_added, blocks_removed
