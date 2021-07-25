@@ -28,7 +28,7 @@ if run_node == True:
     print('starting node', flush=True)
     
 #start mining if true
-run_mining = True
+run_mining = False
 if run_mining == True:
     t2 = threading.Thread(target=mining_process,daemon=True)
     t2.start()

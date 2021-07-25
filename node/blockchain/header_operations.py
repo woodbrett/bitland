@@ -31,10 +31,7 @@ def validateVer(version):
     
     return is_valid
     
-def validatePrevBlock(prev_block, prev_block_input=None):
-    
-    if prev_block_input == None:
-        prev_block_input = getPrevBlock()
+def validatePrevBlock(prev_block, prev_block_input):
         
     is_valid = prev_block_input == prev_block
     return is_valid  
@@ -78,12 +75,13 @@ def validateTime(time_,realtime_validation=True):
         if realtime_validation==True:
             is_valid = (time_int > average_time_last_11 and time_int < (network_adjusted_time + 60*60*2))
         else: 
+            #UPDATE so that it is pulling the last 11 from memory if they aren't in DB yet
             is_valid = (time_int > average_time_last_11 )
     
     return is_valid
 
     
-def validateBitcoinBlock(block_height,prev_block,realtime_validation=True,prior_block_bitcoin_height=None):
+def validateBitcoinBlock(block_height,prev_block, prior_block_bitcoin_height, realtime_validation=True):
     
     if getBlockCount() == 0:
         #prior_bitcoin_block_height = getCurrentBitcoinBlockHeight() - 6
@@ -92,16 +90,15 @@ def validateBitcoinBlock(block_height,prev_block,realtime_validation=True,prior_
     
     else:
         #prior_bitcoin_block_height = queryGetPrevBitcoinBlock()
-        prev_block_str = hexlify(prev_block).decode('utf-8')
-        prior_bitcoin_block_height = getBlockInformation(block_header=prev_block_str).bitcoin_block_height
+        prior_block_bitcoin_height_int = int.from_bytes(prior_block_bitcoin_height, byteorder='big')
         block_height_int = int.from_bytes(block_height, byteorder='big')
         
         #UPDATE should we have margin of a few bitcoin blocks? don't think so
         if realtime_validation==True:
             calculated_block_height = getCurrentBitcoinBlockHeight()
-            is_valid = abs(calculated_block_height - block_height_int) <= bitcoin_block_range and block_height_int >= prior_bitcoin_block_height
+            is_valid = abs(calculated_block_height - block_height_int) <= bitcoin_block_range and block_height_int >= prior_block_bitcoin_height_int
         else:
-            is_valid = block_height_int >= prior_bitcoin_block_height
+            is_valid = block_height_int >= prior_block_bitcoin_height_int
         
     return is_valid    
     

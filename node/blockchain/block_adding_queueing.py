@@ -5,7 +5,8 @@ Created on Jul 20, 2021
 '''
 import threading 
 import time
-from node.information.blocks import getMaxBlockHeight, getBlockInformation
+from node.information.blocks import getMaxBlockHeight, getBlockInformation,\
+    getBlock
 from node.blockchain.validate_block import validateBlock, validateBlockHeader
 from node.blockchain.block_operations import addBlock, removeBlocks
 from utilities.hashing import calculateHeaderHashFromBlock
@@ -112,11 +113,13 @@ def processPeerBlocks(new_blocks_hex, threading=True):
             if self_hash_i != peer_hash_i:
                 peer_blocks_split = peer_blocks[i:]
                 break
+            
             comparison_block_height = comparison_block_height + 1
         
         prev_block = getBlockInformation(comparison_block_height).prev_block
+        prior_block = getBlock(comparison_block_height - 1)
         
-        valid_blocks = validateBlocksMemory(peer_blocks_split,prev_block)
+        valid_blocks = validateBlocksMemory(peer_blocks_split,prev_block,prior_block)
         
         if valid_blocks == True:
             remove = removeBlocks(comparison_block_height,self_height)
@@ -132,21 +135,23 @@ def processPeerBlocks(new_blocks_hex, threading=True):
     return blocks_added, blocks_removed
 
 
-def validateBlocksMemory(blocks,start_prev_block,start_prev_block_header):
+def validateBlocksMemory(blocks,start_prev_block,start_prior_block):
     
     prev_block = unhexlify(start_prev_block)
-    prev_block_header = start_prev_block_header
+    prior_block = start_prior_block
+    prior_block_bytes = unhexlify(prior_block)
     
     for i in range(0,len(blocks)):
         print('analyzing block ' + str(i))
         block_bytes = unhexlify(blocks[i])
-        valid_block = validateBlockHeader(block_bytes, realtime_validation=False, prev_block_input=prev_block)[0]
+        valid_block = validateBlockHeader(block_bytes, realtime_validation=False, prev_block_input=prev_block, prior_block=prior_block_bytes)[0]
         
         if valid_block == False:
             print('invalid block, stopping analysis')
             break
         
         prev_block = calculateHeaderHashFromBlock(blocks[i])
+        prior_block_bytes = block_bytes
         
     return valid_block
 

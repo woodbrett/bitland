@@ -10,7 +10,7 @@ from node.blockchain.block_serialization import deserialize_block, serialize_blo
 from node.blockchain.transaction_serialization import serialize_transaction
 from node.blockchain.queries import *
 from collections import Counter
-from node.information.blocks import getMaxBlockHeight
+from node.information.blocks import getMaxBlockHeight, getBlock
 
 
 def validateBlock(block, realtime_validation=True, prev_block_input=None):
@@ -35,8 +35,8 @@ def validateBlock(block, realtime_validation=True, prev_block_input=None):
     return valid_block
 
 
-def validateBlockHeader(block, realtime_validation=True, prev_block_input=None):
-
+def validateBlockHeader(block, realtime_validation=True, prior_block=None):
+ 
     header = deserialize_block_header(block)
         
     version = header[0]
@@ -60,7 +60,17 @@ def validateBlockHeader(block, realtime_validation=True, prev_block_input=None):
         transaction_outputs = deserialized_block[1][i][2]
         transaction_contingencies = deserialized_block[1][i][3]
         serialized_transactions.append(serialize_transaction(transaction_version, transaction_inputs, transaction_outputs, transaction_contingencies))
-        
+    
+    #prior block calculations for validation
+    if prior_block == None:
+        prior_block_height = getBlockInformation(block_header=header_serialized).id
+        prior_block = getBlock(prior_block_height)
+    
+    prior_block_header = deserialize_block_header(prior_block)
+    prior_block_hash = calculateHeaderHashFromBlock(prior_block)
+    prior_block_bitcoin_height = prior_block_header[5]
+    prior_block_time = prior_block_header[3]
+    
     valid_header = True
     failure_reason = ''
     
@@ -72,7 +82,7 @@ def validateBlockHeader(block, realtime_validation=True, prev_block_input=None):
             print('validating block header: valid version')
     
     if (valid_header == True):
-        valid_header = validatePrevBlock(prev_block, prev_block_input)
+        valid_header = validatePrevBlock(prev_block, prior_block_hash)
         if(valid_header == False):
             failure_reason = 'invalid previous block'
         else:
@@ -93,7 +103,7 @@ def validateBlockHeader(block, realtime_validation=True, prev_block_input=None):
             print('validating block header: valid timestamp')
     
     if (valid_header == True):
-        valid_header = validateBitcoinBlock(bitcoin_height, prev_block, realtime_validation)    
+        valid_header = validateBitcoinBlock(bitcoin_height, prior_block_bitcoin_height, realtime_validation)    
         if(valid_header == False):
             failure_reason = 'invalid bitcoin block height'
         else:
