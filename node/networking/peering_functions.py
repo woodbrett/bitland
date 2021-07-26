@@ -317,6 +317,8 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
                     print('error calling peer ' + peer_ip_address)
                     r = 'error calling peer'
                 
+            print('sent message')
+            
             responses.append([peer_ip_address,r])
 
     return responses

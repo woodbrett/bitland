@@ -61,7 +61,7 @@ def queue_new_transaction_from_peer(transaction_hex,use_threading=True,peer=''):
     if use_threading == True:
         t1 = threading.Thread(target=analyze_new_transaction_from_peer,args=(transaction_hex,peer,use_threading,),daemon=True)
         t1.start()
-        print('thread started, exiting function')
+        t1.join()
 
     else:
         analyze_new_transaction_from_peer(transaction_hex,peer,use_threading)
@@ -72,6 +72,7 @@ def queue_new_transaction_from_peer(transaction_hex,use_threading=True,peer=''):
 def analyze_new_transaction_from_peer(transaction_hex,peer='',use_threading=True):
     
     transaction_bytes = unhexlify(transaction_hex)
+    
     validate_transaction = validateAddTransactionMempool(transaction_bytes, use_threading)
 
     if validate_transaction == True:

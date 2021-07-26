@@ -169,7 +169,7 @@ def mining_process():
     time_ = int(round(datetime.utcnow().timestamp(),0))
     start_nonce = 0
     bitcoin_height = int(requests.get(block_height_url).text)
-    miner_bitcoin_address = '15NwUktZt4kWMLqK5QLrxAMQapyeFxAi6h'
+    miner_bitcoin_address = 'bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws'
     
     version_bytes = version.to_bytes(2, byteorder = 'big')
     prev_block_bytes = getPrevBlock()

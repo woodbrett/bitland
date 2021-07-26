@@ -32,13 +32,18 @@ def waitInTransactionQueue():
 
 def validateAddTransactionMempool(transaction_bytes, use_threading=True):
     
+    print('validating transaction thread', flush=True)
+    
     add_transaction = True
     
     if use_threading == True:
-        waitInTransactionQueue()
+        queued_transaction = waitInTransactionQueue()
+        if queued_transaction == False:
+            add_transaction = False
     
-    if validateMempoolTransaction(transaction_bytes)[0] == True:
-        addTransactionToMempool(transaction_bytes)
+    if add_transaction == True:
+        if validateMempoolTransaction(transaction_bytes)[0] == True:
+            addTransactionToMempool(transaction_bytes)
 
     else:
         add_transaction = False
