@@ -32,6 +32,7 @@ from node.blockchain.validate_block import validateTransactions
 from node.blockchain.transaction_serialization import deserialize_transaction
 import threading
 from node.blockchain.block_adding_queueing import validateAddBlock
+from node.blockchain.header_serialization import serializeMinerAddress
 
 #UPDATE - give ability to pull these from a node rather than inside the code
 
@@ -48,11 +49,13 @@ def findValidHeader(
     ):
 
     difficulty_byte = get_target_from_bits(bits_byte)
+    miner_bitcoin_address_full_byte = serializeMinerAddress(miner_bitcoin_address_byte)
    
     nonce_byte = start_nonce_byte
     nonce = int.from_bytes(nonce_byte,'big')
 
-    header_byte_no_nonce = (version_byte + prev_block_byte + mrkl_root_byte + time_byte + bits_byte + bitcoin_height_byte + miner_bitcoin_address_byte )
+    header_byte_no_nonce = (version_byte + prev_block_byte + mrkl_root_byte + time_byte + bits_byte + bitcoin_height_byte + miner_bitcoin_address_full_byte )
+    print()
     header_byte = (header_byte_no_nonce + nonce_byte) 
     headerhash_byte = sha256(sha256(header_byte).digest()).digest()  
     
@@ -78,7 +81,9 @@ def findValidHeader(
                 header_byte = b''
                 status = 'rival found block'
                 break
-        if(nonce > 2000000000):
+        if nonce == 10000:
+            break
+        if(nonce > 4000000000):
             header_byte = b''
             status = 'timed out'
             break
@@ -171,16 +176,15 @@ def mining_process():
     time_ = int(round(datetime.utcnow().timestamp(),0))
     start_nonce = 0
     bitcoin_height = int(requests.get(block_height_url).text)
-    miner_bitcoin_address = '6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b7773'
+    miner_bitcoin_address = '626331716363733236397a3273346d66746e753972393963686e35333771776e67323335663238783939'
     
     version_bytes = version.to_bytes(2, byteorder = 'big')
     prev_block_bytes = getPrevBlock()
     mrkl_root_bytes = calculateMerkleRoot(transactions)
-    print(mrkl_root_bytes)
     time_bytes = time_.to_bytes(5, byteorder = 'big')
     bits_bytes = get_bits_current_block() 
     bitcoin_height_bytes = bitcoin_height.to_bytes(4, byteorder = 'big')
-    miner_bitcoin_address_bytes = hexlify(miner_bitcoin_address.encode('utf-8'))
+    miner_bitcoin_address_bytes = unhexlify(miner_bitcoin_address)
     start_nonce_bytes = start_nonce.to_bytes(4, byteorder = 'big')    
     
     current_block_height = getMaxBlockHeight()

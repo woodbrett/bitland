@@ -744,6 +744,10 @@ update landbase_enum set valid_claim = true, valid_enabled_block = 0 where y_id 
 truncate bitland.transaction_mempool;
 --	truncate wallet.addresses;
 
+insert into bitland.block(id, header_hash) values
+(0, '0000000000000000000000000000000000000000000000000000000000000000');
+
+
  */
 
 

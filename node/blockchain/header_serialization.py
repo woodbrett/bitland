@@ -69,6 +69,15 @@ def serialize_block_header(
         nonce_bytes
         ):
     
+    miner_bitcoin_address_combined_bytes = serializeMinerAddress(miner_bitcoin_address_bytes)
+    
+    header = (version_bytes + prev_block_bytes + mrkl_root_bytes + time_bytes + bits_bytes + bitcoin_height_bytes + miner_bitcoin_address_combined_bytes + nonce_bytes )
+
+    return header
+
+
+def serializeMinerAddress(miner_bitcoin_address_bytes):
+    
     miner_bitcoin_address_len_bytes = len(miner_bitcoin_address_bytes).to_bytes(miner_bitcoin_address_len_bytes_len, byteorder='big')
     miner_bitcoin_address_combined_bytes = miner_bitcoin_address_len_bytes + miner_bitcoin_address_bytes
     miner_bitcoin_address_combined_hex = hexlify(miner_bitcoin_address_combined_bytes)
@@ -78,9 +87,7 @@ def serialize_block_header(
     
     miner_bitcoin_address_combined_bytes = unhexlify(miner_bitcoin_address_combined_hex)
     
-    header = (version_bytes + prev_block_bytes + mrkl_root_bytes + time_bytes + bits_bytes + bitcoin_height_bytes + miner_bitcoin_address_combined_bytes + nonce_bytes )
-
-    return header
+    return miner_bitcoin_address_combined_bytes
 
 
 def deserialize_block_header(header, start_pos=0):
