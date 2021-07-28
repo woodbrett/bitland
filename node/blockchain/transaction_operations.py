@@ -264,8 +264,7 @@ def validateInputOutputClaims(inputs, outputs):
     input_claim_count = 0
     output_claim_count = 0
 
-    input_length = len(inputs)
-    for i in range(0, input_length):
+    for i in range(0, len(inputs)):
         input_version = int.from_bytes(inputs[i][0],'big')
         transaction_hash = hexlify(inputs[i][1]).decode('utf-8')
         transaction_vout = int.from_bytes(inputs[i][2],'big')
@@ -275,8 +274,7 @@ def validateInputOutputClaims(inputs, outputs):
             input_shape_str = output_parcel[1]
             input_claim_geom = "st_geomfromtext('" + input_shape_str + "',4326)"
     
-    output_length = len(outputs)
-    for i in range(0, input_length):
+    for i in range(0, len(outputs)):
         output_version = int.from_bytes(outputs[i][0],'big')
         if output_version == 3:
             output_claim_count = output_claim_count + 1

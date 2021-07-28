@@ -170,9 +170,9 @@ if __name__ == '__main__':
     vout = 0
     input_transaction_hash = '677d5fc4a0b96d8978fbc50b60ea1b36f53906e26bd83384a2bcd38354f41e4e'
     
-    simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id)
-    print(hexlify(simple_transaction).decode('utf-8'))
-    print(deserialize_transaction(simple_transaction))
+    #simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id)
+    #print(hexlify(simple_transaction).decode('utf-8'))
+    #print(deserialize_transaction(simple_transaction))
     
     
     ############ more complex transaction ################
@@ -187,11 +187,11 @@ if __name__ == '__main__':
     order by block_id desc
     '''    
     
-    input_1 = [2,"677d5fc4a0b96d8978fbc50b60ea1b36f53906e26bd83384a2bcd38354f41e4e",2,"84beff2a5219da491b7d45e84d5d7b952f3e119c4bddf391a0bdb4057b5b4ab9130268149567fa3fd2efd156c58af230480c9f95fd6c70334c98055800453e9f","72a0d46570821837955faaf49f83a8be0a0652fbd17ca6113762b300c8efea0c"]
-    input_2 = [1,"5814c128aff69a595762d1ce28ded5f86e0ae840951bcc61e493bd6aa6878d2e",0,"8a94ddd556a31782f5d8e6496fab8363820bc316c7889886e704a5bf47c902dfdf5e7432c63fc4f68f6861508050fd9788a4ad537bc269b16647124fab24c575","c50b24d29a6408a1c74b3c4f21d6559f4cb7e39a63f561e275ac9359b0816175"]
-    input_3 = [1,"9f6870bf482a445cf102596a55efd1ff1a35edec9dcd425cf0f3cf4478aa2e25",0,"8e44106cc7718202ffa0180ca9d84645f680f5da89c3cbd3ab045a2124de37499401534fc55da398ee4d9f0267966f80d016a7b7902af62d0342a87640c94b7f","665b2c0e6d372c9b4bd060376263b7558a43bea963dc8ea0adedba3fb8375904"]
-    #inputs = [input_1,input_2,input_3]
-    inputs = [input_1]
+    input_1 = [1,"c92ffed21a11db4e5829ce5f027ff09a669aadc78129a6e18432308cdca77ec7",0,"1994ff88d17854fb07d87a89771fc94299dfbdbc5fd3fd2f329ab47092d4b3e5bf219e1616d97f3c66a24b7cdf7dc9296294678aa4bcfb689154a1745363b814","7592a990b5c81f59dedd11bbde952c517c4928bee376008df220922f631d9c4b"]
+    input_2 = [1,"36b5f5868ebb7895f4110a3b8a0438d755a0e2c729986ef9ce9f16723f4bed81",0,"e9541b9971f1d0e5c55ab9dad28f0d5c2a83e9374d0a0ad44c0f3c5630868c0db43059f956f32db5481ec387f8097cdba912903f05734e25a37ce7e425849944","5d3f5801da2cc865992585716ad9d6157be2fb771e05bcc14eef958b01dac475"]
+    input_3 = [1,"5cc1181c5528c88f4d4a8e5e9c56d43801e7f363d9c2a3140d9dbd59d4ce0d3d",0,"f2eafd84e2e1280dca5cc9d0fa4567d40c5ada78ef59cfa4c73dabb01f015bfc78c1714c4f78b46b5946da4f85c8511bb0764dc2008424f7662caa44cdf4b9e9","953b0999283e367116baf9e0a548c10d67b66bbc5da8d3be972d296cc60dec29"]
+    inputs = [input_1,input_2,input_3]
+    #inputs = [input_1]
     
     #OUTPUTS
     '''
@@ -221,18 +221,18 @@ if __name__ == '__main__':
     from intersections
     '''
     
-    output_1 = [1,1,'POLYGON ((-89.296875 76.478549, -89.296875 76.54842, -89.14924 76.54842, -89.156227 76.478549, -89.296875 76.478549))',None]
-    output_2 = [1,1,'POLYGON ((-88.59375 76.26255176579869, -88.59375 76.1616, -88.71073171289233 76.1616, -88.714027405658 76.267062168511, -88.59375 76.26255176579869))',None]
+    output_1 = [1,1,'MULTIPOLYGON (((-94.21875 46.6632, -94.21875 46.52964, -94.409135 46.52964, -94.333189 46.6632, -94.21875 46.6632)),((-94.21875 46.2636, -94.21875 46.13094, -94.474127 46.13094, -94.422537 46.2636, -94.21875 46.2636)))',None]
+    output_2 = [1,1,'MULTIPOLYGON (((-94.474127 46.13094, -94.570313 46.13094, -94.570313 46.2636, -94.422537 46.2636, -94.474127 46.13094)),((-94.921875 47.33604, -94.921875 47.20086, -95.273438 47.20086, -95.273438 47.33604, -94.921875 47.33604)))',None]
     #collateral
-    output_3 = [2,1,'POLYGON ((-89.296875 76.478548984917, -89.296875 76.54842, -89.14924001118135 76.54842, -89.15622711269 76.478548984917, -89.296875 76.478548984917))',None]
-    #outputs = [output_1, output_2, output_3]
-    outputs = [output_1]
+    output_3 = [2,1,'POLYGON ((-94.409135 46.52964, -94.570313 46.52964, -94.570313 46.6632, -94.333189 46.6632, -94.409135 46.52964))',None]
+    outputs = [output_1, output_2, output_3]
+    #outputs = [output_1]
     
     #CONTINGENCIES
     #contingencies [miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address]
-    transfer_fee_address_1 = '1GX28yLjVWux7ws4UQ9FB4MnLH4UKTPK2z'
-    #contingencies = [50000,100,50000,100,hexlify(transfer_fee_address_1.encode('utf-8')).decode('utf-8')]
-    contingencies = [0,0,0,0,'']
+    transfer_fee_address_1 = 'bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws'
+    contingencies = [50000,2000,50000,2000,hexlify(transfer_fee_address_1.encode('utf-8')).decode('utf-8')]
+    #contingencies = [0,0,0,0,'']
         
     complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
     print(hexlify(complex_transaction).decode('utf-8'))

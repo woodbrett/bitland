@@ -6,6 +6,9 @@ Created on Jul 25, 2021
 from node.blockchain.transaction_serialization import deserialize_transaction
 from binascii import hexlify, unhexlify
 from node.blockchain.queries import queryPolygonRules
+from node.blockchain.header_serialization import serialize_block_header_utf8,\
+    deserialize_block_header
+from _datetime import datetime
 
 
 ######### TRANSACTION TESTS #########
@@ -29,7 +32,57 @@ def validate_more_six_digits_fails ():
     return status == False
 
 
+######### SERIALIZATION TESTS #########
+
+def validate_header_serialized_deserialized():
+
+    prev_block = '0000000bd2a66af822f5cbc3a38a683afc3c9f9db74206f9c4ced40d8e55ce2c'
+    mrkl_root = '2b7334323d293f909f3d3458ff6641a5c299838f229d6ae9d0d18b2cf4f56af4'
+    time_ = int(round(datetime.utcnow().timestamp(),0))
+    bits = 0x1d00ffff 
+    nonce = 0x1f1471ce
+    bitcoin_height = 680000
+    miner_bitcoin_address = '626331716363733236397a3273346d66746e753972393963686e35333771776e67323335663238783939'
+    version = 1
+    
+    #test header serialization
+    header = serialize_block_header_utf8 (
+        version,
+        prev_block,     
+        mrkl_root ,
+        time_ ,
+        bits ,
+        bitcoin_height,
+        miner_bitcoin_address,
+        nonce
+        )
+    
+    #print(header)
+
+    #test header deserialization 
+    deserialize_block_header_test = deserialize_block_header (header)
+    
+    if (deserialize_block_header_test[0] == version.to_bytes(2, byteorder = 'big')
+        and deserialize_block_header_test[1] == unhexlify(prev_block)
+        and deserialize_block_header_test[2] == unhexlify(mrkl_root)
+        and deserialize_block_header_test[3] == time_.to_bytes(5, byteorder = 'big')
+        and deserialize_block_header_test[4] == bits.to_bytes(4, byteorder = 'big')
+        and deserialize_block_header_test[5] == bitcoin_height.to_bytes(4, byteorder = 'big')
+        and deserialize_block_header_test[6] == unhexlify(miner_bitcoin_address)
+        and deserialize_block_header_test[7] == nonce.to_bytes(4, byteorder = 'big')
+        ):
+        return True
+    
+    else: 
+        return False
+
+
 if __name__ == '__main__':
     
+    ######### TRANSACTION TESTS #########
     print(validate_sub_six_digits_passes())
     print(validate_more_six_digits_fails())
+    
+    
+    ######### SERIALIZATION TESTS #########
+    print(validate_header_serialized_deserialized())

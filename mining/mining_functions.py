@@ -158,7 +158,9 @@ def validateMempoolTransactions():
 def mining_process():
     
     mempool_transactions = validateMempoolTransactions()
+    print(mempool_transactions)
     transactions = mempool_transactions
+    print(transactions)
     
     landbase_transaction_bytes = getLandbaseTransaction()
     transactions.append(landbase_transaction_bytes)
@@ -169,11 +171,12 @@ def mining_process():
     time_ = int(round(datetime.utcnow().timestamp(),0))
     start_nonce = 0
     bitcoin_height = int(requests.get(block_height_url).text)
-    miner_bitcoin_address = 'bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws'
+    miner_bitcoin_address = '6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b7773'
     
     version_bytes = version.to_bytes(2, byteorder = 'big')
     prev_block_bytes = getPrevBlock()
     mrkl_root_bytes = calculateMerkleRoot(transactions)
+    print(mrkl_root_bytes)
     time_bytes = time_.to_bytes(5, byteorder = 'big')
     bits_bytes = get_bits_current_block() 
     bitcoin_height_bytes = bitcoin_height.to_bytes(4, byteorder = 'big')
