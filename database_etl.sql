@@ -29,8 +29,6 @@ create table bitland.block (
 insert into bitland.block(id, header_hash) values
 (0, '0000000000000000000000000000000000000000000000000000000000000000');
 
---select * from bitland.block
-
 drop table if exists bitland.transaction cascade;
 create table bitland.transaction (
   id SERIAL PRIMARY key, 
@@ -534,6 +532,10 @@ create table wallet.addresses (private_key varchar, public_key varchar);
 
 drop table if exists bitland.block_serialized ;
 create table bitland.block_serialized (id int, block varchar);
+
+insert into bitland.block_serialized(id, block) values
+(0, '0000000000000000000000000000000000000000000000000000000000000000');
+
 
 drop table bitland.int_join;
 drop table bitland.geography_definition;
