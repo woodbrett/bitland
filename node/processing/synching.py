@@ -79,7 +79,7 @@ def check_peer_blocks(use_threading=True):
     
     if max_height_peer != 'self':
         #UPDATE to only ask for max of X blocks, 50?
-        new_blocks = ask_peer_for_blocks(max_height_peer, max(self_height - 5,1), min(max_height-self_height,50)+self_height)
+        new_blocks = ask_peer_for_blocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
         
         if use_threading==True:
             t1 = threading.Thread(target=processPeerBlocks,args=(new_blocks,use_threading,),daemon=True)
