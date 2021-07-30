@@ -81,8 +81,6 @@ def findValidHeader(
                 header_byte = b''
                 status = 'rival found block'
                 break
-        if nonce == 10000:
-            break
         if(nonce > 4000000000):
             header_byte = b''
             status = 'timed out'

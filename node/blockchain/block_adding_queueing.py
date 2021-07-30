@@ -37,7 +37,7 @@ def waitInBlockQueue():
     
 
 #QUEUED PROCESS
-def validateAddBlock(block_bytes, block_height=0, use_threading=True):
+def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_validation=True):
     
     if use_threading == True:
         thread_id = waitInBlockQueue()
@@ -57,7 +57,7 @@ def validateAddBlock(block_bytes, block_height=0, use_threading=True):
             add_block = False
         
         elif block_height == 0 or block_height == self_height + 1:
-            if validateBlock(block_bytes) == True:
+            if validateBlock(block_bytes, realtime_validation=realtime_validation) == True:
                 new_block = addBlock(block_bytes)
                 add_block = True
             else:
@@ -184,4 +184,4 @@ if __name__ == '__main__':
     block = '00010000000000000000000000000000000000000000000000000000000000000000802d2e203e31164959e82c2c400a759b8e2be6de3469365f6caf0067bfbc1a9c006100f9301d0ffff0000a930e002a626331716363733236397a3273346d66746e753972393963686e35333771776e67323335663238783939000000000000000027100001000100010033504f4c59474f4e2828302039302c302038392e37343637342c2d39302038392e37343637342c2d39302039302c30203930292940968c262e02031a2019221037873a20767b151198d0bcd0a0d95c8ce9fed13eb66af5535caaf384e21ffe184605581b20a6e76817f947d2a24b36a3db2a55c2e40000000000000000000000000000000000'
     block_bytes = unhexlify(block)
     
-    x = validateAddBlock(block_bytes, use_threading=False)
+    x = validateAddBlock(block_bytes, use_threading=False,realtime_validation=False)

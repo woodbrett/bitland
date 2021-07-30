@@ -86,23 +86,22 @@ def validateTime(time_,realtime_validation=True):
     
 def validateBitcoinBlock(block_height, prior_block_bitcoin_height, realtime_validation=True):
     
+    
     if getBlockCount() == 0:
-        #prior_bitcoin_block_height = getCurrentBitcoinBlockHeight() - 6
-        is_valid = True
-        return is_valid
+        prior_block_bitcoin_height_int = 0
     
     else:
-        #prior_bitcoin_block_height = queryGetPrevBitcoinBlock()
         prior_block_bitcoin_height_int = int.from_bytes(prior_block_bitcoin_height, byteorder='big')
-        block_height_int = int.from_bytes(block_height, byteorder='big')
-        
-        #UPDATE should we have margin of a few bitcoin blocks? don't think so
-        if realtime_validation==True:
-            calculated_block_height = getCurrentBitcoinBlockHeight()
-            is_valid = abs(calculated_block_height - block_height_int) <= bitcoin_block_range and block_height_int >= prior_block_bitcoin_height_int
-        else:
-            is_valid = block_height_int >= prior_block_bitcoin_height_int
-        
+    
+    block_height_int = int.from_bytes(block_height, byteorder='big')
+    
+    #UPDATE should we have margin of a few bitcoin blocks? don't think so
+    if realtime_validation==True:
+        calculated_block_height = getCurrentBitcoinBlockHeight()
+        is_valid = abs(calculated_block_height - block_height_int) <= bitcoin_block_range and block_height_int >= prior_block_bitcoin_height_int
+    else:
+        is_valid = block_height_int >= prior_block_bitcoin_height_int
+    
     return is_valid    
     
     
@@ -116,19 +115,8 @@ def validateBits(bits):
     
 def validateBitcoinAddress(address):
 
-    #address = unhexlify(address)
-
-    base58Decoder = base58.b58decode(address).hex()
-    prefixAndHash = base58Decoder[:len(base58Decoder)-8]
-    checksum = base58Decoder[len(base58Decoder)-8:]
-    
-    hash = prefixAndHash
-    for x in range(1,3):
-        hash = sha256(unhexlify(hash)).hexdigest()
-    
-    y = hash[:8]
-    
-    is_valid = checksum == hash[:8]
+    address_utf8 = address.decode('utf-8')
+    is_valid = validateBitcoinAddressFromBitcoinNode(address_utf8)
 
     return is_valid
 

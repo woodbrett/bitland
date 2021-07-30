@@ -9,6 +9,7 @@ from node.blockchain.queries import queryPolygonRules
 from node.blockchain.header_serialization import serialize_block_header_utf8,\
     deserialize_block_header
 from _datetime import datetime
+from utilities.bitcoin_requests import validateBitcoinAddressFromBitcoinNode
 
 
 ######### TRANSACTION TESTS #########
@@ -77,12 +78,32 @@ def validate_header_serialized_deserialized():
         return False
 
 
+######### VALIDATION TESTS #########
+
+def validate_bitcoin_addresses():
+    
+    if validateBitcoinAddressFromBitcoinNode('bc1qamgmd4s53pq5y0ejlnps580yujpvyhvanvxc2y') == False:
+        return False
+    if validateBitcoinAddressFromBitcoinNode('bc1qamgmd4s53pq5y0ejlnaps580yujpvyhvanvx2y') == True:
+        return False
+
+    return True
+
 if __name__ == '__main__':
     
     ######### TRANSACTION TESTS #########
     print(validate_sub_six_digits_passes())
     print(validate_more_six_digits_fails())
     
-    
     ######### SERIALIZATION TESTS #########
     print(validate_header_serialized_deserialized())
+    
+    ######### VALIDATION TESTS #########
+    print(validate_bitcoin_addresses())
+    
+    
+    
+    
+    
+    
+    

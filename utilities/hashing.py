@@ -8,7 +8,8 @@ from binascii import unhexlify, hexlify
 from utilities.serialization import deserialize_text, serialize_text
 from hashlib import sha256
 from node.blockchain.block_serialization import deserialize_block
-from node.blockchain.header_serialization import deserialize_block_header
+from node.blockchain.header_serialization import deserialize_block_header,\
+    serialize_block_header
 
 def calculateHeaderHashFromBlock(block_hex=None,block_bytes=None):
     
@@ -33,7 +34,9 @@ def calculateHeaderHash(
         nonce
         ):
 
-    header_byte = ( version + prev_block + mrkl_root + time_ + bits + bitcoin_height + miner_bitcoin_address + nonce) 
+    header_byte = serialize_block_header(version, prev_block, mrkl_root, time_, bits, bitcoin_height, miner_bitcoin_address, nonce)
+
+    #header_byte = ( version + prev_block + mrkl_root + time_ + bits + bitcoin_height + miner_bitcoin_address + nonce) 
     headerhash_byte = sha256(sha256(header_byte).digest()).digest()
     headerhash_hex = hexlify(headerhash_byte).decode("utf-8")
     
