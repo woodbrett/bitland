@@ -54,6 +54,11 @@ def evaluate_connection_request(ip_address, version, port, timestamp):
         t1.start()
     
     vars = namedtuple('vars', ['status','reason','token'])
+    
+    print("evaluated connection request: ")
+    print(status)
+    print(reason)
+    
     return vars(
         status,
         reason,
@@ -99,7 +104,7 @@ def add_peer(ip_address,port,status):
 
 
 #UPDATE
-def update_peer(ip_address,port="null",status="null",connected_time="null",last_ping="null",self_auth_key="null",peer_auth_key="null",derive_peer_auth_key=False):
+def update_peer(ip_address,port="null",status="null",connected_time="null",self_auth_key="null",peer_auth_key="null",derive_peer_auth_key=False,last_ping="null"):
     
     x = ''
     
@@ -109,14 +114,14 @@ def update_peer(ip_address,port="null",status="null",connected_time="null",last_
         x = x + ",status = '" + status + "' "
     if connected_time != "null":
         x = x + ",connected_time = '" + connected_time + "' "
-    if last_ping != "null":
-        x = x + ",last_ping = '" + last_ping + "' "
     if self_auth_key != "null":
         x = x + ",self_auth_key = '" + self_auth_key + "' "
     if peer_auth_key != "null":
         x = x + ",peer_auth_key = '" + peer_auth_key + "' "
     if derive_peer_auth_key == True:
         x = x + ",peer_auth_key = " + peer_auth_key + "uuid_generate_v1() "
+    if last_ping != "null":
+        x = x + ",last_ping = now() "
     
     query = (
         "update networking.peer " +
@@ -266,13 +271,14 @@ def attempt_to_connect_to_new_peer(version, port, timestamp, peer_ip_address, pe
 #currently hardcoded to the structure of the peers query
 #very inelegant with the post/get/etc rest type
 #hardcoded auth
-def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_exclude=[]):
+def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_exclude=[], peer_types=['connected']):
 
     peers = query_peers()
     
     responses = []
     
     print(peers)
+    print(peer_types)
     
     for i in range(0 ,len(peers)):
         exclude_peer = False
@@ -285,7 +291,11 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
             if peer_ip_address == peers_to_exclude[j]:
                 exclude_peer = True
         
-        if exclude_peer == False and peer_status == 'connected':
+        print('debugging transaction loop')
+        print(i)
+        print(peer_status)
+        
+        if exclude_peer == False and peer_status in peer_types:
             url = "http://" + peer_ip_address + ":" + str(peer_port) + endpoint
             headers = {
                 'Content-type': 'application/json', 
@@ -318,6 +328,8 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
                     r = 'error calling peer'
                 
             print('sent message')
+            
+            update_peer(ip_address=peer_ip_address, last_ping="x")
             
             responses.append([peer_ip_address,r])
 
@@ -390,4 +402,28 @@ if __name__ == '__main__':
     print(query_peer(ip_address='99.99.99.99') == 'no peer found')
     print(authenticate_peer('99.99.99.98', 'abc')==False)
     '''
+
+    
+    #payload = {"transaction":"0002010103aca220f7ec55e458acd9aafadc9af571da0676846fb6d5e2505c82a8849782004078708125ab06305a739e7ac4dbc7f0a3a571aad4976369069cf27469262b6f8650d0b508b73e36953f3b59934abc2ddad4ef5442114bae127d9efc49ba8810080101010051504f4c59474f4e28282d32322e352038392e37343637342c2d32322e352038392e35313836382c2d34352038392e35313836382c2d34352038392e37343637342c2d32322e352038392e373436373429294069022ccf1a0644a5e07eb2f89b3e9ab217fcc158f3525655a2a30f66c0c61a916858846f55db7172d5e71e3399d18fc191f0efc9b1fa12efcaeab17e0bbe27db0000000000000000000000000000000000"}
+    #url = "/peer/node_updates/sendNewTransaction"
+    
+    peers_to_exclude=[]
+    
+    payload = ''
+    url = '/node_queries/getBlockHeight'
+    rest_type = 'get'
+    
+    #message_all_connected_peers("/peer/node_updates/sendNewTransaction", payload=payload, rest_type='put',peers_to_exclude=peers_to_exclude)
+    message_peer(url, '76.179.199.85', payload=payload, rest_type='get')
+    
+    '''
+    url = 'http://76.179.199.85:8336/peer/node_updates/sendNewTransaction'
+    payload = "{'transaction': '0002010103aca220f7ec55e458acd9aafadc9af571da0676846fb6d5e2505c82a8849782004078708125ab06305a739e7ac4dbc7f0a3a571aad4976369069cf27469262b6f8650d0b508b73e36953f3b59934abc2ddad4ef5442114bae127d9efc49ba8810080101010051504f4c59474f4e28282d32322e352038392e37343637342c2d32322e352038392e35313836382c2d34352038392e35313836382c2d34352038392e37343637342c2d32322e352038392e373436373429294069022ccf1a0644a5e07eb2f89b3e9ab217fcc158f3525655a2a30f66c0c61a916858846f55db7172d5e71e3399d18fc191f0efc9b1fa12efcaeab17e0bbe27db0000000000000000000000000000000000'}"
+    headers = "{'Content-type': 'application/json', 'Accept': 'application/json', 'Authorization': '76c231fc-f164-11eb-82f7-7c7a911eb72e'}"
+    
+    r = requests.put(url, data=json.dumps(payload), headers=headers).json()
+    '''
+    
+    
+    
     

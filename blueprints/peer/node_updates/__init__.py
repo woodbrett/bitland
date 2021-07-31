@@ -66,7 +66,7 @@ class send_new_block(Resource):
 class send_new_transaction(Resource):
 
     @namespace.response(500, 'Internal Server error')
-    @namespace.expect(block_model)
+    @namespace.expect(transaction_model)
     @namespace.doc(security='Bearer')   
     def put(self):
         

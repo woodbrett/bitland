@@ -14,7 +14,8 @@ from node.networking.node_query_functions import get_blocks_start_end
 import json
 from node.networking.peering_functions import (
     message_all_connected_peers,
-    message_peer
+    message_peer, update_peer, connect_to_peer, query_peer,
+    attempt_to_connect_to_new_peer, delete_peer
     )
 from node.blockchain.block_serialization import deserialize_block
 from node.blockchain.validate_block import (
@@ -26,6 +27,9 @@ import time
 import threading
 from node.blockchain.block_adding_queueing import processPeerBlocks
 from node.blockchain.mempool_operations import garbageCollectMempool
+from ipaddress import ip_address
+from node.blockchain.global_variables import bitland_version
+from system_variables import peering_port
 
 def start_node():
     
@@ -35,8 +39,7 @@ def start_node():
     print('checked peers')
     garbageCollectMempool()
     
-    t3 = threading.Thread(target=run_node,daemon=True)
-    t3.start()
+    run_node()
     
     return True
 
@@ -51,7 +54,23 @@ def run_node():
 
 def pingPeers():
 
-    ping = message_all_connected_peers('/peer/node_queries/getBlockHeight', rest_type='get')
+    ping = message_all_connected_peers('/peer/peering/ping', rest_type='get',peer_types=['connected','unpeered','offline'])
+    
+    for i in range(0,len(ping)):
+        
+        ip_address= ping[i][0]
+        
+        if ping[i][1] == 'error calling peer':
+            update_peer(ip_address=ip_address,status='offline')
+        
+        elif ping[i][1].get('message') == 'Not authenticated as peer':
+            
+            peer_port = query_peer(ip_address=ip_address).port
+            delete_peer(ip_address)
+            attempt_to_connect_to_new_peer(bitland_version, peering_port, int(time.time()), ip_address, peer_port)
+        
+        else:
+            update_peer(ip_address=ping[i][0],status='connected')
     
     return True
     
@@ -113,5 +132,5 @@ def ask_peer_for_blocks(peer, start_block, end_block):
 
 if __name__ == '__main__':
     
-    x = check_peer_blocks(use_threading=False)
+    x = start_node()
     
