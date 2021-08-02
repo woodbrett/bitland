@@ -64,7 +64,7 @@ def queue_new_transaction_from_peer(transaction_hex,use_threading=True,peer=''):
     if use_threading == True:
         t4 = threading.Thread(target=analyze_new_transaction_from_peer,args=(transaction_hex,peer,use_threading,),daemon=True)
         t4.start()
-        t4.join()
+        #t4.join() this t4.join was causing a circular error, why did we put it in?
 
     else:
         analyze_new_transaction_from_peer(transaction_hex,peer,use_threading)
