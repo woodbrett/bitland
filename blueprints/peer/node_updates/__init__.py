@@ -76,7 +76,7 @@ class send_new_transaction(Resource):
         transaction = request.json['transaction']
         ip_address = request.remote_addr
         
-        x = queue_new_transaction_from_peer(transaction,ip_address)
+        x = queue_new_transaction_from_peer(transaction_hex=transaction,peer=ip_address)
         print(x)
         
         status = 'received'
