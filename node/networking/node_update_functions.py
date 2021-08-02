@@ -77,12 +77,13 @@ def analyze_new_transaction_from_peer(transaction_hex,peer='',use_threading=True
     transaction_bytes = unhexlify(transaction_hex)
     
     print('analyzing new transaction')
+    print(peer)
     
     validate_transaction = validateAddTransactionMempool(transaction_bytes, use_threading)
 
     if validate_transaction == True:
         print('sending transaction to peers')
-        #send_transaction_to_peers(transaction_hex,peers_to_exclude=[peer])
+        send_transaction_to_peers(transaction_hex,peers_to_exclude=[peer])
 
     return validate_transaction
 
@@ -95,7 +96,8 @@ def send_transaction_to_peers(transaction,peers_to_exclude=[]):
         }
     rest_type = 'put'
     
-    print('sending_transaction to peers')
+    print('sending_transaction to peers 2, peers to exclude', flush=True)
+    print(peers_to_exclude,flush=True)
     
     send_transaction = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
     
