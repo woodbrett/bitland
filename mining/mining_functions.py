@@ -222,11 +222,8 @@ def mining_process():
         
 if __name__ == '__main__':
     
-    #x = mining_process();
-    
-    print(hexlify('bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws'.encode('utf-8')))
-    print(unhexlify('6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b7773'))
-    
+    x = mining_process();
+
     
     
     
