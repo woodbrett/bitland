@@ -320,8 +320,6 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
                 except Exception as error:
                     print('error calling peer ' + peer_ip_address)
                     r = 'error calling peer'
-                
-            print('sent message')
             
             update_peer(ip_address=peer_ip_address, last_ping="x")
             

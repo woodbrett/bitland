@@ -72,11 +72,7 @@ def findValidHeader(
         headerhash_byte = sha256(sha256(header_byte).digest()).digest()  
         #print(hexlify(headerhash_byte).decode("utf-8"))
         if(nonce % 1000000 == 0):
-            print("nonce: " + str(nonce))
-            print(datetime.now() - start_time)
-            print(hexlify(header_byte).decode('utf-8'))
-            print(hexlify(headerhash_byte).decode('utf-8'))
-            print(str(current_block_height) + ' ' + str(getMaxBlockHeight()))
+            print("block: " + str(current_block_height) + "; nonce: " + str(nonce) + "; time: " + str(datetime.now() - start_time))
             if current_block_height != getMaxBlockHeight():
                 header_byte = b''
                 status = 'rival found block'
@@ -89,8 +85,6 @@ def findValidHeader(
         status = 'found valid block'
         new_block_height = current_block_height + 1
 
-    print(hexlify(header_byte).decode('utf-8'))
-    
     end_time = datetime.now()
     print(end_time - start_time)
     print(int.from_bytes(time_byte,'big'))
@@ -118,8 +112,6 @@ def getTransactionsFromMempool(max_size_bytes=4000000):
        "SELECT transaction_serialized " +
        "FROM   r;" 
     )
-    
-    print(query)
     
     try:
         transactions = executeSqlMultipleRows(query)
