@@ -22,14 +22,14 @@ app.register_blueprint(peer)
 app.register_blueprint(local)
     
 #start node ongoing functions (managing peers, pinging, garbage collecting transactions)
-run_node = False
+run_node = True
 if run_node == True:
     t1 = threading.Thread(target=start_node,daemon=True)
     t1.start()
     print('starting node', flush=True)
     
 #start mining if true
-run_mining = False
+run_mining = True
 if run_mining == True:
     t2 = threading.Thread(target=mining_process,daemon=True)
     t2.start()

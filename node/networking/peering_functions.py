@@ -292,10 +292,6 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
             if peer_ip_address == peers_to_exclude[j]:
                 exclude_peer = True
         
-        print('debugging transaction loop')
-        print(i)
-        print(peer_status)
-        
         if exclude_peer == False and peer_status in peer_types:
             url = "http://" + peer_ip_address + ":" + str(peer_port) + endpoint
             headers = {
@@ -303,11 +299,8 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
                 'Accept': 'application/json', 
                 'Authorization': token 
             }
-            print(headers)
-            print(json.dumps(payload))
             
             if rest_type == 'get':
-                print('trying get')
                 try:
                     r = requests.get(url, headers=headers).json()
                 except Exception as error:
@@ -373,37 +366,10 @@ def message_peer(endpoint, peer_ip_address, payload='', rest_type='get'):
             print('error calling peer ' + peer_ip_address)
             r = 'error calling peer'
     
-    print(r)
-
     return r
 
     
 if __name__ == '__main__':
-    
-    #x = attempt_to_connect_to_new_peer(1, 8336, 1, '76.179.199.85', 8334)
-    
-    #connect_to_peer("abc", 100, 100, 'localhost' , 8334)
-    #new_peer = add_peer('99.99.99.99',1000,'connected')
-    #new_peer = add_peer('99.99.99.98',1000,'connected')
-    #new_peer = add_peer('99.99.99.97',1000,'connected')
-    #new_peer = add_peer('99.99.99.96',1000,'connected')
-
-    #print(message_all_connected_peers(endpoint='abc',peers_to_exclude=['99.99.99.98']))
-    
-    #UNIT TESTS    
-    '''
-    new_peer = add_peer('99.99.99.99',1000,'initial_connection')
-    print(query_peer(ip_address='') == 'no peer found')
-    print(query_peer(ip_address='99.99.99.99').port == 1000)
-    print(peer_count()==1)
-    print(connect_peer('99.99.99.99',1, 1000, '11:00').status == 'unsuccessful peer')
-    update_peer(ip_address='99.99.99.99',port=1006,status='xyz')
-    print(query_peer(ip_address='99.99.99.99').port == 1006)
-    delete_peer('99.99.99.99')
-    print(query_peer(ip_address='99.99.99.99') == 'no peer found')
-    print(authenticate_peer('99.99.99.98', 'abc')==False)
-    '''
-
     
     payload = {"transaction":"0002010103aca220f7ec55e458acd9aafadc9af571da0676846fb6d5e2505c82a8849782004078708125ab06305a739e7ac4dbc7f0a3a571aad4976369069cf27469262b6f8650d0b508b73e36953f3b59934abc2ddad4ef5442114bae127d9efc49ba8810080101010051504f4c59474f4e28282d32322e352038392e37343637342c2d32322e352038392e35313836382c2d34352038392e35313836382c2d34352038392e37343637342c2d32322e352038392e373436373429294069022ccf1a0644a5e07eb2f89b3e9ab217fcc158f3525655a2a30f66c0c61a916858846f55db7172d5e71e3399d18fc191f0efc9b1fa12efcaeab17e0bbe27db0000000000000000000000000000000000"}
     url = "/peer/node_updates/sendNewTransaction"
@@ -411,22 +377,7 @@ if __name__ == '__main__':
     
     peers_to_exclude=[]
     
-    #payload = ''
-    #url = '/peer/node_queries/getBlockHeight'
-    #rest_type = 'get'
-    
-    print(datetime.now())
-    #message_all_connected_peers("/peer/node_updates/sendNewTransaction", payload=payload, rest_type='put',peers_to_exclude=peers_to_exclude)
     message_peer(url, '76.179.199.85', payload=payload, rest_type=rest_type)
-    print(datetime.now())
-    
-    '''
-    url = 'http://76.179.199.85:8336/peer/node_updates/sendNewTransaction'
-    payload = "{'transaction': '0002010103aca220f7ec55e458acd9aafadc9af571da0676846fb6d5e2505c82a8849782004078708125ab06305a739e7ac4dbc7f0a3a571aad4976369069cf27469262b6f8650d0b508b73e36953f3b59934abc2ddad4ef5442114bae127d9efc49ba8810080101010051504f4c59474f4e28282d32322e352038392e37343637342c2d32322e352038392e35313836382c2d34352038392e35313836382c2d34352038392e37343637342c2d32322e352038392e373436373429294069022ccf1a0644a5e07eb2f89b3e9ab217fcc158f3525655a2a30f66c0c61a916858846f55db7172d5e71e3399d18fc191f0efc9b1fa12efcaeab17e0bbe27db0000000000000000000000000000000000'}"
-    headers = "{'Content-type': 'application/json', 'Accept': 'application/json', 'Authorization': '76c231fc-f164-11eb-82f7-7c7a911eb72e'}"
-    
-    r = requests.put(url, data=json.dumps(payload), headers=headers).json()
-    '''
     
     
     

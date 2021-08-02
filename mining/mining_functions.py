@@ -174,7 +174,7 @@ def mining_process():
     time_ = int(round(datetime.utcnow().timestamp(),0))
     start_nonce = 0
     bitcoin_height = int(requests.get(block_height_url).text)
-    miner_bitcoin_address = '626331716363733236397a3273346d66746e753972393963686e35333771776e67323335663238783939'
+    miner_bitcoin_address = '6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b7773'
     
     version_bytes = version.to_bytes(2, byteorder = 'big')
     prev_block_bytes = getPrevBlock()
@@ -222,8 +222,10 @@ def mining_process():
         
 if __name__ == '__main__':
     
-    x = mining_process();
+    #x = mining_process();
     
+    print(hexlify('bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws'.encode('utf-8')))
+    print(unhexlify('6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b7773'))
     
     
     
