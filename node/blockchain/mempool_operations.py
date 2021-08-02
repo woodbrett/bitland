@@ -14,8 +14,6 @@ def garbageCollectMempool():
                 "join bitland.transaction_mempool m on t.transaction_hash = m.transaction_hash );"
                 )
 
-    print(query)
-
     try:
         delete = executeSqlDeleteUpdate(query)
         
@@ -34,8 +32,6 @@ def removeTransactionsFromMempool(block_id):
                 "from bitland.transaction t " +
                 "join bitland.transaction_mempool m on t.transaction_hash = m.transaction_hash and t.block_id = " +str(block_id) + ");"
                 )
-
-    print(query)
 
     try:
         delete = executeSqlDeleteUpdate(query)

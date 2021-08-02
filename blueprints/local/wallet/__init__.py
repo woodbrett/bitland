@@ -28,6 +28,9 @@ class broadcast_transaction(Resource):
     @namespace.doc(security='Bearer')   
     def put(self):
         
+        print(request.remote_addr)
+        print(request.headers.get("Authorization"))
+        
         if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated')
         

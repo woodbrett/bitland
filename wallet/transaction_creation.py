@@ -13,7 +13,7 @@ import ecdsa
 from node.information.transaction import getUtxoInfo
 import json
 
-def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_private_key, input_public_key, polygon, planet_id):
+def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type):
     
     private_key_encoded = ecdsa.SigningKey.from_string(unhexlify(input_private_key),curve=ecdsa.SECP256k1)
     public_key_encoded = ecdsa.VerifyingKey.from_string(unhexlify(input_public_key),curve=ecdsa.SECP256k1)
@@ -37,7 +37,7 @@ def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_pr
     transaction_version = transaction_version.to_bytes(2, byteorder = 'big')
         
     #input 1 - standard
-    type = 4 #standard
+    type = input_spend_type 
     transaction_hash = input_transaction_hash
     vout = input_vout
     signature = signature
@@ -156,23 +156,24 @@ if __name__ == '__main__':
     #simple transaction
     '''
     select 
-    '["' || pub_key || '","' || private_key || '","' || st_astext(geom) || '",' || planet_id::varchar || ',' || vout::varchar || ',"' ||      || '"]',
+    '["' || pub_key || '","' || private_key || '","' || st_astext(geom) || '",' || planet_id::varchar || ',' || vout::varchar || ',"' || transaction_hash::varchar || '"]',
         block_id
     from bitland.utxo u
     join wallet.addresses a on u.pub_key = a.public_key 
     order by block_id desc
     '''
-    
-    input_public_key = '700e4f461437fb74f1f0a6fd87b7b7ef3f9311183c71650bef977593d79a49d030bda18cdda096b074218e226694c5e00591b01681c5ff9f44b714ce9848edc3'
-    input_private_key = 'f5bfb2b7e46e575dedbfd29be1d2258e5918d35bdd2d210a6d907f01bba5bf40'
-    polygon = 'POLYGON((-88.59375 76.35366,-88.59375 76.262552,-88.714027 76.267062,-88.710732 76.1616,-89.296875 76.1616,-89.296875 76.35366,-89.296875 76.478549,-89.156227 76.478549,-89.14924 76.54842,-88.59375 76.54842,-87.890625 76.54842,-87.890625 76.35366,-88.59375 76.35366))'
+
+    input_public_key = 'af6d999747d695f7a21370cb2cee05b3e49182219ba6eee24e1e35576be0d719aa995e98fe10288e0937921b98fa806378b511506794d80f8f6a1a7ca2e52124'
+    input_private_key = '7e01de010c7f5903f0625006f73fb190307315d7da11746688aa52af24c9f715'
+    polygon = "POLYGON((-60.382165 84.41892,-60.46875 84.41892,-60.46875 84.6585,-60.46875 84.90942,-60.363055 84.90942,-60.382165 84.41892))"
     planet_id = 1
-    vout = 0
-    input_transaction_hash = '677d5fc4a0b96d8978fbc50b60ea1b36f53906e26bd83384a2bcd38354f41e4e'
+    vout = 2
+    input_transaction_hash = 'a8788b7873e8c5671d62c2f3936b34ec3207bfc68062ea4250e4b10182dd8845'
+    input_spend_type = 1
     
-    #simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id)
-    #print(hexlify(simple_transaction).decode('utf-8'))
-    #print(deserialize_transaction(simple_transaction))
+    simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
+    print(hexlify(simple_transaction).decode('utf-8'))
+    print(deserialize_transaction(simple_transaction))
     
     
     ############ more complex transaction ################
@@ -187,26 +188,23 @@ if __name__ == '__main__':
     order by block_id desc
     '''    
     
-    input_1 = [1,"c92ffed21a11db4e5829ce5f027ff09a669aadc78129a6e18432308cdca77ec7",0,"1994ff88d17854fb07d87a89771fc94299dfbdbc5fd3fd2f329ab47092d4b3e5bf219e1616d97f3c66a24b7cdf7dc9296294678aa4bcfb689154a1745363b814","7592a990b5c81f59dedd11bbde952c517c4928bee376008df220922f631d9c4b"]
-    input_2 = [1,"36b5f5868ebb7895f4110a3b8a0438d755a0e2c729986ef9ce9f16723f4bed81",0,"e9541b9971f1d0e5c55ab9dad28f0d5c2a83e9374d0a0ad44c0f3c5630868c0db43059f956f32db5481ec387f8097cdba912903f05734e25a37ce7e425849944","5d3f5801da2cc865992585716ad9d6157be2fb771e05bcc14eef958b01dac475"]
-    input_3 = [1,"5cc1181c5528c88f4d4a8e5e9c56d43801e7f363d9c2a3140d9dbd59d4ce0d3d",0,"f2eafd84e2e1280dca5cc9d0fa4567d40c5ada78ef59cfa4c73dabb01f015bfc78c1714c4f78b46b5946da4f85c8511bb0764dc2008424f7662caa44cdf4b9e9","953b0999283e367116baf9e0a548c10d67b66bbc5da8d3be972d296cc60dec29"]
+    input_1 = [1,"a09bf469d5f2f03b6efdc67ed08fc16ffeb0c85a604ad0d8d68df8751878e014",0,"bb975c0184fb17d02277f672816601169783dced038775adf2a9fb6aacd68125f17ad2fe6128d78df685ee1085fdb64513343a899cace23c3f1239e66d9d1814","05c14395a986351bcff7aa05f7c7d2d0f443b588ba3f0f72ebe0f0f9030d59ca"]
+    input_2 = [1,"558fa3ff81c645a4136a8fd6ababbe3ae9aeb6c64410f56c85f45a2ff6bdaead",0,"5a3058c716ed7820479fc5e51c0ee2bff83e1003f85f4505766e32db271a0dd9595e6a55e50df4599c6324f950dce46b52c2440af4e523f36db8ffe86b53d6fb","72822e8f5cb71755b40e02f0300641b76541b1fabffeed1e8d783e1f4465beff"]
+    input_3 = [1,"5f8c3a04eac19d080c90915fbfde0496f05c7892e8586ca28d9174a974611ec9",0,"b4030ad2dca040e9c05eaad31250f3cf120bccbc97e0914ca664a87ef911734db0bde4dabc6055e94c54679d8bc7fcf27cbe7cd4ba47b6cff8243aad8417d6bd","54a4bf48340d4b518f2fe68793ae78fdfdd3964a75890466cb62bde634a668a9"]
     inputs = [input_1,input_2,input_3]
     #inputs = [input_1]
     
     #OUTPUTS
     '''
-    select st_union(geom)
-    from bitland.utxo
-    where id in (159,158,157)    
-    
     with combo as (
     select 
       st_union(geom) as full_geom,
-      st_geomfromtext('POLYGON((-88.494300843158 76.258822422417, -88.714027405658 76.267062168511, -88.708534241596 76.091280918511, -88.527259827533 76.113253574761, -88.530006409565 76.113253574761, -88.494300843158 76.258822422417))',4326) as sub_polygon_1,
-      st_geomfromtext('POLYGON((-89.403419495502 76.478548984917, -89.15622711269 76.478548984917, -89.142494202533 76.61587808648, -89.348487854877 76.59390543023, -89.378700257221 76.54996011773, -89.403419495502 76.478548984917))',4326) as collateral  
+      st_geomfromtext(st_astext(st_geomfromtext('POLYGON((-59.798011780658 85.053067832573, -58.919105530658 84.987149863823, -58.952064515033 84.273038535698, -59.787025452533 84.295011191948, -59.951820374408 84.251065879448, -59.798011780658 85.053067832573))',4326),6),4326) as sub_polygon_1,
+      st_geomfromtext(st_astext(st_geomfromtext('POLYGON((-60.632972718158 85.031095176323, -60.358314515033 85.031095176323, -60.391273499408 84.185147910698, -60.589027405658 84.251065879448, -60.654945374408 84.569669395073, -60.632972718158 85.031095176323))',4326),6),4326) as collateral  
     from bitland.utxo
-    where id in (159,158,157)
-    )    
+    where id in (548,547,545)
+    )  
+    --select * from combo
     , intersections as (
     select 
       full_geom,
@@ -214,17 +212,18 @@ if __name__ == '__main__':
       st_intersection(full_geom,collateral) as collateral
     from combo
     )
+    --select * from intersections
     select 
-      st_difference(st_difference(full_geom,sub_polygon_1),collateral) as remainder_polygon,
-      sub_polygon_1,
-      collateral 
+      st_astext(st_difference(st_difference(full_geom,sub_polygon_1),collateral),6) as remainder_polygon,
+      st_astext(sub_polygon_1,6) as sub_polygon_1,
+      st_astext(collateral,6) as collateral 
     from intersections
     '''
     
-    output_1 = [1,1,'MULTIPOLYGON (((-94.21875 46.6632, -94.21875 46.52964, -94.409135 46.52964, -94.333189 46.6632, -94.21875 46.6632)),((-94.21875 46.2636, -94.21875 46.13094, -94.474127 46.13094, -94.422537 46.2636, -94.21875 46.2636)))',None]
-    output_2 = [1,1,'MULTIPOLYGON (((-94.474127 46.13094, -94.570313 46.13094, -94.570313 46.2636, -94.422537 46.2636, -94.474127 46.13094)),((-94.921875 47.33604, -94.921875 47.20086, -95.273438 47.20086, -95.273438 47.33604, -94.921875 47.33604)))',None]
+    output_1 = [1,1,'MULTIPOLYGON(((-59.919629 84.41892,-60.382165 84.41892,-60.363055 84.90942,-59.825561 84.90942,-59.919629 84.41892)),((-56.25 85.31082,-56.25 85.1733,-59.0625 85.1733,-59.0625 85.31082,-56.25 85.31082)))',None]
+    output_2 = [1,1,'POLYGON((-59.0625 84.6585,-59.0625 84.41892,-59.919629 84.41892,-59.825561 84.90942,-59.0625 84.90942,-59.0625 84.6585))',None]
     #collateral
-    output_3 = [2,1,'POLYGON ((-94.409135 46.52964, -94.570313 46.52964, -94.570313 46.6632, -94.333189 46.6632, -94.409135 46.52964))',None]
+    output_3 = [2,1,'POLYGON((-60.382165 84.41892,-60.46875 84.41892,-60.46875 84.6585,-60.46875 84.90942,-60.363055 84.90942,-60.382165 84.41892))',None]
     outputs = [output_1, output_2, output_3]
     #outputs = [output_1]
     
@@ -234,8 +233,8 @@ if __name__ == '__main__':
     contingencies = [50000,2000,50000,2000,hexlify(transfer_fee_address_1.encode('utf-8')).decode('utf-8')]
     #contingencies = [0,0,0,0,'']
         
-    complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
-    print(hexlify(complex_transaction).decode('utf-8'))
-    print(deserialize_transaction(complex_transaction))
+    #complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
+    #print(hexlify(complex_transaction).decode('utf-8'))
+    #print(deserialize_transaction(complex_transaction))
     
     
