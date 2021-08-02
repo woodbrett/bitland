@@ -517,17 +517,16 @@ def getPublicKeySpendTypes(spend_type, utxo_public_key, utxo_transfer_failover_k
 
 def validContingencyStatusSpendTypes(spend_type):
     #NO_FEE - transaction didn't have a transfer fee
-    #FEE_PAID_UNCONFIRMED - fee was paid but not through the confirmation period
-    #FEE_PAID_CONFIRMED - fee was paid but not through the confirmation period
-    #FEE_UNPAID_NOT_EXPIRED - fee not paid, but timing not expired
+    #OPEN - fee not paid, but timing not expired
+    #VALIDATED_UNCONFIRMED - fee was paid but not through the confirmation period
+    #VALIDATED_CONFIRMED - fee was paid but not through the confirmation period
     #EXPIRED_UNCONFIRMED - fee not paid, timing expired, waiting for block period
     #EXPIRED_CONFIRMED - fee not paid, waiting period complete, parcel is returned to original address
-
     #NO_CLAIM, OUTSTANDING_CLAIM, SUCCESSFUL_CLAIM
-
+    
     if spend_type == 1:
-        transfer_fee_status = ['NO_FEE', 'FEE_PAID_CONFIRMED']
-        miner_fee_status = ['NO_FEE', 'FEE_PAID_CONFIRMED']
+        transfer_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
+        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
         claim_status = []
         outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
         input_utxo_type = [0,1,2]
@@ -540,8 +539,8 @@ def validContingencyStatusSpendTypes(spend_type):
         input_utxo_type = [2]
         
     elif spend_type == 3:
-        transfer_fee_status = ['NO_FEE', 'FEE_PAID_CONFIRMED', 'EXPIRED_CONFIRMED']
-        miner_fee_status = ['NO_FEE', 'FEE_PAID_CONFIRMED', 'EXPIRED_CONFIRMED']
+        transfer_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
+        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
         claim_status = []
         outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
         input_utxo_type = [0,1,2,3]
@@ -555,7 +554,7 @@ def validContingencyStatusSpendTypes(spend_type):
     
     elif spend_type == 5:
         transfer_fee_status = []
-        miner_fee_status = ['NO_FEE', 'FEE_PAID_CONFIRMED']
+        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
         claim_status = ['SUCCESSFUL_CLAIM']
         outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
         input_utxo_type = [3]
