@@ -22,7 +22,7 @@ app.register_blueprint(peer)
 app.register_blueprint(local)
     
 #start node ongoing functions (managing peers, pinging, garbage collecting transactions)
-run_node = True
+run_node = False
 if run_node == True:
     t1 = threading.Thread(target=start_node,daemon=True)
     t1.start()
