@@ -79,7 +79,8 @@ def analyze_new_transaction_from_peer(transaction_hex,peer='',use_threading=True
     print('analyzing new transaction')
     
     validate_transaction = validateAddTransactionMempool(transaction_bytes, use_threading)
-
+    print("valid transaction " + str(validate_transaction))
+    
     if validate_transaction == True:
         print('sending transaction to peers')
         send_transaction_to_peers(transaction_hex,peers_to_exclude=[peer])
