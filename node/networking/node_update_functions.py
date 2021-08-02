@@ -64,7 +64,7 @@ def queue_new_transaction_from_peer(transaction_hex,use_threading=True,peer=''):
     if use_threading == True:
         t4 = threading.Thread(target=analyze_new_transaction_from_peer,args=(transaction_hex,peer,use_threading,),daemon=True)
         t4.start()
-        t4.join()
+        #t4.join()
 
     else:
         analyze_new_transaction_from_peer(transaction_hex,peer,use_threading)
@@ -82,7 +82,7 @@ def analyze_new_transaction_from_peer(transaction_hex,peer='',use_threading=True
 
     if validate_transaction == True:
         print('sending transaction to peers')
-        send_transaction_to_peers(transaction_hex,peers_to_exclude=[peer])
+        #send_transaction_to_peers(transaction_hex,peers_to_exclude=[peer])
 
     return validate_transaction
 
