@@ -66,8 +66,8 @@ def getMinerFeeStatus(utxo_id, bitcoin_block):
         #if not found in database, look it up from blockchain, don't try to save it in the db at this step
         else:
             calc_miner_fee_status = calculateMinerFeeStatus(utxo_id, bitcoin_block)
-            miner_fee_status = calc_miner_fee_status[0]
-            status_block = calc_miner_fee_status[1]
+            miner_fee_status = calc_miner_fee_status.get('status')
+            status_block = calc_miner_fee_status.get('bitcoin_block_height')
             
         if miner_fee_status == 'VALIDATED':
             if status_block + contingency_validation_blocks <= bitcoin_block:
@@ -113,9 +113,9 @@ def getTransferFeeStatus(utxo_id, bitcoin_block):
         #UPDATE
         #if not found in database, look it up from blockchain, don't try to save it in the db at this step
         else:
-            calc_transfer_fee_status = calculateTranfserFeeStatus(utxo_id, bitcoin_block)
-            transfer_fee_status = calc_transfer_fee_status[0]
-            status_block = calc_transfer_fee_status[1]
+            calc_transfer_fee_status = calculateTransferFeeStatus(bitcoin_block=bitcoin_block, utxo_id=utxo_id)
+            transfer_fee_status = calc_transfer_fee_status.get('status')
+            status_block = calc_transfer_fee_status.get('bitcoin_block_height')
             
         if transfer_fee_status == 'VALIDATED':
             if status_block + contingency_validation_blocks <= bitcoin_block:
@@ -191,27 +191,30 @@ def calculateMinerFeeStatus(utxo_id, bitcoin_block):
     miner_bitcoin_address = input_utxo.miner_bitcoin_address
     miner_fee_expiration_block = input_utxo.bitcoin_block_height + input_utxo.miner_fee_blocks
     
-    miner_fee = getLowestBlockAddressFee(miner_bitcoin_address, miner_fee_sats)
+    miner_fee = getLowestBlockAddressFee(hexlify(miner_bitcoin_address.encode('utf-8')), miner_fee_sats)
     miner_fee_status = miner_fee[0]
+    
+    status = {'status':'ERROR','txid':'','bitcoin_block_height':0,'transaction_number':0,'address':'','value':0}
     
     if miner_fee_status == 'fee address not found':
         if bitcoin_block > miner_fee_expiration_block:
-            status = ['EXPIRED','',0,0,'',0]
+            status = {'status':'EXPIRED','txid':'','bitcoin_block_height':0,'transaction_number':0,'address':'','value':0}
         else:
-            status = ['OPEN','',0,0,'',0]
+            status = {'status':'OPEN','txid':'','bitcoin_block_height':0,'transaction_number':0,'address':'','value':0}
             
     elif miner_fee_status == 'identified fee address':
         if miner_fee[2] <= miner_fee_expiration_block:
-            status = ['VALIDATED',miner_fee[1],miner_fee[2],miner_fee[3],miner_fee[4],miner_fee[5]]
+            status = {'status':'VALIDATED','txid':miner_fee[1],'bitcoin_block_height':miner_fee[2],'transaction_number':miner_fee[3],'address':miner_fee[4],'value':miner_fee[5]}
         else:
-            status = ['EXPIRED','',0,0,'',0]
+            status = {'status':'EXPIRED','txid':'','bitcoin_block_height':0,'transaction_number':0,'address':'','value':0}
     
     else: 
-        status = ['ERROR','',0,0,'',0]
+        status = {'status':'ERROR','txid':'','bitcoin_block_height':0,'transaction_number':0,'address':'','value':0}
     
     return status
 
 
+#UPDATE combine with one above
 def calculateMinerFeeStatusTransaction(transaction_id, bitcoin_block):
     
     print(transaction_id)
@@ -243,67 +246,47 @@ def calculateMinerFeeStatusTransaction(transaction_id, bitcoin_block):
 
 
 #UPDATE
-def calculateTranfserFeeStatus(utxo_id, bitcoin_block):
+def calculateTransferFeeStatus(bitcoin_block, utxo_id=0, transaction_id=0):
 
-    input_utxo = getOutputParcelByTransactionVout(id=utxo_id)
-    transfer_fee_sats = input_utxo.transfer_fee_sats
-    transfer_fee_bitcoin_address = input_utxo.transfer_fee_address
-    transfer_fee_expiration_block = input_utxo.bitcoin_block_height + input_utxo.transfer_fee_blocks
+    if utxo_id != 0:
+        input_utxo = getOutputParcelByTransactionVout(id=utxo_id)
+        transfer_fee_sats = input_utxo.transfer_fee_sats
+        transfer_fee_bitcoin_address = input_utxo.transfer_fee_address
+        transfer_fee_expiration_block = input_utxo.bitcoin_block_height + input_utxo.transfer_fee_blocks
+    
+    else:
+        transaction_info = getTransactionInformation(id = transaction_id)
+        transfer_fee_sats = transaction_info.transfer_fee_sats
+        transfer_fee_bitcoin_address = transaction_info.transfer_fee_address
+        transfer_fee_expiration_block = transaction_info.bitcoin_block_height + transaction_info.transfer_fee_blocks #transaction_info.block_id + transaction_info.transfer_fee_blocks
     
     transfer_fee = getLowestBlockAddressFee(transfer_fee_bitcoin_address, transfer_fee_sats)
     transfer_fee_status = transfer_fee[0]
     
-    if transfer_fee_status == 'fee address not found':
-        if bitcoin_block > transfer_fee_expiration_block:
-            status = ['EXPIRED','',0,0,'',0]
-        else:
-            status = ['OPEN','',0,0,'',0]
-            
-    elif transfer_fee_status == 'identified fee address':
-        if transfer_fee[2] <= transfer_fee_expiration_block:
-            status = ['VALIDATED',transfer_fee[1],transfer_fee[2],transfer_fee[3],transfer_fee[4],transfer_fee[5]]
-        else:
-            status = ['EXPIRED','',0,0,'',0]
-    
-    else: 
-        status = ['ERROR','',0,0,'',0]
-    
-    return status
-
-
-def calculateTransferFeeStatusTransaction(transaction_id, bitcoin_block):
-    
-    transaction_info = getTransactionInformation(id = transaction_id)
-    transfer_fee_sats = transaction_info.transfer_fee_sats
-    transfer_fee_bitcoin_address = transaction_info.transfer_fee_address
-    transfer_fee_expiration_block = transaction_info.bitcoin_block_height + transaction_info.transfer_fee_blocks #transaction_info.block_id + transaction_info.transfer_fee_blocks
-    
-    transfer_fee = getLowestBlockAddressFee(transfer_fee_bitcoin_address, transfer_fee_sats)
-    transfer_fee_status = transfer_fee[0]
+    status = {'status':'ERROR','txid':'','bitcoin_block_height':0,'transaction_number':0,'address':'','value':0}
     
     if transfer_fee_status == 'fee address not found':
         if bitcoin_block > transfer_fee_expiration_block:
-            status = ['EXPIRED','',0,0,'',0]
+            status = {'status':'EXPIRED','txid':'','bitcoin_block_height':0,'transaction_number':0,'address':'','value':0}
         else:
-            status = ['OPEN','',0,0,'',0]
+            status = {'status':'OPEN','txid':'','bitcoin_block_height':0,'transaction_number':0,'address':'','value':0}
             
     elif transfer_fee_status == 'identified fee address':
         if transfer_fee[2] <= transfer_fee_expiration_block:
-            status = ['VALIDATED',transfer_fee[1],transfer_fee[2],transfer_fee[3],transfer_fee[4],transfer_fee[5]]
+            status = {'status':'VALIDATED','txid':transfer_fee[1],'bitcoin_block_height':transfer_fee[2],'transaction_number':transfer_fee[3],'address':transfer_fee[4],'value':transfer_fee[5]}
         else:
-            status = ['EXPIRED','',0,0,'',0]
+            status = {'status':'EXPIRED','txid':'','bitcoin_block_height':0,'transaction_number':0,'address':'','value':0}
     
     else: 
-        status = ['ERROR','',0,0,'',0]
+        status = {'status':'ERROR','txid':'','bitcoin_block_height':0,'transaction_number':0,'address':'','value':0}
     
     return status
-    
+
 
 def getLowestBlockAddressFee(address_hex, fee):
     
     address_utf8 = unhexlify(address_hex).decode('utf-8')
     address_search_url_sub = address_search_url.replace(':address', address_utf8)
-    print(address_search_url_sub)
     
     address_info = requests.get(address_search_url_sub).json()
     

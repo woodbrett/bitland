@@ -389,7 +389,7 @@ def updateTransferFeeList(bitcoin_block, bitland_block):
         print(transaction_id)
 
         #2 look in bitcoin blockchain to determine status
-        transfer_fee_status = calculateTransferFeeStatusTransaction(transaction_id, confirmed_bitcoin_block)
+        transfer_fee_status = calculateTransferFeeStatus(bitcoin_block=confirmed_bitcoin_block, transaction_id=transaction_id)
         #[status, txid, block_height, j, vout_address, value]
         
         print(transfer_fee_status)

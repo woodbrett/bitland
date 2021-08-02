@@ -58,9 +58,6 @@ def send_block_to_peers(block_height,block,peers_to_exclude=[]):
 
 def queue_new_transaction_from_peer(transaction_hex,use_threading=True,peer=''):
     
-    print('new transaction queued, peers',flush=True)
-    print(peer)
-    
     if use_threading == True:
         t4 = threading.Thread(target=analyze_new_transaction_from_peer,args=(transaction_hex,peer,use_threading,),daemon=True)
         t4.start()
@@ -76,14 +73,10 @@ def analyze_new_transaction_from_peer(transaction_hex,peer='',use_threading=True
     
     transaction_bytes = unhexlify(transaction_hex)
     
-    print('analyzing new transaction')
-    print(peer)
     
     validate_transaction = validateAddTransactionMempool(transaction_bytes, use_threading)
-    print("valid transaction " + str(validate_transaction))
     
     if validate_transaction == True:
-        print('sending transaction to peers')
         send_transaction_to_peers(transaction_hex,peers_to_exclude=[peer])
 
     return validate_transaction

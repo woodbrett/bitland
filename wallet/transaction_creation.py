@@ -162,18 +162,18 @@ if __name__ == '__main__':
     join wallet.addresses a on u.pub_key = a.public_key 
     order by block_id desc
     '''
-    
-    input_public_key = 'aa0ef7f61e9fea10fa562337bcb7c66e2ee2dac2012645a9acdc7b0432d1ee25f9451b16dd11d601e0cb3b4b8eda73d67dfdcf2d530d05163ec2653454f99f1e'
-    input_private_key = 'f1a165ed5a2d206f1a9aa0faab0007af4acc72c51348c6b21bcaa4345ffc3ab7'
-    polygon = "POLYGON((-22.5 89.74674,-22.5 89.51868,-45 89.51868,-45 89.74674,-22.5 89.74674))"
+
+    input_public_key = 'af6d999747d695f7a21370cb2cee05b3e49182219ba6eee24e1e35576be0d719aa995e98fe10288e0937921b98fa806378b511506794d80f8f6a1a7ca2e52124'
+    input_private_key = '7e01de010c7f5903f0625006f73fb190307315d7da11746688aa52af24c9f715'
+    polygon = "POLYGON((-60.382165 84.41892,-60.46875 84.41892,-60.46875 84.6585,-60.46875 84.90942,-60.363055 84.90942,-60.382165 84.41892))"
     planet_id = 1
-    vout = 0
-    input_transaction_hash = '03aca220f7ec55e458acd9aafadc9af571da0676846fb6d5e2505c82a8849782'
+    vout = 2
+    input_transaction_hash = 'a8788b7873e8c5671d62c2f3936b34ec3207bfc68062ea4250e4b10182dd8845'
     input_spend_type = 1
     
-    #simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
-    #print(hexlify(simple_transaction).decode('utf-8'))
-    #print(deserialize_transaction(simple_transaction))
+    simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
+    print(hexlify(simple_transaction).decode('utf-8'))
+    print(deserialize_transaction(simple_transaction))
     
     
     ############ more complex transaction ################
@@ -233,8 +233,8 @@ if __name__ == '__main__':
     contingencies = [50000,2000,50000,2000,hexlify(transfer_fee_address_1.encode('utf-8')).decode('utf-8')]
     #contingencies = [0,0,0,0,'']
         
-    complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
-    print(hexlify(complex_transaction).decode('utf-8'))
-    print(deserialize_transaction(complex_transaction))
+    #complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
+    #print(hexlify(complex_transaction).decode('utf-8'))
+    #print(deserialize_transaction(complex_transaction))
     
     
