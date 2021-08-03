@@ -65,6 +65,23 @@ def getBlocks(start_block_id, end_block_id):
     return blocks
 
 
+def getBlockCount():
+    
+    query = ("select count(*) from bitland.block b where id > 0")
+    block_count = executeSql(query)[0]
+    return block_count
+
+
+def getPrevBlock():
+    
+    query = ("select header_hash, id " 
+                              + "from bitland.block b "
+                              + "join bitland.max_block mb on b.id = mb.max_block" ) 
+    prev_block = executeSql(query)[0]
+    
+    return prev_block 
+
+
 if __name__ == '__main__':
     
     #x = getBlocks(1,51)

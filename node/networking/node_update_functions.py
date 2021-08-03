@@ -90,9 +90,6 @@ def send_transaction_to_peers(transaction,peers_to_exclude=[]):
         }
     rest_type = 'put'
     
-    print('sending_transaction to peers 2, peers to exclude', flush=True)
-    print(peers_to_exclude,flush=True)
-    
     send_transaction = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
     
     return send_transaction 

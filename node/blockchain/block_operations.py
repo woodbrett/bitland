@@ -9,13 +9,27 @@ from node.blockchain.header_serialization import *
 from node.blockchain.block_serialization import deserialize_block, serialize_block
 from node.blockchain.transaction_serialization import serialize_transaction
 from utilities.sqlUtils import executeSql
-from node.blockchain.queries import *
 from utilities.hashing import calculateHeaderHash, calculateTransactionHash
 from node.blockchain.contingency_operations import *
-from node.information.blocks import getMaxBlockHeight
 from node.blockchain.mempool_operations import removeTransactionsFromMempool
 import threading
-from node.blockchain.validate_block import validateBlock, validateBlockHeader
+from node.blockchain.validate_block import (
+    validateBlock, 
+    validateBlockHeader
+    )
+from node.information.blocks import (
+    getBlockCount,
+    getMaxBlockHeight
+    )
+from node.information.utxo import (
+    getUtxo
+    )
+from node.information.contingency import (
+    getClaim
+    )
+from node.information.transaction import (
+    getTransaction
+    )
 
 def addBlock(block):
     
@@ -190,10 +204,10 @@ def addTransaction(transaction, block_height):
         input = inputs[i]
         input_version = int.from_bytes(input[0],'big')
         input_transaction_hash = hexlify(input[1]).decode('utf-8')
-        input_transaction_id = getTransactionIdByHash(input_transaction_hash)[0]
+        input_transaction_id = getTransaction(transaction_hash=input_transaction_hash).get('id')
         vout = int.from_bytes(input[2],'big')
         vin = i
-        output_parcel_id = getOutputParcelByTransactionVout(input_transaction_hash, vout)[3]
+        output_parcel_id = getUtxo(transaction_hash=input_transaction_hash, vout=vout).get('id')
         sig = hexlify(input[3]).decode('utf-8')
         
         if input_version != 3:
@@ -201,9 +215,9 @@ def addTransaction(transaction, block_height):
             
             #mark any invalidated claims
             #UPDATE can make this way more efficient by doing all transactions at once probably            
-            override_claim_id = getClaimByOutputParcelId(output_parcel_id)
-            if override_claim_id != 'no_claim':
-                updateClaimInvalidate(override_claim_id, block_height, input_parcel_id)
+            claim_info = getClaim(output_parcel_id)
+            if claim_info.get('status') == 'claim identified':
+                updateClaimInvalidate(claim_info.get('claim_id'), block_height, input_parcel_id)
             
         if input_version == 3:
             claim_input_id = output_parcel_id
@@ -225,9 +239,9 @@ def addTransaction(transaction, block_height):
             add_claim = addClaimToDb(claim_input_id, parcel_id, miner_fee_sats, block_height, leading_claim, invalidated_claim, block_height)
         
             #mark superceded claims
-            override_claim_id = getClaimByOutputParcelId(output_parcel_id)
-            if override_claim_id != 'no_claim':
-                updateClaimLeading(override_claim_id, block_height)
+            override_claim_info = getClaim(output_parcel_id)
+            if override_claim_info.get('status') == 'claim identified':
+                updateClaimLeading(override_claim_info.get('claim_id'), block_height)
 
     if (is_landbase):
         updateDbLandbase(parcel_id, block_height)

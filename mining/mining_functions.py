@@ -21,7 +21,7 @@ from node.information.blocks import getMaxBlockHeight
 from node.networking.node_update_functions import queue_new_block_from_peer
 from mining.create_landbase_transaction import getLandbaseTransaction
 from system_variables import block_height_url
-from node.blockchain.header_operations import getPrevBlock
+from node.blockchain.header_operations import getPrevBlockGuarded
 from node.blockchain.block_serialization import serialize_block
 from node.blockchain.global_variables import bitland_version
 from utilities.sqlUtils import (
@@ -169,7 +169,7 @@ def mining_process():
     miner_bitcoin_address = '6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b7773'
     
     version_bytes = version.to_bytes(2, byteorder = 'big')
-    prev_block_bytes = getPrevBlock()
+    prev_block_bytes = getPrevBlockGuarded()
     mrkl_root_bytes = calculateMerkleRoot(transactions)
     time_bytes = time_.to_bytes(5, byteorder = 'big')
     bits_bytes = get_bits_current_block() 

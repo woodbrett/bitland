@@ -177,7 +177,7 @@ def validateTransactions(block=b'', block_height=None, transactions=[]):
         for j in range(0, len(transaction_inputs)):
             transaction_hash = hexlify(transaction_inputs[j][1]).decode('utf-8')
             transaction_vout = int.from_bytes(transaction_inputs[j][2],'big')
-            input_utxo_id = getOutputParcelByTransactionVout(transaction_hash, transaction_vout)[3]
+            input_utxo_id = getUtxo(transaction_hash=transaction_hash, vout=transaction_vout).get('id')
             transaction_input_utxo.append(input_utxo_id)
         
         if (valid_transactions[0] == False):

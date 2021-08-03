@@ -10,7 +10,7 @@ from node.blockchain.transaction_serialization import (
 )
 from wallet.key_generation import *
 import ecdsa
-from node.information.transaction import getUtxoInfo
+from node.information.utxo import getUtxo
 import json
 
 def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type):
@@ -90,7 +90,8 @@ def createTransaction1(transaction_version, inputs, outputs, contingencies):
         input_public_key = inputs[i][3]
         input_private_key = inputs[i][4]
         
-        coordinates = getUtxoInfo(transaction_hash=input_transaction_hash, vout=input_vout).shape
+        utxo = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout)
+        coordinates = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout).get('shape')
         coordinates = coordinates.replace(", ","," ) # remove all spaces
         coordinates = coordinates.replace(" (","(" ) # remove all spaces
         
@@ -171,9 +172,9 @@ if __name__ == '__main__':
     input_transaction_hash = 'a8788b7873e8c5671d62c2f3936b34ec3207bfc68062ea4250e4b10182dd8845'
     input_spend_type = 1
     
-    simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
-    print(hexlify(simple_transaction).decode('utf-8'))
-    print(deserialize_transaction(simple_transaction))
+    #simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
+    #print(hexlify(simple_transaction).decode('utf-8'))
+    #print(deserialize_transaction(simple_transaction))
     
     
     ############ more complex transaction ################
@@ -188,9 +189,9 @@ if __name__ == '__main__':
     order by block_id desc
     '''    
     
-    input_1 = [1,"a09bf469d5f2f03b6efdc67ed08fc16ffeb0c85a604ad0d8d68df8751878e014",0,"bb975c0184fb17d02277f672816601169783dced038775adf2a9fb6aacd68125f17ad2fe6128d78df685ee1085fdb64513343a899cace23c3f1239e66d9d1814","05c14395a986351bcff7aa05f7c7d2d0f443b588ba3f0f72ebe0f0f9030d59ca"]
-    input_2 = [1,"558fa3ff81c645a4136a8fd6ababbe3ae9aeb6c64410f56c85f45a2ff6bdaead",0,"5a3058c716ed7820479fc5e51c0ee2bff83e1003f85f4505766e32db271a0dd9595e6a55e50df4599c6324f950dce46b52c2440af4e523f36db8ffe86b53d6fb","72822e8f5cb71755b40e02f0300641b76541b1fabffeed1e8d783e1f4465beff"]
-    input_3 = [1,"5f8c3a04eac19d080c90915fbfde0496f05c7892e8586ca28d9174a974611ec9",0,"b4030ad2dca040e9c05eaad31250f3cf120bccbc97e0914ca664a87ef911734db0bde4dabc6055e94c54679d8bc7fcf27cbe7cd4ba47b6cff8243aad8417d6bd","54a4bf48340d4b518f2fe68793ae78fdfdd3964a75890466cb62bde634a668a9"]
+    input_1 = [1,"e43170fb0ce4584874ddc87f57832ed544e20f4391ac81d45f12a557f82ad981",0,"7eaacc77cc4fcdf2c5317eff07bade1ce572ff2eb8c8f07bdc39b797e6e36b82f6c0f5cd0d3d17eb394d01e203d6ffa873b6c9c752340e9a6e498f470c5fe429","1e5a95b46e5f222b1e4f10fae4a51872d11eee35f9c4d3c5ab11ff21ad059c6e"]
+    input_2 = [1,"9991247337d7d2083cb3015bbddc901203d7c6457dd92ecd2fffa96b9a4d6297",0,"ef70cb3ede3f61210f1c6c030b22f969e3413a29c3f03b16baf579e409e6e2267b1e7abc519fabc08624d620aeebee0da462198ef1b8948a36ec3d09049e6041","60f4ef52fd77f5e4433db9af0b0136ef3b46b0159dd7bb7f967ef958f0174867"]
+    input_3 = [1,"5d9b93ab7d15bf0b21ddb025c454b757032d9fc6eda6cdb2f505a7a9f07c7a5c",0,"69022ccf1a0644a5e07eb2f89b3e9ab217fcc158f3525655a2a30f66c0c61a916858846f55db7172d5e71e3399d18fc191f0efc9b1fa12efcaeab17e0bbe27db","9d71aea112309b1f64af8d06b1c2d6198bf74c1c850e43cc615c7d738ebe0146"]
     inputs = [input_1,input_2,input_3]
     #inputs = [input_1]
     
@@ -220,21 +221,21 @@ if __name__ == '__main__':
     from intersections
     '''
     
-    output_1 = [1,1,'MULTIPOLYGON(((-59.919629 84.41892,-60.382165 84.41892,-60.363055 84.90942,-59.825561 84.90942,-59.919629 84.41892)),((-56.25 85.31082,-56.25 85.1733,-59.0625 85.1733,-59.0625 85.31082,-56.25 85.31082)))',None]
-    output_2 = [1,1,'POLYGON((-59.0625 84.6585,-59.0625 84.41892,-59.919629 84.41892,-59.825561 84.90942,-59.0625 84.90942,-59.0625 84.6585))',None]
+    output_1 = [1,1,'MULTIPOLYGON(((-56.25 85.1733,-56.25 85.03956,-59.0625 85.03956,-59.0625 85.1733,-56.25 85.1733)),((-45 87.01524,-45 86.80374,-45.424322 86.80374,-45.289507 87.01524,-45 87.01524)),((-45.928667 86.80374,-47.8125 86.80374,-47.8125 87.01524,-45.835072 87.01524,-45.928667 86.80374),(-46.673584 86.955708,-46.657105 86.900777,-46.662598 86.856832,-46.26709 86.878804,-46.300049 86.977681,-46.673584 86.955708)),((-22.5 89.74674,-22.5 89.51868,-43.693747 89.51868,-43.548375 89.74674,-22.5 89.74674)),((-44.727228 89.51868,-45 89.51868,-45 89.74674,-44.626304 89.74674,-44.727228 89.51868)))',None]
+    output_2 = [1,1,'POLYGON((-46.673584 86.955708,-46.300049 86.977681,-46.26709 86.878804,-46.662598 86.856832,-46.657105 86.900777,-46.673584 86.955708))',None]
     #collateral
-    output_3 = [2,1,'POLYGON((-60.382165 84.41892,-60.46875 84.41892,-60.46875 84.6585,-60.46875 84.90942,-60.363055 84.90942,-60.382165 84.41892))',None]
+    output_3 = [2,1,'MULTIPOLYGON(((-45.424322 86.80374,-45.928667 86.80374,-45.835072 87.01524,-45.289507 87.01524,-45.424322 86.80374)),((-43.693747 89.51868,-44.727228 89.51868,-44.626304 89.74674,-43.548375 89.74674,-43.693747 89.51868)))',None]
     outputs = [output_1, output_2, output_3]
     #outputs = [output_1]
     
     #CONTINGENCIES
     #contingencies [miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address]
     transfer_fee_address_1 = 'bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws'
-    contingencies = [50000,2000,50000,2000,hexlify(transfer_fee_address_1.encode('utf-8')).decode('utf-8')]
+    contingencies = [50001,2000,50001,2000,hexlify(transfer_fee_address_1.encode('utf-8')).decode('utf-8')]
     #contingencies = [0,0,0,0,'']
         
-    #complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
-    #print(hexlify(complex_transaction).decode('utf-8'))
-    #print(deserialize_transaction(complex_transaction))
+    complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
+    print(hexlify(complex_transaction).decode('utf-8'))
+    print(deserialize_transaction(complex_transaction))
     
     

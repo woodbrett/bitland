@@ -8,7 +8,6 @@ from node.blockchain.transaction_serialization import deserialize_transaction,\
     serialize_transaction
 from utilities.serialization import deserialize_text
 from utilities.sqlUtils import executeSql
-import psycopg2
 from utilities.config import config
 from binascii import unhexlify, hexlify
 import ecdsa
@@ -17,13 +16,18 @@ from collections import namedtuple
 from node.blockchain.global_variables import *
 from system_variables import address_search_url
 import requests
-from utilities.bitcoin_requests import *
 from node.blockchain.contingency_operations import *
 from utilities.hashing import calculateTransactionHash
 from utilities.bitcoin_requests import getCurrentBitcoinBlockHeight
 from node.blockchain.header_serialization import deserialize_block_header
 from node.information.blocks import getMaxBlockHeight
 from node.information.mempool import getMempoolInformation
+from utilities.gis_functions import (
+    queryPolygonEquality,
+    queryPolygonRules,
+    queryPolygonAreaMeters,
+    queryUnionPolygonAreaMeters
+    )
 
 #input version 1 - standard spend (which could be a scuessful collateral)
 #input version 2 - spending as collateral
@@ -270,8 +274,8 @@ def validateInputOutputClaims(inputs, outputs):
         transaction_vout = int.from_bytes(inputs[i][2],'big')
         if input_version == 3:
             input_claim_count = input_claim_count + 1
-            output_parcel = getOutputParcelByTransactionVout(transaction_hash, transaction_vout)
-            input_shape_str = output_parcel[1]
+            output_parcel = getUtxo(transaction_hash=transaction_hash, vout=transaction_vout)
+            input_shape_str = output_parcel.get('shape')
             input_claim_geom = "st_geomfromtext('" + input_shape_str + "',4326)"
     
     for i in range(0, len(outputs)):
@@ -343,8 +347,8 @@ def getInputUnionShape(inputs):
     for i in range(0, input_length):
         transaction_hash = hexlify(inputs[i][1]).decode('utf-8')
         transaction_vout = int.from_bytes(inputs[i][2],'big')
-        output_parcel = getOutputParcelByTransactionVout(transaction_hash, transaction_vout)
-        shape_str = output_parcel[1]
+        output_parcel = getUtxo(transaction_hash=transaction_hash, vout=transaction_vout)
+        shape_str = output_parcel.get('shape')
         shape = shape_str.encode('utf-8')
         
         if (i == 0):
@@ -388,7 +392,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
     transaction_hash = hexlify(input[1]).decode('utf-8')
     transaction_vout = int.from_bytes(input[2],'big')
     input_signature = input[3]
-    input_utxo = getOutputParcelByTransactionVout(transaction_hash, transaction_vout)
+    input_utxo = getUtxo(transaction_hash=transaction_hash, vout=transaction_vout)
 
     if block_height == None:
         block_height = getMaxBlockHeight() + 1
@@ -424,19 +428,19 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
     
     if (valid_input == True):
 
-        input_utxo_version = input_utxo.output_version
-        input_utxo_id = input_utxo.id
-        input_utxo_shape = input_utxo.shape
-        input_utxo_pub_key = input_utxo.pub_key
-        input_utxo_collateral_pub_key = input_utxo.miner_landbase_address
-        input_utxo_failed_transfer_pub_key = input_utxo.transfer_fee_failover_address
+        input_utxo_version = input_utxo.get('output_version')
+        input_utxo_id = input_utxo.get('id')
+        input_utxo_shape = input_utxo.get('shape')
+        input_utxo_pub_key = input_utxo.get('pub_key')
+        input_utxo_collateral_pub_key = input_utxo.get('miner_landbase_address')
+        input_utxo_failed_transfer_pub_key = input_utxo.get('transfer_fee_failover_address')
     
         #get summary of utxo - what is its transfer fee status, miner fee status
         #UPDATE to pull data from contingency logic
-        transfer_fee_status = inspected_parcel.transfer_fee_status
-        claim_status = inspected_parcel.claim_status
-        outstanding_claim = inspected_parcel.outstanding_claims
-        miner_fee_status = inspected_parcel.miner_fee_status
+        transfer_fee_status = inspected_parcel.get('transfer_fee_status')
+        claim_status = inspected_parcel.get('claim_status')
+        outstanding_claim = inspected_parcel.get('outstanding_claims')
+        miner_fee_status = inspected_parcel.get('miner_fee_status')
         
         valid_transfer_fee_types = validContingencyStatusSpendTypes(input_version)[0]
         valid_miner_fee_types = validContingencyStatusSpendTypes(input_version)[1]

@@ -23,6 +23,10 @@ from utilities.difficulty import get_target_from_bits
 from utilities.bitcoin_requests import *
 from node.blockchain.global_variables import *
 from node.blockchain.header_serialization import serialize_block_header_utf8
+from node.information.blocks import (
+    getBlockCount,
+    getPrevBlock
+    )
 
 def validateVer(version):
     
@@ -40,13 +44,13 @@ def validatePrevBlock(prev_block, prev_block_input):
     return is_valid  
 
 
-def getPrevBlock():
+def getPrevBlockGuarded():
     
     if getBlockCount() == 0:
         node_prev_block = genesis_prev_block
     
     else:
-        node_prev_block_hex = queryGetPrevBlock()
+        node_prev_block_hex = getPrevBlock()
         node_prev_block = unhexlify(node_prev_block_hex)
     
     return node_prev_block  

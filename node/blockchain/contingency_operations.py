@@ -4,17 +4,25 @@ Created on Mar 11, 2021
 @author: brett_wood
 '''
 from collections import namedtuple
-from node.blockchain.queries import *
 import requests
 from system_variables import address_search_url
 from node.blockchain.global_variables import *
+from node.information.utxo import (
+    getUtxo
+    )
+from node.information.transaction import (
+    getTransaction
+    )
+from node.information.contingency import (
+    getClaim
+    )
 
 
 def inspectParcel(transaction, vout, bitcoin_block_height, bitland_block):
     
-    output_parcel = getOutputParcelByTransactionVout(transaction, vout)
+    output_parcel = getUtxo(transaction_hash=transaction, vout=vout)
     
-    if output_parcel == 'no matched utxo':
+    if output_parcel.get('status') == 'no matched utxo':
         is_current_utxo = False
         type = None
         miner_fee_status = None
@@ -24,34 +32,33 @@ def inspectParcel(transaction, vout, bitcoin_block_height, bitland_block):
     
     else:
         is_current_utxo = True
-        type = output_parcel.output_version
-        miner_fee_status = getMinerFeeStatus(output_parcel.id, bitcoin_block_height)
-        transfer_fee_status = getTransferFeeStatus(output_parcel.id, bitcoin_block_height)
-        outstanding_claims = getUtxoClaim(output_parcel.id, bitland_block)
-        claim_status = getClaimStatus(output_parcel.id, bitland_block)
-
-    columns = namedtuple('columns', ['is_current_utxo', 'type', 'miner_fee_status', 'transfer_fee_status', 'outstanding_claims', 'claim_status'])
-    parcel_output = columns(
-                    is_current_utxo,
-                    type,
-                    miner_fee_status,
-                    transfer_fee_status,
-                    outstanding_claims,
-                    claim_status
-                    )
+        type = output_parcel.get('output_version')
+        miner_fee_status = getMinerFeeStatus(output_parcel.get('id'), bitcoin_block_height)
+        transfer_fee_status = getTransferFeeStatus(output_parcel.get('id'), bitcoin_block_height)
+        outstanding_claims = getUtxoClaim(output_parcel.get('id'), bitland_block)
+        claim_status = getClaimStatus(output_parcel.get('id'), bitland_block)
+    
+    parcel_output = {
+        'is_current_utxo': is_current_utxo, 
+        'type': type, 
+        'miner_fee_status': miner_fee_status, 
+        'transfer_fee_status': transfer_fee_status, 
+        'outstanding_claims': outstanding_claims, 
+        'claim_status': claim_status
+    }
     
     return parcel_output
 
 
 def getMinerFeeStatus(utxo_id, bitcoin_block):
 
-    input_utxo = getOutputParcelByTransactionVout(id=utxo_id)
-    input_utxo_version = input_utxo.output_version
-    miner_fee_sats = input_utxo.miner_fee_sats
-    miner_bitcoin_address = input_utxo.miner_bitcoin_address
-    miner_fee_expiration_block = input_utxo.bitcoin_block_height + input_utxo.miner_fee_blocks
-    miner_fee_status_db = input_utxo.miner_fee_status
-    miner_fee_status_block_height_db = input_utxo.miner_fee_status_block_height
+    input_utxo = getUtxo(id=utxo_id)
+    input_utxo_version = input_utxo.get('output_version')
+    miner_fee_sats = input_utxo.get('miner_fee_sats')
+    miner_bitcoin_address = input_utxo.get('miner_bitcoin_address')
+    miner_fee_expiration_block = input_utxo.get('bitcoin_block_height') + input_utxo.get('miner_fee_blocks')
+    miner_fee_status_db = input_utxo.get('miner_fee_status')
+    miner_fee_status_block_height_db = input_utxo.get('miner_fee_status_block_height')
     
     #determine if no fee
     if miner_fee_sats == 0:
@@ -92,13 +99,13 @@ def getMinerFeeStatus(utxo_id, bitcoin_block):
 
 def getTransferFeeStatus(utxo_id, bitcoin_block):
 
-    input_utxo = getOutputParcelByTransactionVout(id=utxo_id)
-    input_utxo_version = input_utxo.output_version
-    transfer_fee_sats = input_utxo.transfer_fee_sats
-    failed_transfer_fee_address = input_utxo.transfer_fee_failover_address
-    transfer_fee_expiration_block = input_utxo.bitcoin_block_height + input_utxo.transfer_fee_blocks
-    transfer_fee_status_db = input_utxo.transfer_fee_status
-    transfer_fee_status_block_height_db = input_utxo.transfer_fee_status_block_height
+    input_utxo = getUtxo(id=utxo_id)
+    input_utxo_version = input_utxo.get('output_version')
+    transfer_fee_sats = input_utxo.get('transfer_fee_sats')
+    failed_transfer_fee_address = input_utxo.get('transfer_fee_failover_address')
+    transfer_fee_expiration_block = input_utxo.get('bitcoin_block_height') + input_utxo.get('transfer_fee_blocks')
+    transfer_fee_status_db = input_utxo.get('transfer_fee_status')
+    transfer_fee_status_block_height_db = input_utxo.get('transfer_fee_status_block_height')
 
     #determine if no fee
     if transfer_fee_sats == 0:
@@ -140,19 +147,19 @@ def getTransferFeeStatus(utxo_id, bitcoin_block):
 
 def getClaimStatus(utxo_id, bitland_block):
 
-    claim_info = getClaimInformation(claim_action_output_parcel_id = utxo_id)
+    claim_info = getClaim(claim_action_output_parcel_id = utxo_id)
     
-    if claim_info.status == 'unidentified':
+    if claim_info.get('status') == 'unidentified':
         claim_status = 'NO_CLAIM'
     
-    elif claim_info.leading_claim == 'false':
+    elif claim_info.get('leading_claim') == 'false':
         claim_status = 'SUPERCEDED_CLAIM'
     
-    elif claim_info.invalidated_claim == 'true':
+    elif claim_info.get('invalidated_claim') == 'true':
         claim_status = 'INVALIDATED_CLAIM'
         
-    elif (claim_info.leading_claim == 'true' and claim_info.invalidated_claim == 'false'):
-        claim_expiration_block = claim_info.claim_block_height + claim_blocks
+    elif (claim_info.get('leading_claim') == 'true' and claim_info.get('invalidated_claim') == 'false'):
+        claim_expiration_block = claim_info.get('claim_block_height') + claim_blocks
         if bitland_block < claim_expiration_block:
             claim_status = 'OUTSTANDING_CLAIM'
         else:
@@ -166,16 +173,16 @@ def getClaimStatus(utxo_id, bitland_block):
 
 def getUtxoClaim(utxo_id, bitland_block):
 
-    claim_info = getClaimInformation(claimed_output_parcel_id = utxo_id)
+    claim_info = getClaim(claimed_output_parcel_id = utxo_id)
     
-    if claim_info.status == 'unidentified':
+    if claim_info.get('status') == 'no claim found':
         claim_status = 'NO_CLAIM'
         
-    elif claim_info.invalidated_claim == 'true':
+    elif claim_info.get('invalidated_claim') == 'true':
         claim_status = 'INVALIDATED_CLAIM'
         
-    elif (claim_info.leading_claim == 'true' and claim_info.invalidated_claim == 'false'):
-        claim_expiration_block = claim_info.claim_block_height + claim_blocks
+    elif (claim_info.get('leading_claim') == 'true' and claim_info.get('invalidated_claim') == 'false'):
+        claim_expiration_block = claim_info.get('claim_block_height') + claim_blocks
         if bitland_block < claim_expiration_block:
             claim_status = 'OUTSTANDING_CLAIM'
         else:
@@ -186,10 +193,10 @@ def getUtxoClaim(utxo_id, bitland_block):
 
 def calculateMinerFeeStatus(utxo_id, bitcoin_block):
     
-    input_utxo = getOutputParcelByTransactionVout(id=utxo_id)
-    miner_fee_sats = input_utxo.miner_fee_sats
-    miner_bitcoin_address = input_utxo.miner_bitcoin_address
-    miner_fee_expiration_block = input_utxo.bitcoin_block_height + input_utxo.miner_fee_blocks
+    input_utxo = getUtxo(id=utxo_id)
+    miner_fee_sats = input_utxo.get('miner_fee_sats')
+    miner_bitcoin_address = input_utxo.get('miner_bitcoin_address')
+    miner_fee_expiration_block = input_utxo.get('bitcoin_block_height') + input_utxo.get('miner_fee_blocks')
     
     miner_fee = getLowestBlockAddressFee(hexlify(miner_bitcoin_address.encode('utf-8')), miner_fee_sats)
     miner_fee_status = miner_fee[0]
@@ -219,10 +226,10 @@ def calculateMinerFeeStatusTransaction(transaction_id, bitcoin_block):
     
     print(transaction_id)
     
-    transaction_info = getTransactionInformation(id = transaction_id)
-    miner_fee_sats = transaction_info.miner_fee_sats
-    miner_bitcoin_address = transaction_info.miner_bitcoin_address
-    miner_fee_expiration_block = transaction_info.bitcoin_block_height + transaction_info.miner_fee_blocks
+    transaction_info = getTransaction(id = transaction_id)
+    miner_fee_sats = transaction_info.get('miner_fee_sats')
+    miner_bitcoin_address = transaction_info.get('miner_bitcoin_address')
+    miner_fee_expiration_block = transaction_info.get('bitcoin_block_height') + transaction_info.get('miner_fee_blocks')
     
     miner_fee = getLowestBlockAddressFee(miner_bitcoin_address, miner_fee_sats)
     miner_fee_status = miner_fee[0]
@@ -249,16 +256,16 @@ def calculateMinerFeeStatusTransaction(transaction_id, bitcoin_block):
 def calculateTransferFeeStatus(bitcoin_block, utxo_id=0, transaction_id=0):
 
     if utxo_id != 0:
-        input_utxo = getOutputParcelByTransactionVout(id=utxo_id)
-        transfer_fee_sats = input_utxo.transfer_fee_sats
-        transfer_fee_bitcoin_address = input_utxo.transfer_fee_address
-        transfer_fee_expiration_block = input_utxo.bitcoin_block_height + input_utxo.transfer_fee_blocks
+        input_utxo = getUtxo(id=utxo_id)
+        transfer_fee_sats = input_utxo.get('transfer_fee_sats')
+        transfer_fee_bitcoin_address = input_utxo.get('transfer_fee_address')
+        transfer_fee_expiration_block = input_utxo.get('bitcoin_block_height') + input_utxo.get('transfer_fee_blocks')
     
     else:
-        transaction_info = getTransactionInformation(id = transaction_id)
-        transfer_fee_sats = transaction_info.transfer_fee_sats
-        transfer_fee_bitcoin_address = transaction_info.transfer_fee_address
-        transfer_fee_expiration_block = transaction_info.bitcoin_block_height + transaction_info.transfer_fee_blocks #transaction_info.block_id + transaction_info.transfer_fee_blocks
+        transaction_info = getTransaction(id = transaction_id)
+        transfer_fee_sats = transaction_info.get('transfer_fee_sats')
+        transfer_fee_bitcoin_address = transaction_info.get('transfer_fee_address')
+        transfer_fee_expiration_block = transaction_info.get('bitcoin_block_height') + transaction_info.get('transfer_fee_blocks')
     
     transfer_fee = getLowestBlockAddressFee(transfer_fee_bitcoin_address, transfer_fee_sats)
     transfer_fee_status = transfer_fee[0]
