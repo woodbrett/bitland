@@ -29,8 +29,6 @@ create table bitland.block (
 insert into bitland.block(id, header_hash) values
 (0, '0000000000000000000000000000000000000000000000000000000000000000');
 
---select * from bitland.block
-
 drop table if exists bitland.transaction cascade;
 create table bitland.transaction (
   id SERIAL PRIMARY key, 
@@ -535,6 +533,10 @@ create table wallet.addresses (private_key varchar, public_key varchar);
 drop table if exists bitland.block_serialized ;
 create table bitland.block_serialized (id int, block varchar);
 
+insert into bitland.block_serialized(id, block) values
+(0, '0000000000000000000000000000000000000000000000000000000000000000');
+
+
 drop table bitland.int_join;
 drop table bitland.geography_definition;
 drop table if exists bitland.address;
@@ -702,10 +704,14 @@ where ip.id is null;
 
 drop view if exists bitland.transaction_contingency;
 create view bitland.transaction_contingency as 
-select t.*, mft.status as miner_fee_status, tft.status as transfer_fee_status, mft.bitcoin_block_height as miner_fee_status_block_height, tft.bitcoin_block_height as transfer_fee_status_block_height
+select t.*, b.bitcoin_block_height, mft.status as miner_fee_status, tft.status as transfer_fee_status, 
+mft.bitcoin_block_height as miner_fee_status_block_height, 
+tft.bitcoin_block_height as transfer_fee_status_block_height,
+b.miner_bitcoin_address 
 from bitland.transaction t
 left join bitland.miner_fee_transaction mft on t.id = mft.transaction_id 
-left join bitland.transfer_fee_transaction tft on t.id = tft.transaction_id;
+left join bitland.transfer_fee_transaction tft on t.id = tft.transaction_id
+join bitland.block b on t.block_id = b.id;
 
 --
 --OTHER
@@ -732,12 +738,18 @@ truncate bitland.block_serialized cascade;
 truncate bitland.transaction cascade;
 truncate bitland.output_parcel cascade;
 truncate bitland.claim cascade;
-trunacte bitland.transfer_fee_transaction;
-trunacte bitland.miner_fee_transaction;
+truncate bitland.transfer_fee_transaction;
+truncate bitland.miner_fee_transaction;
 update landbase_enum set valid_claim = false;
 update landbase_enum set block_claim = null;
 update landbase_enum set valid_claim = true, valid_enabled_block = 0 where y_id in (1,975);
+truncate bitland.transaction_mempool;
 --	truncate wallet.addresses;
+
+insert into bitland.block(id, header_hash) values
+(0, '0000000000000000000000000000000000000000000000000000000000000000');
+
+
  */
 
 

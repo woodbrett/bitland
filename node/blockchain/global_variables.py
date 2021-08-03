@@ -7,7 +7,7 @@ from binascii import unhexlify, hexlify
 
 global starting_bits 
 global difficulty_adjustment_blocks
-global target_timespan
+global target_timespan_bitcoin_blocks
 global genesis_prev_block
 global contingency_validation_blocks
 global claim_required_percentage_increase
@@ -19,7 +19,7 @@ starting_bits_hex = 0x1d0ffff0  # original was 0x1d00ffff
 starting_bits = starting_bits_hex.to_bytes(4, 'big')
 difficulty_adjustment_blocks = 2016
 
-target_timespan = 1209600
+target_timespan_bitcoin_blocks = 2016
 genesis_prev_block = unhexlify('0000000000000000000000000000000000000000000000000000000000000000')
 
 contingency_validation_blocks = 10

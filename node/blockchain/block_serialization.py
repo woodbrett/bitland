@@ -54,9 +54,10 @@ if __name__ == '__main__':
     block_bytes = unhexlify(block)
     deserialized_block = deserialize_block(block_bytes)
     print(deserialized_block)
-    print(deserialized_block[1][0])
-    print(deserialized_block[1][1])
+    print(deserialized_block[0][8])
+    print(int.from_bytes(deserialized_block[0][8],'big'))
     print(deserialized_block[1])
+    print(deserialized_block[1][0])
     
     
 

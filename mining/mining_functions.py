@@ -30,6 +30,9 @@ from utilities.sqlUtils import (
     )
 from node.blockchain.validate_block import validateTransactions
 from node.blockchain.transaction_serialization import deserialize_transaction
+import threading
+from node.blockchain.block_adding_queueing import validateAddBlock
+from node.blockchain.header_serialization import serializeMinerAddress
 
 #UPDATE - give ability to pull these from a node rather than inside the code
 
@@ -46,11 +49,13 @@ def findValidHeader(
     ):
 
     difficulty_byte = get_target_from_bits(bits_byte)
+    miner_bitcoin_address_full_byte = serializeMinerAddress(miner_bitcoin_address_byte)
    
     nonce_byte = start_nonce_byte
     nonce = int.from_bytes(nonce_byte,'big')
 
-    header_byte_no_nonce = (version_byte + prev_block_byte + mrkl_root_byte + time_byte + bits_byte + bitcoin_height_byte + miner_bitcoin_address_byte )
+    header_byte_no_nonce = (version_byte + prev_block_byte + mrkl_root_byte + time_byte + bits_byte + bitcoin_height_byte + miner_bitcoin_address_full_byte )
+    print()
     header_byte = (header_byte_no_nonce + nonce_byte) 
     headerhash_byte = sha256(sha256(header_byte).digest()).digest()  
     
@@ -67,16 +72,12 @@ def findValidHeader(
         headerhash_byte = sha256(sha256(header_byte).digest()).digest()  
         #print(hexlify(headerhash_byte).decode("utf-8"))
         if(nonce % 1000000 == 0):
-            print("nonce: " + str(nonce))
-            print(datetime.now() - start_time)
-            print(hexlify(header_byte).decode('utf-8'))
-            print(hexlify(headerhash_byte).decode('utf-8'))
-            print(str(current_block_height) + ' ' + str(getMaxBlockHeight()))
+            print("block: " + str(current_block_height) + "; nonce: " + str(nonce) + "; time: " + str(datetime.now() - start_time))
             if current_block_height != getMaxBlockHeight():
                 header_byte = b''
                 status = 'rival found block'
                 break
-        if(nonce > 2000000000):
+        if(nonce > 4000000000):
             header_byte = b''
             status = 'timed out'
             break
@@ -84,8 +85,6 @@ def findValidHeader(
         status = 'found valid block'
         new_block_height = current_block_height + 1
 
-    print(hexlify(header_byte).decode('utf-8'))
-    
     end_time = datetime.now()
     print(end_time - start_time)
     print(int.from_bytes(time_byte,'big'))
@@ -113,8 +112,6 @@ def getTransactionsFromMempool(max_size_bytes=4000000):
        "SELECT transaction_serialized " +
        "FROM   r;" 
     )
-    
-    print(query)
     
     try:
         transactions = executeSqlMultipleRows(query)
@@ -152,12 +149,13 @@ def validateMempoolTransactions():
     return transaction_byte_list
 
 
-#UPDATE add transactions into this
+#UPDATE figure out if node is synching before starting to try to mine
 def mining_process():
     
-    
     mempool_transactions = validateMempoolTransactions()
+    print(mempool_transactions)
     transactions = mempool_transactions
+    print(transactions)
     
     landbase_transaction_bytes = getLandbaseTransaction()
     transactions.append(landbase_transaction_bytes)
@@ -168,7 +166,7 @@ def mining_process():
     time_ = int(round(datetime.utcnow().timestamp(),0))
     start_nonce = 0
     bitcoin_height = int(requests.get(block_height_url).text)
-    miner_bitcoin_address = '15NwUktZt4kWMLqK5QLrxAMQapyeFxAi6h'
+    miner_bitcoin_address = '6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b7773'
     
     version_bytes = version.to_bytes(2, byteorder = 'big')
     prev_block_bytes = getPrevBlock()
@@ -176,7 +174,7 @@ def mining_process():
     time_bytes = time_.to_bytes(5, byteorder = 'big')
     bits_bytes = get_bits_current_block() 
     bitcoin_height_bytes = bitcoin_height.to_bytes(4, byteorder = 'big')
-    miner_bitcoin_address_bytes = hexlify(miner_bitcoin_address.encode('utf-8'))
+    miner_bitcoin_address_bytes = unhexlify(miner_bitcoin_address)
     start_nonce_bytes = start_nonce.to_bytes(4, byteorder = 'big')    
     
     current_block_height = getMaxBlockHeight()
@@ -206,7 +204,10 @@ def mining_process():
         serialized_block = serialize_block(header, transactions)
         block_hex = hexlify(serialized_block).decode('utf-8')
         print(block_hex)
-        queue_new_block_from_peer(block_height,block_hex)
+        
+        t1 = threading.Thread(target=validateAddBlock,args=(serialized_block,),daemon=True)
+        t1.start()
+        t1.join()
     
     return mining_process()
             
@@ -214,8 +215,7 @@ def mining_process():
 if __name__ == '__main__':
     
     x = mining_process();
-    
-    
+
     
     
     

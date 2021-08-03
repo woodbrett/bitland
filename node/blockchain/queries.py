@@ -87,7 +87,7 @@ def getTransactionInformation (transaction_hash = '', id = 0):
     transaction_hash = str(transaction_hash)
     id = str(id)
     
-    query = ("select id, block_id, transaction_hash, version, is_landbase, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address, miner_fee_status, transfer_fee_status, miner_fee_status_block_height, transfer_fee_status_block_height, miner_bitcoin_address " +
+    query = ("select id, block_id, transaction_hash, version, is_landbase, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address, bitcoin_block_height, miner_fee_status, transfer_fee_status, miner_fee_status_block_height, transfer_fee_status_block_height, miner_bitcoin_address " +
              "from bitland.transaction_contingency " +
              "where (transaction_hash = '" + transaction_hash + "' or id = " + id +");"
              )
@@ -96,7 +96,7 @@ def getTransactionInformation (transaction_hash = '', id = 0):
     
     try:
         transaction = executeSql(query)
-        columns = namedtuple('columns', ['id', 'block_id', 'transaction_hash', 'version', 'is_landbase', 'miner_fee_sats', 'miner_fee_blocks', 'transfer_fee_sats', 'transfer_fee_blocks', 'transfer_fee_address', 'miner_fee_status', 'transfer_fee_status', 'miner_fee_status_block_height', 'transfer_fee_status_block_height', 'miner_bitcoin_address'])
+        columns = namedtuple('columns', ['id', 'block_id', 'transaction_hash', 'version', 'is_landbase', 'miner_fee_sats', 'miner_fee_blocks', 'transfer_fee_sats', 'transfer_fee_blocks', 'transfer_fee_address', 'bitcoin_block_height','miner_fee_status', 'transfer_fee_status', 'miner_fee_status_block_height', 'transfer_fee_status_block_height', 'miner_bitcoin_address'])
         utxo_output = columns(
                         transaction[0],
                         transaction[1],
@@ -112,7 +112,8 @@ def getTransactionInformation (transaction_hash = '', id = 0):
                         transaction[11],
                         transaction[12],
                         transaction[13],
-                        transaction[14]
+                        transaction[14],
+                        transaction[15]
                         )
 
     except Exception as error:
@@ -285,6 +286,20 @@ def queryPolygonEquality(polygon1, polygon2):
     return equal_polygons 
 
 
+def queryPolygonRules(outputs):
+    
+    valid_polygon_decimals = True
+    
+    for i in range(0,len(outputs)):
+        output_shape = outputs[i][2].decode('utf-8')
+        query = "select st_astext(st_geomfromtext('" + output_shape + "',4326),6) = '" + output_shape + "';"
+        valid_polygon_decimals = executeSql(query)[0]
+        if valid_polygon_decimals == False:
+            break
+    
+    return valid_polygon_decimals
+
+
 def queryPolygonAreaMeters (polygon):
     
     polygon = str(polygon)
@@ -372,9 +387,9 @@ def getBlockById(block_id):
     return executeSql(select)
 
 
-def getBlockInformation(block_id = 0, block_header = ''):
+def getBlockInformation(block_id = -1, header_hash = ''):
     select = ("select id, header_hash , version, prev_block , mrkl_root , time, bits, bitcoin_block_height , miner_bitcoin_address, nonce from bitland.block b "
-              +" where id = " + str(block_id) + " or header_hash = '" + str(block_header) + "' ;")
+              +" where id = " + str(block_id) + " or header_hash = '" + str(header_hash) + "' ;")
     
     try:
         db_block = executeSql(select)
@@ -407,12 +422,12 @@ def getBlockHeaders(start_block_height, end_block_height):
 
 #UPDATE - may be more elegant to get transactions from that table vs distincting UTXOs
 def getExpiringCollateralTransactions(bitcoin_block_id):
-    select = ("select id from bitland.transaction_contingency where miner_fee_sats <> 0 and miner_fee_status is null and block_id + miner_fee_blocks < " + str(bitcoin_block_id) + ";")
+    select = ("select id from bitland.transaction_contingency where miner_fee_sats <> 0 and miner_fee_status is null and bitcoin_block_height + miner_fee_blocks < " + str(bitcoin_block_id) + ";")
     return executeSqlMultipleRows(select)
 
 
 def getExpiringTransferFeeTransactions(bitcoin_block_id):
-    select = ("select id from bitland.transaction_contingency where transfer_fee_sats <> 0 and transfer_fee_status is null and block_id + miner_fee_blocks < " + str(bitcoin_block_id) + ";")
+    select = ("select id from bitland.transaction_contingency where transfer_fee_sats <> 0 and transfer_fee_status is null and bitcoin_block_height + miner_fee_blocks < " + str(bitcoin_block_id) + ";")
     return executeSqlMultipleRows(select)
     
 

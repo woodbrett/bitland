@@ -14,28 +14,32 @@ from node.networking.node_query_functions import get_blocks_start_end
 import json
 from node.networking.peering_functions import (
     message_all_connected_peers,
-    message_peer
+    message_peer, update_peer, connect_to_peer, query_peer,
+    attempt_to_connect_to_new_peer, delete_peer
     )
 from node.blockchain.block_serialization import deserialize_block
 from node.blockchain.validate_block import (
     validateBlock,
     validateBlockHeader
     )
-from node.blockchain.block_operations import (
-    addBlock,
-    removeBlocks
-    )
 from utilities.hashing import calculateHeaderHashFromBlock
 import time
 import threading
+from node.blockchain.block_adding_queueing import processPeerBlocks
+from node.blockchain.mempool_operations import garbageCollectMempool
+from ipaddress import ip_address
+from node.blockchain.global_variables import bitland_version
+from system_variables import peering_port
 
 def start_node():
     
-    #pingPeers()
+    pingPeers()
     #findPeers()
     check_peer_blocks()
-    t3 = threading.Thread(target=run_node,daemon=True)
-    t3.start()
+    print('checked peers')
+    garbageCollectMempool()
+    
+    run_node()
     
     return True
 
@@ -50,12 +54,28 @@ def run_node():
 
 def pingPeers():
 
-    ping = message_all_connected_peers('/peer/node_queries/getBlockHeight', rest_type='get')
+    ping = message_all_connected_peers('/peer/peering/ping', rest_type='get',peer_types=['connected','unpeered','offline'])
+    
+    for i in range(0,len(ping)):
+        
+        ip_address= ping[i][0]
+        
+        if ping[i][1] == 'error calling peer':
+            update_peer(ip_address=ip_address,status='offline')
+        
+        elif ping[i][1].get('message') == 'Not authenticated as peer':
+            
+            peer_port = query_peer(ip_address=ip_address).port
+            delete_peer(ip_address)
+            attempt_to_connect_to_new_peer(bitland_version, peering_port, int(time.time()), ip_address, peer_port)
+        
+        else:
+            update_peer(ip_address=ping[i][0],status='connected')
     
     return True
     
 
-def check_peer_blocks():
+def check_peer_blocks(use_threading=True):
     
     peer_heights = ask_peers_for_height()
     self_height = getMaxBlockHeight()
@@ -65,99 +85,28 @@ def check_peer_blocks():
     blocks_removed = 0
     
     for i in range(0,len(peer_heights)):
-        if peer_heights[i][1].get('block_height') > max_height:
+        
+        #UPDATE handle the errors from peers more elegantly
+        if peer_heights[i][1] == 'error calling peer':
+            None
+        
+        elif peer_heights[i][1].get('block_height') > max_height:
             max_height= peer_heights[i][1].get('block_height')
             max_height_peer = peer_heights[i][0]
     
     if max_height_peer != 'self':
         #UPDATE to only ask for max of X blocks, 50?
-        new_blocks = ask_peer_for_blocks(max_height_peer, max(self_height - 5,1), min(max_height-self_height,50)+self_height)
+        new_blocks = ask_peer_for_blocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
         
-        peer_blocks = json.loads(new_blocks.get('blocks'))
-        start_block_height = int(new_blocks.get('start_block_height'))
-        peer_next_block_index = self_height - start_block_height + 1
-        peer_next_block = peer_blocks[peer_next_block_index]
-        
-        next_block_header = deserialize_block(unhexlify(peer_next_block))[0]
-        next_block_prev_block = next_block_header[1]
-        
-        self_height_hash = unhexlify(getBlockInformation(block_id=self_height).header_hash)
-                
-        self_base_hash = unhexlify(getBlockInformation(block_id=start_block_height).header_hash)
-        peer_base_hash = calculateHeaderHashFromBlock(peer_blocks[0])
-        
-        if next_block_prev_block == self_height_hash:
-            process_blocks(peer_blocks[peer_next_block_index:])
-            blocks_added = len(peer_blocks[peer_next_block_index:])
-        
-        #UPDATE else logic in case the peer has a longer divergent chain
-        #haven't tested this yet
-        
-        elif self_base_hash == peer_base_hash: #unhexlify(getBlockInformation(block_id=start_block_height).header_hash) == calculateHeaderHashFromBlock(unhexlify(peer_blocks[0])):
-            
-            comparison_block_height = start_block_height
-            
-            #move to function compare_chains_find_split 
-            for i in range(0,(self_height - start_block_height + 1)):
-                
-                self_hash_i = unhexlify(getBlockInformation(block_id=i+start_block_height).header_hash)
-                peer_hash_i = calculateHeaderHashFromBlock(peer_blocks[i])
-                
-                if self_hash_i != peer_hash_i:
-                    peer_blocks_split = peer_blocks[i:]
-                    break
-                comparison_block_height = comparison_block_height + 1
-            
-            prev_block = getBlockInformation(comparison_block_height).prev_block
-            valid_blocks = process_blocks_memory(peer_blocks_split,prev_block)
-            
-            if valid_blocks == True:
-                remove = removeBlocks(comparison_block_height,self_height)
-                blocks_removed = len(peer_blocks_split)
-                
-                if remove == True:
-                    process_blocks(peer_blocks_split)
-                    blocks_added = len(peer_blocks_split)
-                
-    return blocks_added, blocks_removed
-
-
-def process_blocks_memory(blocks,start_prev_block):
-    
-    prev_block = unhexlify(start_prev_block)
-    
-    for i in range(0,len(blocks)):
-        print('analyzing block ' + str(i))
-        block_bytes = unhexlify(blocks[i])
-        valid_block = validateBlockHeader(block_bytes, realtime_validation=False, prev_block_input=prev_block)[0]
-        
-        if valid_block == False:
-            print('invalid block, stopping analysis')
-            break
-        
-        prev_block = calculateHeaderHashFromBlock(blocks[i])
-        
-    return valid_block
-
-
-def process_blocks(blocks):
-    
-    for i in range(0,len(blocks)):
-        print('analyzing block ' + str(i))
-        block_bytes = unhexlify(blocks[i])
-        valid_block = validateBlock(block_bytes, False)
-        print(valid_block)
-        
-        if valid_block == True:
-            add_block = addBlock(block_bytes)
-            print('added block ' + str(add_block))
-        
+        if use_threading==True:
+            t1 = threading.Thread(target=processPeerBlocks,args=(new_blocks,use_threading,),daemon=True)
+            t1.start()
+            t1.join()
         else:
-            print('invalid block, stopping additions')
-            break
-        
-    return None
-    
+            processPeerBlocks(new_blocks,use_threading=use_threading)
+
+    return True
+
 
 def ask_peers_for_height():
     
@@ -180,5 +129,5 @@ def ask_peer_for_blocks(peer, start_block, end_block):
 
 if __name__ == '__main__':
     
-    x = synch_node()
-    
+    #x = start_node()
+    x = check_peer_blocks(use_threading=False)

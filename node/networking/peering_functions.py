@@ -6,7 +6,8 @@ Created on Jul 11, 2021
 from utilities.sqlUtils import *
 from system_variables import (
     max_peer_count,
-    peering_port
+    peering_port,
+    local_api_password
     )
 from collections import namedtuple
 import threading
@@ -14,6 +15,7 @@ import time
 import requests
 import json
 from ipaddress import ip_address
+from _datetime import datetime
 
 #external_contact_local_accepted
 #local_contact_external_accepted
@@ -53,6 +55,11 @@ def evaluate_connection_request(ip_address, version, port, timestamp):
         t1.start()
     
     vars = namedtuple('vars', ['status','reason','token'])
+    
+    print("evaluated connection request: ")
+    print(status)
+    print(reason)
+    
     return vars(
         status,
         reason,
@@ -69,6 +76,14 @@ def authenticate_peer(ip_address, token):
         return True
     
     else: 
+        return False
+
+
+def authenticateLocalUser(ip_address, password):
+    
+    if password == local_api_password and ip_address == '127.0.0.1':
+        return True
+    else:
         return False
 
 
@@ -90,7 +105,7 @@ def add_peer(ip_address,port,status):
 
 
 #UPDATE
-def update_peer(ip_address,port="null",status="null",connected_time="null",last_ping="null",self_auth_key="null",peer_auth_key="null",derive_peer_auth_key=False):
+def update_peer(ip_address,port="null",status="null",connected_time="null",self_auth_key="null",peer_auth_key="null",derive_peer_auth_key=False,last_ping="null"):
     
     x = ''
     
@@ -100,14 +115,14 @@ def update_peer(ip_address,port="null",status="null",connected_time="null",last_
         x = x + ",status = '" + status + "' "
     if connected_time != "null":
         x = x + ",connected_time = '" + connected_time + "' "
-    if last_ping != "null":
-        x = x + ",last_ping = '" + last_ping + "' "
     if self_auth_key != "null":
         x = x + ",self_auth_key = '" + self_auth_key + "' "
     if peer_auth_key != "null":
         x = x + ",peer_auth_key = '" + peer_auth_key + "' "
     if derive_peer_auth_key == True:
         x = x + ",peer_auth_key = " + peer_auth_key + "uuid_generate_v1() "
+    if last_ping != "null":
+        x = x + ",last_ping = now() "
     
     query = (
         "update networking.peer " +
@@ -257,13 +272,14 @@ def attempt_to_connect_to_new_peer(version, port, timestamp, peer_ip_address, pe
 #currently hardcoded to the structure of the peers query
 #very inelegant with the post/get/etc rest type
 #hardcoded auth
-def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_exclude=[]):
+def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_exclude=[], peer_types=['connected']):
 
     peers = query_peers()
     
     responses = []
     
     print(peers)
+    print(peer_types)
     
     for i in range(0 ,len(peers)):
         exclude_peer = False
@@ -276,18 +292,15 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
             if peer_ip_address == peers_to_exclude[j]:
                 exclude_peer = True
         
-        if exclude_peer == False and peer_status == 'connected':
+        if exclude_peer == False and peer_status in peer_types:
             url = "http://" + peer_ip_address + ":" + str(peer_port) + endpoint
             headers = {
                 'Content-type': 'application/json', 
                 'Accept': 'application/json', 
                 'Authorization': token 
             }
-            print(headers)
-            print(json.dumps(payload))
             
             if rest_type == 'get':
-                print('trying get')
                 try:
                     r = requests.get(url, headers=headers).json()
                 except Exception as error:
@@ -307,7 +320,9 @@ def message_all_connected_peers(endpoint, payload='', rest_type='get', peers_to_
                 except Exception as error:
                     print('error calling peer ' + peer_ip_address)
                     r = 'error calling peer'
-                
+            
+            update_peer(ip_address=peer_ip_address, last_ping="x")
+            
             responses.append([peer_ip_address,r])
 
     return responses
@@ -349,34 +364,19 @@ def message_peer(endpoint, peer_ip_address, payload='', rest_type='get'):
             print('error calling peer ' + peer_ip_address)
             r = 'error calling peer'
     
-    print(r)
-
     return r
 
     
 if __name__ == '__main__':
     
-    #x = attempt_to_connect_to_new_peer(1, 8336, 1, '76.179.199.85', 8334)
+    payload = {"transaction":"0002010103aca220f7ec55e458acd9aafadc9af571da0676846fb6d5e2505c82a8849782004078708125ab06305a739e7ac4dbc7f0a3a571aad4976369069cf27469262b6f8650d0b508b73e36953f3b59934abc2ddad4ef5442114bae127d9efc49ba8810080101010051504f4c59474f4e28282d32322e352038392e37343637342c2d32322e352038392e35313836382c2d34352038392e35313836382c2d34352038392e37343637342c2d32322e352038392e373436373429294069022ccf1a0644a5e07eb2f89b3e9ab217fcc158f3525655a2a30f66c0c61a916858846f55db7172d5e71e3399d18fc191f0efc9b1fa12efcaeab17e0bbe27db0000000000000000000000000000000000"}
+    url = "/peer/node_updates/sendNewTransaction"
+    rest_type = 'put'
     
-    #connect_to_peer("abc", 100, 100, 'localhost' , 8334)
-    #new_peer = add_peer('99.99.99.99',1000,'connected')
-    #new_peer = add_peer('99.99.99.98',1000,'connected')
-    #new_peer = add_peer('99.99.99.97',1000,'connected')
-    #new_peer = add_peer('99.99.99.96',1000,'connected')
-
-    #print(message_all_connected_peers(endpoint='abc',peers_to_exclude=['99.99.99.98']))
+    peers_to_exclude=[]
     
-    #UNIT TESTS    
-    '''
-    new_peer = add_peer('99.99.99.99',1000,'initial_connection')
-    print(query_peer(ip_address='') == 'no peer found')
-    print(query_peer(ip_address='99.99.99.99').port == 1000)
-    print(peer_count()==1)
-    print(connect_peer('99.99.99.99',1, 1000, '11:00').status == 'unsuccessful peer')
-    update_peer(ip_address='99.99.99.99',port=1006,status='xyz')
-    print(query_peer(ip_address='99.99.99.99').port == 1006)
-    delete_peer('99.99.99.99')
-    print(query_peer(ip_address='99.99.99.99') == 'no peer found')
-    print(authenticate_peer('99.99.99.98', 'abc')==False)
-    '''
+    message_peer(url, '76.179.199.85', payload=payload, rest_type=rest_type)
+    
+    
+    
     

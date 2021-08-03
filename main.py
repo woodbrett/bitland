@@ -5,9 +5,8 @@ Created on Mar 28, 2021
 '''
 
 from flask import Flask
-from blueprints.basic_endpoints import blueprint as basic_endpoint
-from blueprints.documented_endpoints import blueprint as documented_endpoint
 from blueprints.peer import blueprint as peer
+from blueprints.local import blueprint as local
 import threading
 from mining.mining_functions import mining_process
 from system_variables import (
@@ -19,14 +18,14 @@ from node.processing.synching import start_node
 app = Flask(__name__)
 app.config['RESTPLUS_MASK_SWAGGER'] = False
 
-app.register_blueprint(basic_endpoint)
-app.register_blueprint(documented_endpoint)
 app.register_blueprint(peer)
+app.register_blueprint(local)
     
 #start node ongoing functions (managing peers, pinging, garbage collecting transactions)
 run_node = True
 if run_node == True:
-    start_node()
+    t1 = threading.Thread(target=start_node,daemon=True)
+    t1.start()
     print('starting node', flush=True)
     
 #start mining if true
@@ -40,5 +39,9 @@ if run_mining == True:
 if __name__ == "__main__":
     
     app.run(port=peering_port,host=peering_host)
+    
+    #local_app.run(port=peering_port)
+    #t1 = threading.Thread(target=local_app.run,args=(peering_port,),daemon=True)
+    #t1.start()
     
     

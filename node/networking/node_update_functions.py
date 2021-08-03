@@ -6,8 +6,6 @@ Created on Jul 12, 2021
 import threading
 import time
 import queue
-from node.blockchain.validate_block import validateBlock
-from node.blockchain.block_operations import addBlock
 from binascii import unhexlify
 from node.networking.peering_functions import message_all_connected_peers
 from node.information.blocks import getMaxBlockHeight
@@ -17,54 +15,31 @@ from node.blockchain.transaction_operations import (
     addTransactionToMempool,
     validateMempoolTransaction
     )
+from node.blockchain.block_adding_queueing import validateAddBlock
+from node.blockchain.transaction_adding_queueing import validateAddTransactionMempool
 
 action_queue = []
 
 def queue_new_block_from_peer(block_height,block,peer=''):
     
-    t1 = threading.Thread(target=analyze_new_block_from_peer,args=(block_height,block,peer,),daemon=True)
-    t1.start()
+    t3 = threading.Thread(target=analyze_new_block_from_peer,args=(block_height,block,peer,),daemon=True)
+    t3.start()
 
     print('thread started, exiting function')
 
     return True
     
 
+#UPDATE
 def analyze_new_block_from_peer(block_height,block,peer=''):
     
-    action_queue.append(threading.get_ident())
-    print(action_queue)
-    
-    print(threading.get_ident())
-    time.sleep(5)
-    sleep_time = 0
-
-    while action_queue[0] != threading.get_ident():
-        time.sleep(1)   
-        sleep_time = sleep_time + 1
-        print('thread: ' + str(threading.get_ident() + '; sleep: ' + str(sleep_time)))
-        if sleep_time > 100:
-            return False
-
-    self_height = getMaxBlockHeight()
     block_bytes = unhexlify(block)
-
-    if block_height > self_height + 1:
-        check_peer_blocks()
+    add_block = validateAddBlock(block_bytes, block_height)
     
-    elif block_height == self_height + 1:
-        if validateBlock(block_bytes) == True:
-            addBlock(block_bytes)
-            send_block_to_peers(block_height,block,peers_to_exclude=[peer])
-            
-        #UPDATE make sure it didn't not validate because of something wrong, but rather different chain (prior block different)
-        #right now it just sends it to synch node to handle, but this should be integrated more directly
-        else:
-            synch_node()
+    if add_block == True:
+        send_block_to_peers(block_height,block,peers_to_exclude=[peer])
     
-    action_queue.remove(threading.get_ident())
-    
-    return True
+    return add_block
 
 
 def send_block_to_peers(block_height,block,peers_to_exclude=[]):
@@ -81,38 +56,30 @@ def send_block_to_peers(block_height,block,peers_to_exclude=[]):
     return send_block
 
 
-def queue_new_transaction_from_peer(transaction,peer=''):
+def queue_new_transaction_from_peer(transaction_hex,use_threading=True,peer=''):
     
-    t1 = threading.Thread(target=analyze_new_transaction_from_peer,args=(transaction,peer,),daemon=True)
-    t1.start()
+    if use_threading == True:
+        t4 = threading.Thread(target=analyze_new_transaction_from_peer,args=(transaction_hex,peer,use_threading,),daemon=True)
+        t4.start()
+        #t4.join() this t4.join may cause circular logic
 
-    print('thread started, exiting function')
-
-    return True
-
-
-def analyze_new_transaction_from_peer(transaction,peer=''):
-    
-    action_queue.append(threading.get_ident())
-    time.sleep(5)
-
-    while action_queue[0] != threading.get_ident():
-        time.sleep(1)
-        print('a')
-    
-    transaction_bytes = unhexlify(transaction)
-    print(transaction_bytes)
-
-    if validateMempoolTransaction(transaction_bytes)[0] == True:
-        addTransactionToMempool(transaction_bytes)
-        send_transaction_to_peers(transaction,peers_to_exclude=[peer])
-        
     else:
-        return False
-        
-    action_queue.remove(threading.get_ident())
+        analyze_new_transaction_from_peer(transaction_hex,peer,use_threading)
 
-    return True
+    return None
+
+
+def analyze_new_transaction_from_peer(transaction_hex,peer='',use_threading=True):
+    
+    transaction_bytes = unhexlify(transaction_hex)
+    
+    
+    validate_transaction = validateAddTransactionMempool(transaction_bytes, use_threading)
+    
+    if validate_transaction == True:
+        send_transaction_to_peers(transaction_hex,peers_to_exclude=[peer])
+
+    return validate_transaction
 
 
 def send_transaction_to_peers(transaction,peers_to_exclude=[]):
@@ -122,6 +89,9 @@ def send_transaction_to_peers(transaction,peers_to_exclude=[]):
         "transaction":transaction
         }
     rest_type = 'put'
+    
+    print('sending_transaction to peers 2, peers to exclude', flush=True)
+    print(peers_to_exclude,flush=True)
     
     send_transaction = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
     
@@ -135,9 +105,8 @@ if __name__ == '__main__':
     print(send_block_to_peers(block))
     '''
     
-    transaction = '000201013c75b4c2a69b3a86e13ac62705a6cf2d8a56d7d8b8d18bf846c621d62478fe060040ebff9ba202e4e182ed5d5fd685e4220279547ce2368f93a9453174def02b454d9c93667c18e65ed24968b181be63a38af117a3c0c5b59e7e94baf8c5b602f7d70101010054504f4c59474f4e28282d33392e3337352038372e373637312c2d33392e3337352038372e36323530382c2d34352038372e36323530382c2d34352038372e373637312c2d33392e3337352038372e37363731292940e3f2ecdefaa8e3f6652e8960dcca0d09d713fe255cbb5920c79e5dfe46f9447971cb2c76c7e6870ec9641924fa7a4ce7955bf911caf8be624cb21e4cfbcbfaf30000000000000000000000000000000000'
-    #x = queue_new_transaction_from_peer(transaction)
-    x = analyze_new_transaction_from_peer(transaction)
-    print(x)
+    transaction_hex = '0002010103aca220f7ec55e458acd9aafadc9af571da0676846fb6d5e2505c82a8849782004078708125ab06305a739e7ac4dbc7f0a3a571aad4976369069cf27469262b6f8650d0b508b73e36953f3b59934abc2ddad4ef5442114bae127d9efc49ba8810080101010051504f4c59474f4e28282d32322e352038392e37343637342c2d32322e352038392e35313836382c2d34352038392e35313836382c2d34352038392e37343637342c2d32322e352038392e373436373429294069022ccf1a0644a5e07eb2f89b3e9ab217fcc158f3525655a2a30f66c0c61a916858846f55db7172d5e71e3399d18fc191f0efc9b1fa12efcaeab17e0bbe27db0000000000000000000000000000000000'    
+    
+    x = queue_new_transaction_from_peer(transaction_hex, use_threading=False)
     
     

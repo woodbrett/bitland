@@ -6,11 +6,18 @@ Created on Nov 18, 2020
 
 from codecs import decode, encode
 from binascii import hexlify, unhexlify
-from node.blockchain.global_variables import *
+from node.blockchain.global_variables import (
+    target_timespan_bitcoin_blocks,
+    starting_bits,
+    difficulty_adjustment_blocks
+    )
 from node.blockchain.queries import (
     getPriorBlock,
     getMaxBlock,
     getBlockById)
+from node.information.blocks import (
+    getBlockInformation
+    )
 
 def get_bits_from_target(target):
     bitlength = target.bit_length() + 1 #look on bitcoin cpp for info
@@ -61,11 +68,11 @@ def get_bits_current_block():
     return bits_bytes
 
 
-#UPDATE this to be based on bitcoin blocks rather than time
 def get_difficulty_adjustment(start_block, end_block):
+#difficulty is tied to trying to make the blocks line up with bitcoin blocks
     
-    block_timespan = getBlockById(end_block)[5] - getBlockById(start_block)[5]
-    adjustment = target_timespan / block_timespan
+    block_timespan = getBlockInformation(end_block).bitcoin_block_height - getBlockInformation(start_block).bitcoin_block_height
+    adjustment = target_timespan_bitcoin_blocks / block_timespan
     
     return adjustment
 

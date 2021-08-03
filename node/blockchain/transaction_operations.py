@@ -31,11 +31,11 @@ from node.information.mempool import getMempoolInformation
 #input version 4 - spend failed transfer
 #input version 5 - spend successful claim
 
-#input version 1 - standard 
-#input version 2 - spending as collateral
-#input version 3 - make claim
-#input version 4 - n/a
-#input version 5 - n/a
+#output version 1 - standard 
+#output version 2 - collateral
+#output version 3 - make claim
+
+#UPDATE limit lat/long to 6 decimal places
 
 def validateMempoolTransaction(transaction):
     
@@ -210,8 +210,8 @@ def validateTransaction2(transaction, block_height, block_header):
             
     except Exception as inst: 
         valid_transaction, failure_reason = inst.args  
-        print("transaction status: " + str(transaction_status))
-        print("reason: " + str(reason))
+        print("transaction status: " + str(valid_transaction))
+        print("reason: " + str(failure_reason))
     
     if failure_reason != '':
         print('validating transaction: ' + failure_reason)
@@ -264,8 +264,7 @@ def validateInputOutputClaims(inputs, outputs):
     input_claim_count = 0
     output_claim_count = 0
 
-    input_length = len(inputs)
-    for i in range(0, input_length):
+    for i in range(0, len(inputs)):
         input_version = int.from_bytes(inputs[i][0],'big')
         transaction_hash = hexlify(inputs[i][1]).decode('utf-8')
         transaction_vout = int.from_bytes(inputs[i][2],'big')
@@ -275,8 +274,7 @@ def validateInputOutputClaims(inputs, outputs):
             input_shape_str = output_parcel[1]
             input_claim_geom = "st_geomfromtext('" + input_shape_str + "',4326)"
     
-    output_length = len(outputs)
-    for i in range(0, input_length):
+    for i in range(0, len(outputs)):
         output_version = int.from_bytes(outputs[i][0],'big')
         if output_version == 3:
             output_claim_count = output_claim_count + 1
@@ -326,6 +324,12 @@ def validateShapes(inputs, outputs):
         valid_shapes = output_union_area == sum_output_area
         if(valid_shapes == False):
             failure_reason = 'sum of individual outputs not equal to unioned output'
+    
+    #validate that no more than 6 decimals are used and potentially other rules
+    if (valid_shapes == True):
+        valid_shapes = queryPolygonRules(outputs)
+        if(valid_shapes == False):
+            failure_reason = 'sum of individual outputs not equal to unioned output'    
     
     return valid_shapes, failure_reason
 
@@ -390,8 +394,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
         block_height = getMaxBlockHeight() + 1
 
     if block_header != None:
-        deserialized_block_header = deserialize_block_header(block_header)
-        bitcoin_block_height = deserialized_block_header[5]
+        bitcoin_block_height = int.from_bytes(block_header[5],'big')
         
     else:
         bitcoin_block_height = getCurrentBitcoinBlockHeight()
@@ -415,6 +418,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
     #validate it is an outstanding utxo
     if (valid_input == True):
         valid_input = input_utxo != 'no matched utxo'
+        print(valid_input)
         if(valid_input == False):
             failure_reason = 'no matched utxo'
     
@@ -441,7 +445,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
         valid_input_utxo_types = validContingencyStatusSpendTypes(input_version)[4]
         
         transfer_fee_status_valid = ((transfer_fee_status in valid_transfer_fee_types) or valid_transfer_fee_types == [])
-        miner_fee_status_valid = ((miner_fee_status in valid_miner_fee_types) or valid_transfer_fee_types == [])
+        miner_fee_status_valid = ((miner_fee_status in valid_miner_fee_types) or valid_miner_fee_types == [])
         claim_status_valid = ((claim_status in valid_claim_types) or valid_claim_types == [])
         outstanding_claim_valid = ((outstanding_claim in valid_claim_types) or valid_claim_types == [])
         input_utxo_type_valid = ((input_utxo_version in valid_input_utxo_types) or valid_input_utxo_types == [])
@@ -513,17 +517,16 @@ def getPublicKeySpendTypes(spend_type, utxo_public_key, utxo_transfer_failover_k
 
 def validContingencyStatusSpendTypes(spend_type):
     #NO_FEE - transaction didn't have a transfer fee
-    #FEE_PAID_UNCONFIRMED - fee was paid but not through the confirmation period
-    #FEE_PAID_CONFIRMED - fee was paid but not through the confirmation period
-    #FEE_UNPAID_NOT_EXPIRED - fee not paid, but timing not expired
+    #OPEN - fee not paid, but timing not expired
+    #VALIDATED_UNCONFIRMED - fee was paid but not through the confirmation period
+    #VALIDATED_CONFIRMED - fee was paid but not through the confirmation period
     #EXPIRED_UNCONFIRMED - fee not paid, timing expired, waiting for block period
     #EXPIRED_CONFIRMED - fee not paid, waiting period complete, parcel is returned to original address
-
     #NO_CLAIM, OUTSTANDING_CLAIM, SUCCESSFUL_CLAIM
-
+    
     if spend_type == 1:
-        transfer_fee_status = ['NO_FEE', 'FEE_PAID_CONFIRMED']
-        miner_fee_status = ['NO_FEE', 'FEE_PAID_CONFIRMED']
+        transfer_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
+        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
         claim_status = []
         outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
         input_utxo_type = [0,1,2]
@@ -536,8 +539,8 @@ def validContingencyStatusSpendTypes(spend_type):
         input_utxo_type = [2]
         
     elif spend_type == 3:
-        transfer_fee_status = ['NO_FEE', 'FEE_PAID_CONFIRMED', 'EXPIRED_CONFIRMED']
-        miner_fee_status = ['NO_FEE', 'FEE_PAID_CONFIRMED', 'EXPIRED_CONFIRMED']
+        transfer_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
+        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
         claim_status = []
         outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
         input_utxo_type = [0,1,2,3]
@@ -551,7 +554,7 @@ def validContingencyStatusSpendTypes(spend_type):
     
     elif spend_type == 5:
         transfer_fee_status = []
-        miner_fee_status = ['NO_FEE', 'FEE_PAID_CONFIRMED']
+        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
         claim_status = ['SUCCESSFUL_CLAIM']
         outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
         input_utxo_type = [3]

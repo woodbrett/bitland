@@ -31,11 +31,11 @@ def validateVer(version):
     
     return is_valid
     
-def validatePrevBlock(prev_block, prev_block_input=None):
-    
-    if prev_block_input == None:
-        prev_block_input = getPrevBlock()
-        
+def validatePrevBlock(prev_block, prev_block_input):
+
+    if getBlockCount() == 0:
+        prev_block_input = unhexlify('0000000000000000000000000000000000000000000000000000000000000000')
+       
     is_valid = prev_block_input == prev_block
     return is_valid  
 
@@ -78,31 +78,30 @@ def validateTime(time_,realtime_validation=True):
         if realtime_validation==True:
             is_valid = (time_int > average_time_last_11 and time_int < (network_adjusted_time + 60*60*2))
         else: 
+            #UPDATE so that it is pulling the last 11 from memory if they aren't in DB yet
             is_valid = (time_int > average_time_last_11 )
     
     return is_valid
 
     
-def validateBitcoinBlock(block_height,realtime_validation=True):
+def validateBitcoinBlock(block_height, prior_block_bitcoin_height, realtime_validation=True):
+    
     
     if getBlockCount() == 0:
-        #prior_bitcoin_block_height = getCurrentBitcoinBlockHeight() - 6
-        is_valid = True
-        return is_valid
+        prior_block_bitcoin_height_int = 0
     
     else:
-        prior_bitcoin_block_height = queryGetPrevBitcoinBlock()
+        prior_block_bitcoin_height_int = int.from_bytes(prior_block_bitcoin_height, byteorder='big')
+    
+    block_height_int = int.from_bytes(block_height, byteorder='big')
+    
+    #UPDATE should we have margin of a few bitcoin blocks? don't think so
+    if realtime_validation==True:
         calculated_block_height = getCurrentBitcoinBlockHeight()
-        block_height_int = int.from_bytes(block_height, byteorder='big')
-        
-        #print(block_height_int)
-        
-        #UPDATE should we have margin of a few bitcoin blocks? don't think so
-        if realtime_validation==True:
-            is_valid = abs(calculated_block_height - block_height_int) <= bitcoin_block_range and block_height_int >= prior_bitcoin_block_height
-        else:
-            is_valid = block_height_int >= prior_bitcoin_block_height
-        
+        is_valid = abs(calculated_block_height - block_height_int) <= bitcoin_block_range and block_height_int >= prior_block_bitcoin_height_int
+    else:
+        is_valid = block_height_int >= prior_block_bitcoin_height_int
+    
     return is_valid    
     
     
@@ -116,17 +115,8 @@ def validateBits(bits):
     
 def validateBitcoinAddress(address):
 
-    address = unhexlify(address)
-
-    base58Decoder = base58.b58decode(address).hex()
-    prefixAndHash = base58Decoder[:len(base58Decoder)-8]
-    checksum = base58Decoder[len(base58Decoder)-8:]
-    
-    hash = prefixAndHash
-    for x in range(1,3):
-        hash = sha256(unhexlify(hash)).hexdigest()
-    
-    is_valid = checksum == hash[:8]
+    address_utf8 = address.decode('utf-8')
+    is_valid = validateBitcoinAddressFromBitcoinNode(address_utf8)
 
     return is_valid
 
@@ -203,54 +193,7 @@ def getHeaders(start_hash,end_hash):
 
 if __name__ == '__main__':
     
-    print(getHeaders(unhexlify('0000000000000000000000000000000000000000000000000000000000000000'.encode('utf-8')),unhexlify('0000000000000000000000000000000000000000000000000000000000000000'.encode('utf-8'))))
+    miner_address_bytes = b'bc1qccs269z2s4mftnu9r99chn537qwng235f28x99'
     
-    '''
-    version = 1 
-    prev_block = '0000000000000000000000000000000000000000000000000000000000000000'
-    mrkl_root = '2b7334323d293f909f3d3458ff6641a5c299838f229d6ae9d0d18b2cf4f56af4'
-    time_ = 1614041015
-    bits = 0x1d00ffff 
-    nonce = 0x1f1471ce
-    bitcoin_height = 680000
-    miner_bitcoin_address = '31354e77556b745a74346b574d4c714b35514c7278414d5161707965467841693668'
-        
-    version_bytes = version.to_bytes(2, byteorder = 'big')
-    prev_block_bytes = unhexlify(prev_block)
-    mrkl_root_bytes = unhexlify(mrkl_root)
-    time_bytes = time_.to_bytes(5, byteorder = 'big')
-    bits_bytes = bits.to_bytes(4, byteorder = 'big')
-    bitcoin_height_bytes = bitcoin_height.to_bytes(4, byteorder = 'big')
-    miner_bitcoin_address_bytes = unhexlify(miner_bitcoin_address)
-    nonce_bytes = nonce.to_bytes(4, byteorder = 'big')    
-    
-    transaction_1 = '00010001013b504f4c59474f4e20282839302039302c2039302038392e37343637342c203138302038392e37343637342c203138302039302c20393020393029292231354e77556b745a74346b574d4c714b35514c7278414d51617079654678416936680000'
-    transaction_2 = '00010001013b504f4c59474f4e20282839302039302c2039302038392e37343637342c203138302038392e37343637342c203138302039302c20393020393029292231354e77556b745a74346b574d4c714b35514c7278414d51617079654678416936680000'
-    transaction_3 = '00010001013b504f4c59474f4e20282839302039302c2039302038392e37343637342c203138302038392e37343637342c203138302039302c20393020393029292231354e77556b745a74346b574d4c714b35514c7278414d51617079654678416936680000'
-    
-    transaction_1_bytes = unhexlify(transaction_1)
-    transaction_2_bytes = unhexlify(transaction_2)
-    transaction_3_bytes = unhexlify(transaction_3)
-    transaction_set_bytes = [transaction_1_bytes,transaction_2_bytes,transaction_3_bytes]
-    
-    print('version: ' + str(validateVer(version_bytes)))
-    print('prev block: ' + str(validatePrevBlock(prev_block_bytes)))
-    print('mrkl: ' + str(validateMrklRoot(mrkl_root_bytes, transaction_set_bytes)))
-    print('time: ' + str(validateTime(time_bytes)))
-    print('bits: ' + str(validateBits(bits_bytes)))
-    print('block: ' + str(validateBitcoinBlock(bitcoin_height_bytes)))
-    print('bitcoin address: ' + str(validateBitcoinAddress(miner_bitcoin_address_bytes)))
-    print('valid header: ' + str(validateHeaderHash(
-        version_bytes,
-        prev_block_bytes, 
-        mrkl_root_bytes,
-        time_bytes,
-        bits_bytes,
-        bitcoin_height_bytes,
-        miner_bitcoin_address_bytes,
-        nonce_bytes
-        ))
-    )    
-    '''
-    
-    
+    x = validateBitcoinAddress(miner_address_bytes)
+    print(x)
