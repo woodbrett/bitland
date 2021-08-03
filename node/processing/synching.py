@@ -84,8 +84,6 @@ def check_peer_blocks(use_threading=True):
     blocks_added = 0
     blocks_removed = 0
     
-    print(peer_heights)
-    
     for i in range(0,len(peer_heights)):
         
         #UPDATE handle the errors from peers more elegantly
@@ -106,7 +104,6 @@ def check_peer_blocks(use_threading=True):
             t1.join()
         else:
             processPeerBlocks(new_blocks,use_threading=use_threading)
-            
 
     return True
 
@@ -132,5 +129,5 @@ def ask_peer_for_blocks(peer, start_block, end_block):
 
 if __name__ == '__main__':
     
-    x = start_node()
-    
+    #x = start_node()
+    x = check_peer_blocks(use_threading=False)

@@ -164,14 +164,14 @@ def validateBlocksMemory(blocks,start_prev_block,start_prior_block):
 def validateAddBlocksAlreadyQueue(blocks):
     
     for i in range(0,len(blocks)):
-        print('analyzing block ' + str(i))
+        print('analyzing block ' + str(i), flush=True)
         block_bytes = unhexlify(blocks[i])
         valid_block = validateBlock(block_bytes, realtime_validation=False)
         print(valid_block)
         
         if valid_block == True:
             add_block = addBlock(block_bytes)
-            print('added block ' + str(add_block))
+            print('added block ' + str(add_block), flush=True)
         
         else:
             valid_block == False
