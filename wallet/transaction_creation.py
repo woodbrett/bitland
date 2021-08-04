@@ -152,9 +152,61 @@ def createTransaction1(transaction_version, inputs, outputs, contingencies):
     return serialized_transaction
     
 
+def createTransactionClaim(input_transaction_hash, input_vout, miner_fee_sats, miner_fee_blocks):
+    
+    utxo = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout)
+    polygon = utxo.get('shape')
+    polygon_bytes = polygon.encode('utf-8')
+    planet_id = utxo.get('planet_id')
+    
+    output_keys = generateRandomKeys()
+    output_private_key = output_keys[0]
+    output_public_key = output_keys[1]
+
+    savePublicPrivateKeysDb(output_private_key, output_public_key)
+    
+    transaction_version = 2
+    transaction_version = transaction_version.to_bytes(2, byteorder = 'big')
+        
+    #input 1 - claim
+    type = 3 
+    transaction_hash = input_transaction_hash
+    vout = input_vout
+    signature = b''
+    input_1 = [type.to_bytes(1, byteorder = 'big'), unhexlify(transaction_hash), vout.to_bytes(1, byteorder = 'big'), signature]
+
+    inputs = [input_1]
+    
+    #output 1 - claim
+    type = 1
+    planet_id = planet_id
+    coordinates = polygon
+    public_key = output_public_key
+    output_1 = [type.to_bytes(1, byteorder = 'big'), planet_id.to_bytes(1, byteorder = 'big'), coordinates.encode('utf-8'), unhexlify(public_key)]
+
+    outputs = [output_1]
+
+    #contingencies
+    miner_fee_sats = miner_fee_sats #this is also the claim amount
+    miner_fee_blocks = miner_fee_blocks #12960 max 
+    transfer_fee_sats = 0
+    transfer_fee_blocks = 0 #12960 max
+    transfer_fee_address = ''
+    contingencies = [miner_fee_sats.to_bytes(6, byteorder = 'big'),
+                     miner_fee_blocks.to_bytes(2, byteorder = 'big'),
+                     transfer_fee_sats.to_bytes(6, byteorder = 'big'),
+                     transfer_fee_blocks.to_bytes(2, byteorder = 'big'),
+                     transfer_fee_address.encode('utf-8')
+                     ]
+
+    serialized_transaction = serialize_transaction(transaction_version, inputs, outputs, contingencies)
+    
+    return serialized_transaction    
+    
+
 if __name__ == '__main__':
 
-    #simple transaction
+    ############## SIMPLE TRANSACTION #################
     '''
     select 
     '["' || pub_key || '","' || private_key || '","' || st_astext(geom) || '",' || planet_id::varchar || ',' || vout::varchar || ',"' || transaction_hash::varchar || '"]',
@@ -177,7 +229,7 @@ if __name__ == '__main__':
     #print(deserialize_transaction(simple_transaction))
     
     
-    ############ more complex transaction ################
+    ############ MORE COMPLEX TRANSACTION ################
     #INPUTS
     '''
         select 
@@ -234,8 +286,22 @@ if __name__ == '__main__':
     contingencies = [50001,2000,50001,2000,hexlify(transfer_fee_address_1.encode('utf-8')).decode('utf-8')]
     #contingencies = [0,0,0,0,'']
         
-    complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
-    print(hexlify(complex_transaction).decode('utf-8'))
-    print(deserialize_transaction(complex_transaction))
+    #complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
+    #print(hexlify(complex_transaction).decode('utf-8'))
+    #print(deserialize_transaction(complex_transaction))
+    
+    
+    ############ CLAIM TRANSACTION ################
+    
+    claim_transaction = createTransactionClaim('11e0177991e5b50d90c1e3492c5d8b2cae1fa2c1d0fdd856a96458682f859cfa', 0, 10000, 500)
+    print(hexlify(claim_transaction).decode('utf-8'))
+    
+    
+    
+    
+    
+    
+    
+    
     
     

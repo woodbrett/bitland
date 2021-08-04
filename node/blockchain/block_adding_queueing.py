@@ -7,7 +7,7 @@ import threading
 import time
 from node.information.blocks import (
     getMaxBlockHeight, 
-    getBlock
+    getBlock, getBlockSerialized
     )
 from node.blockchain.validate_block import validateBlock, validateBlockHeader
 from node.blockchain.block_operations import addBlock, removeBlocks
@@ -124,7 +124,7 @@ def processPeerBlocks(new_blocks_hex, use_threading=True):
             comparison_block_height = comparison_block_height + 1
         
         prev_block = getBlock(comparison_block_height).get('prev_block')
-        prior_block = getBlock(comparison_block_height - 1)
+        prior_block = getBlockSerialized(comparison_block_height - 1)
         
         valid_blocks = validateBlocksMemory(peer_blocks_split,prev_block,prior_block)
         

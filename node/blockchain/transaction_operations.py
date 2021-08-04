@@ -303,6 +303,8 @@ def validateInputOutputClaims(inputs, outputs):
         if(valid_input == False):
             failure_reason = 'claim geometries dont match'
     
+    #logic that claim has to be 50% higher than previous one is captured in the input validation
+    
     return valid_input, failure_reason
 
 
