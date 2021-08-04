@@ -83,5 +83,8 @@ if __name__ == '__main__':
     
     print(validateBitcoinAddressFromBitcoinNode('abc'))
     print(validateBitcoinAddressFromBitcoinNode('bc1qsdmlzvq79spjameemz5d8g2xfxxxgcp74h7j5w'))
+    
+    
+    
 
 

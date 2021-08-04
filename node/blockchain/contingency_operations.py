@@ -14,8 +14,9 @@ from node.information.transaction import (
     getTransaction
     )
 from node.information.contingency import (
-    getClaim
+    getClaim, getContingencyStatusDb
     )
+from utilities.sqlUtils import executeSql
 
 
 def inspectParcel(transaction, vout, bitcoin_block_height, bitland_block):
@@ -33,8 +34,10 @@ def inspectParcel(transaction, vout, bitcoin_block_height, bitland_block):
     else:
         is_current_utxo = True
         type = output_parcel.get('output_version')
-        miner_fee_status = getMinerFeeStatus(output_parcel.get('id'), bitcoin_block_height)
-        transfer_fee_status = getTransferFeeStatus(output_parcel.get('id'), bitcoin_block_height)
+        #miner_fee_status = getMinerFeeStatus(output_parcel.get('id'), bitcoin_block_height)
+        miner_fee_status = getContingency(transaction,'miner_fee',bitcoin_block_height,bitland_block)
+        #transfer_fee_status = getTransferFeeStatus(output_parcel.get('id'), bitcoin_block_height)
+        transfer_fee_status = getContingency(transaction,'transfer_fee',bitcoin_block_height,bitland_block)
         outstanding_claims = getUtxoClaim(output_parcel.get('id'), bitland_block)
         claim_status = getClaimStatus(output_parcel.get('id'), bitland_block)
     
@@ -49,7 +52,7 @@ def inspectParcel(transaction, vout, bitcoin_block_height, bitland_block):
     
     return parcel_output
 
-
+'''
 def getMinerFeeStatus(utxo_id, bitcoin_block):
 
     input_utxo = getUtxo(id=utxo_id)
@@ -143,7 +146,7 @@ def getTransferFeeStatus(utxo_id, bitcoin_block):
             transfer_fee_status = 'error'
 
     return transfer_fee_status
-
+'''
 
 def getClaimStatus(utxo_id, bitland_block):
 
@@ -193,7 +196,7 @@ def getUtxoClaim(utxo_id, bitland_block):
     
     return claim_status
 
-
+'''
 def calculateMinerFeeStatus(utxo_id, bitcoin_block):
     
     input_utxo = getUtxo(id=utxo_id)
@@ -291,6 +294,27 @@ def calculateTransferFeeStatus(bitcoin_block, utxo_id=0, transaction_id=0):
         status = {'status':'ERROR','txid':'','bitcoin_block_height':0,'transaction_number':0,'address':'','value':0}
     
     return status
+'''
+
+def getContingency(transaction_hash,type,bitcoin_height,bitland_height):
+    
+    #check DB
+    db_contingency = getContingencyStatusDb(transaction_hash=transaction_hash, type=type)
+    
+    if db_contingency.get('status') == 'contingency identified' :        
+        if db_contingency.get('record_status') in ['expired_confirmed', 'validated_confirmed']:
+            return db_contingency.get('record_status')
+    
+        else:
+            calculate_contingency = calculateContingencyStatus(transaction_hash,type,bitcoin_height)
+            transaction_id = getTransaction(transaction_hash).get('id')
+            addContingencyStatusDb(transaction_id=transaction_id, type=type, recorded_status_bitcoin_block_height=bitcoin_height, recorded_status_bitland_block_height=bitland_height, status=calculate_contingency.get('status'), bitcoin_transaction_id=calculate_contingency.get('bitcoin_txid'))
+            return calculate_contingency.get('status')
+    
+    elif db_contingency.get('status') == 'no contingency found' : 
+        return 'no contingency'
+        
+    return None
 
 
 def getLowestBlockAddressFee(address_hex, fee):
@@ -302,7 +326,10 @@ def getLowestBlockAddressFee(address_hex, fee):
     
     address_count = len(address_info)
     
-    transaction = ['fee address not found']
+    transaction = {
+        'status':'fee address not found'
+        }
+    
     transactions = []
     
     #UPDATE to go through next pages if more than 25 occurrences
@@ -332,31 +359,95 @@ def getLowestBlockAddressFee(address_hex, fee):
                     transaction = transactions[i]
                     lowest_block_height = transactions[i][1]
     
-        transaction.insert(0, 'identified fee address')
+        transaction = {
+            'status':'identified fee address',
+            'txid': transaction[0],
+            'block_height': transaction[1],
+            'address': transaction[3],
+            'value': transaction[4]
+            }
 
     return transaction
 
 
-#UPDATE
-def getUtxoPubKey(utxo_id, pub_key_input_type):
+def calculateContingencyStatus(transaction_hash,type,bitcoin_height):
     
-    return 'abc'
+    transaction = getTransaction(transaction_hash=transaction_hash)
+    
+    if type == 'miner_fee':
+        bitcoin_address = hexlify(transaction.get('miner_bitcoin_address').encode('utf-8')).decode('utf-8')
+        fee_sats = transaction.get('miner_fee_sats')
+        expiration_block = transaction.get('bitcoin_block_height') + transaction.get('miner_fee_blocks')
+        expiration_confirmed_block = expiration_block + contingency_validation_blocks
+    
+    elif type == 'transfer_fee':
+        bitcoin_address = hexlify(transaction.get('transfer_fee_address').encode('utf-8')).decode('utf-8')
+        fee_sats = transaction.get('transfer_fee_sats')
+        expiration_block = transaction.get('bitcoin_block_height') + transaction.get('transfer_fee_blocks')
+        expiration_confirmed_block = expiration_block + contingency_validation_blocks
+
+    bitcoin_address_search = getLowestBlockAddressFee(bitcoin_address,fee_sats)
+
+    if bitcoin_address_search.get('status') == 'fee address not found':
+        if bitcoin_height > expiration_block:
+            status = 'expired'
+        else:
+            status = 'open'
+            
+    elif bitcoin_address_search.get('status') == 'identified fee address':
+        if bitcoin_address_search.get('block_height') > expiration_block:
+            status = 'expired'
+        elif bitcoin_address_search.get('block_height') <= expiration_block:
+            status = 'validated'
+    
+    if status == 'expired':
+        if bitcoin_height > expiration_confirmed_block:
+            status = 'expired_confirmed'
+        elif bitcoin_height > expiration_block:
+            status = 'expired_unconfirmed'
+    
+    if status == 'validated':
+        if bitcoin_address_search.get('block_height') + contingency_validation_blocks > bitcoin_height:
+            status = 'validated_unconfirmed'
+        else:
+            status = 'validated_confirmed'
+    
+    output = {
+        'status': status,
+        'bitcoin_txid': bitcoin_address_search.get('txid') or ''
+        }
+    
+    return output
+
+
+def addContingencyStatusDb(transaction_id=0, type='', recorded_status_bitcoin_block_height=0, recorded_status_bitland_block_height=0, status='', bitcoin_transaction_id=''):
+    
+    transaction_id = str(transaction_id)
+    recorded_status_bitcoin_block_height = str(recorded_status_bitcoin_block_height)
+    recorded_status_bitland_block_height = str(recorded_status_bitland_block_height) 
+    
+    query = ("insert into bitland.contingency_status values  " +
+            "(" + transaction_id + "," +
+            "'" + type + "'," + 
+            recorded_status_bitcoin_block_height + "," +  
+            recorded_status_bitland_block_height + "," +  
+            "'" + status + "'," +  
+            "'" + bitcoin_transaction_id + "') " +
+            "RETURNING transaction_id;"
+            )
+
+    claim_id = executeSql(query)
+    
+    return claim_id
 
 
 if __name__ == '__main__':
 
-    address = '31354e77556b745a74346b574d4c714b35514c7278414d5161707965467841693668'
-    print(unhexlify(address).decode('utf-8'))
-    
-    address_str = '15NwUktZt4kWMLqK5QLrxAMQapyeFxAi6h'
-    address_hex_bytes = hexlify(address_str.encode('utf-8'))
-    print(address_hex_bytes)
-    print(len(address_hex_bytes))
-    print(unhexlify(address_hex_bytes))
+    address = 'bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws'
+    address_hex = hexlify(address.encode('utf-8')).decode('utf-8')
+    print(getLowestBlockAddressFee(address_hex,50000))
 
-    utxo_id = 21
-    transaction = 'b0bcaa0b93e0802533596449a9efa39f7137895c51baba2fa3eefe38cab8fff6'
-    vout = 1
-    bitcoin_block = 700000
-    bitland_block = 4
-    print(inspectParcel(transaction, vout, bitcoin_block, bitland_block))
+    print(calculateContingencyStatus('a8788b7873e8c5671d62c2f3936b34ec3207bfc68062ea4250e4b10182dd8845','miner_fee',694208))
+
+    print(addContingencyStatusDb(539, 'miner_fee', 694208, 239, 'validated','6642f684813e41aa1420ea315ed1b6fba2c151226d2f14b2a741659559439283'))
+
