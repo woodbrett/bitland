@@ -15,7 +15,7 @@ from system_variables import (
     )
 from node.processing.synching import (
     start_node,
-    synched_with_peers
+    run_node
     )
 import time
 
@@ -26,9 +26,10 @@ app.register_blueprint(peer)
 app.register_blueprint(local)
     
 #start node ongoing functions (managing peers, pinging, garbage collecting transactions)
-run_node = True
-if run_node == True:
-    t1 = threading.Thread(target=start_node,daemon=True)
+node = True
+if node == True:
+    start_node()
+    t1 = threading.Thread(target=run_node,daemon=True)
     t1.start()
     print('starting node', flush=True)
     
@@ -36,11 +37,6 @@ if run_node == True:
 run_mining = True
 if run_mining == True:
     
-    while synched_with_peers != 'synched':
-        time.sleep(5)
-        print('mining waiting for synch')
-        print(synched_with_peers)
-        
     t2 = threading.Thread(target=mining_process,daemon=True)
     t2.start()
     print('started mining', flush=True)

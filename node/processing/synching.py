@@ -29,8 +29,6 @@ from ipaddress import ip_address
 from node.blockchain.global_variables import bitland_version
 from system_variables import peering_port
 
-synched_with_peers = 'unknown'
-
 def start_node():
     
     pingPeers()
@@ -38,8 +36,6 @@ def start_node():
     check_peer_blocks()
     print('checked peers')
     garbageCollectMempool()
-    
-    run_node()
     
     return True
 
@@ -107,8 +103,6 @@ def check_peer_blocks(use_threading=True):
             t1.join()
         else:
             processPeerBlocks(new_blocks,use_threading=use_threading)
-
-    synched_with_peers = 'synched'
 
     return True
 
