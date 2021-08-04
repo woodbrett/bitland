@@ -6,7 +6,10 @@ Created on Mar 6, 2021
 import requests
 from system_variables import (
     transaction_validation_url,
-    block_height_url
+    block_height_url,
+    rpc_user,
+    rpc_password,
+    node_url 
     )
 from _sha256 import sha256
 import base58
@@ -37,12 +40,8 @@ def validateV1BitcoinAddress(address):
 
 
 def validateBitcoinAddressFromBitcoinNode(address_utf8):
-    
-    rpc_user = 'admin'
-    rpc_password = 'password'
-    
-    # rpc_user and rpc_password are set in the bitcoin.conf file
-    rpc_connection = AuthServiceProxy("http://%s:%s@192.168.86.34:8332"%(rpc_user, rpc_password))
+
+    rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
     
     return rpc_connection.validateaddress(address_utf8).get('isvalid')
 

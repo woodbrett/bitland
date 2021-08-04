@@ -178,15 +178,18 @@ def getUtxoClaim(utxo_id, bitland_block):
     if claim_info.get('status') == 'no claim found':
         claim_status = 'NO_CLAIM'
         
-    elif claim_info.get('invalidated_claim') == 'true':
+    elif claim_info.get('invalidated_claim') == True:
         claim_status = 'INVALIDATED_CLAIM'
         
-    elif (claim_info.get('leading_claim') == 'true' and claim_info.get('invalidated_claim') == 'false'):
+    elif (claim_info.get('leading_claim') == True and claim_info.get('invalidated_claim') == False):
         claim_expiration_block = claim_info.get('claim_block_height') + claim_blocks
         if bitland_block < claim_expiration_block:
             claim_status = 'OUTSTANDING_CLAIM'
         else:
             claim_status = 'SUCCESSFUL_CLAIM'    
+            
+    else: 
+        claim_status = 'ERROR'
     
     return claim_status
 
