@@ -29,6 +29,8 @@ from ipaddress import ip_address
 from node.blockchain.global_variables import bitland_version
 from system_variables import peering_port
 
+synched_with_peers = 'unknown'
+
 def start_node():
     
     pingPeers()
@@ -94,6 +96,9 @@ def check_peer_blocks(use_threading=True):
     
     if max_height_peer != 'self':
         #UPDATE to only ask for max of X blocks, 50?
+        
+        synched_with_peers = 'out of synch'
+        
         new_blocks = ask_peer_for_blocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
         
         if use_threading==True:
@@ -102,6 +107,8 @@ def check_peer_blocks(use_threading=True):
             t1.join()
         else:
             processPeerBlocks(new_blocks,use_threading=use_threading)
+
+    synched_with_peers = 'synched'
 
     return True
 

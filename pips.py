@@ -12,3 +12,4 @@ python -m pip install psycopg2
 python -m pip install requests
 python -m pip install base58
 python -m pip install ecdsa
+python -m pip install python-bitcoinrpc
