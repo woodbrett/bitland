@@ -178,7 +178,7 @@ def createTransactionClaim(input_transaction_hash, input_vout, miner_fee_sats, m
     inputs = [input_1]
     
     #output 1 - claim
-    type = 1
+    type = 3
     planet_id = planet_id
     coordinates = polygon
     public_key = output_public_key

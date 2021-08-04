@@ -482,7 +482,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
     
     #check if its valid to make a claim
     if (valid_input == True and input_version == 3):
-        utxo_current_claim_sats = input_utxo.claim_fee_sats
+        utxo_current_claim_sats = input_utxo.get('claim_fee_sats')
         valid_input = validateClaimAttempt(miner_fee_sats, utxo_current_claim_sats)
         if(valid_input == False):
             failure_reason = 'insufficient bid for claim'          
@@ -576,6 +576,9 @@ def validContingencyStatusSpendTypes(spend_type):
 
 
 def validateClaimAttempt(miner_fee_sats, utxo_current_claim_sats):
+    
+    if utxo_current_claim_sats == None or utxo_current_claim_sats == 0:
+        return True
     
     #claim must be larger than prior claims by 50% (global variable)
     valid_claim_increase = (miner_fee_sats / utxo_current_claim_sats - 1) > claim_required_percentage_increase
