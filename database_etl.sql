@@ -657,6 +657,10 @@ begin
 	delete from bitland.transaction
 	where id in (select distinct transaction_id from block_joins bj)
 	)
+	,delete_claim as (
+	delete from bitland.claim
+	where claim_block_height = $1
+	)
 	,delete_block_entry as (
 	delete from bitland.block
 	where id in (select distinct block_id from delete_block)

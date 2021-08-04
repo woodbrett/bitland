@@ -90,7 +90,7 @@ def addTransferFeeStatusToDb(transaction_id, bitcoin_block_height, bitcoin_trans
 
 
 #What is invalidation input parcel id?
-def addClaimToDb(claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, leading_claim, invalidated_claim, invalidation_input_parcel_id, from_bitland_block_height):
+def addClaimToDb(claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, leading_claim, invalidated_claim, from_bitland_block_height):
 
     claimed_output_parcel_id = str(claimed_output_parcel_id)
     claim_action_output_parcel_id = str(claim_action_output_parcel_id)
@@ -134,6 +134,8 @@ def updateClaimLeading(id, block):
     block = str(block)
     
     query = ("update bitland.claim set leading_claim = false, to_bitland_block_height = " + block + " where id = " + id + " RETURNING id")
+    print(query)
+
     claim_id = executeSql(query)[0]
     
     return claim_id
