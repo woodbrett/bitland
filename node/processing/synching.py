@@ -4,9 +4,7 @@ Created on Jul 14, 2021
 @author: brett_wood
 '''
 from node.information.blocks import (
-    getBlocks,
-    getMaxBlockHeight,
-    getBlockInformation
+    getMaxBlockHeight
     )
 from node.blockchain.block_serialization import deserialize_block
 from binascii import unhexlify,hexlify

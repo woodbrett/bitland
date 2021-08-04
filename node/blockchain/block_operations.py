@@ -25,7 +25,9 @@ from node.information.utxo import (
     getUtxo
     )
 from node.information.contingency import (
-    getClaim
+    getClaim,
+    getExpiringCollateralTransactions,
+    getExpiringTransferFeeTransactions
     )
 from node.information.transaction import (
     getTransaction

@@ -5,8 +5,10 @@ Created on Jul 20, 2021
 '''
 import threading 
 import time
-from node.information.blocks import getMaxBlockHeight, getBlockInformation,\
+from node.information.blocks import (
+    getMaxBlockHeight, 
     getBlock
+    )
 from node.blockchain.validate_block import validateBlock, validateBlockHeader
 from node.blockchain.block_operations import addBlock, removeBlocks
 from utilities.hashing import calculateHeaderHashFromBlock
@@ -93,9 +95,9 @@ def processPeerBlocks(new_blocks_hex, use_threading=True):
     next_block_header = deserialize_block(unhexlify(peer_next_block))[0]
     next_block_prev_block = next_block_header[1]
     
-    self_height_hash = unhexlify(getBlockInformation(block_id=self_height).header_hash)
+    self_height_hash = unhexlify(getBlock(block_id=self_height).get('header_hash'))
             
-    self_base_hash = unhexlify(getBlockInformation(block_id=start_block_height).header_hash)
+    self_base_hash = unhexlify(getBlock(block_id=start_block_height).get('header_hash'))
     peer_base_hash = calculateHeaderHashFromBlock(peer_blocks[0])
         
     if next_block_prev_block == self_height_hash:
@@ -105,14 +107,14 @@ def processPeerBlocks(new_blocks_hex, use_threading=True):
     #UPDATE else logic in case the peer has a longer divergent chain
     #haven't tested this yet
     
-    elif self_base_hash == peer_base_hash: #unhexlify(getBlockInformation(block_id=start_block_height).header_hash) == calculateHeaderHashFromBlock(unhexlify(peer_blocks[0])):
+    elif self_base_hash == peer_base_hash: 
         
         comparison_block_height = start_block_height
         
         #move to function compare_chains_find_split 
         for i in range(0,(self_height - start_block_height + 1)):
             
-            self_hash_i = unhexlify(getBlockInformation(block_id=i+start_block_height).header_hash)
+            self_hash_i = unhexlify(getBlock(block_id=i+start_block_height).get('header_hash'))
             peer_hash_i = calculateHeaderHashFromBlock(peer_blocks[i])
             
             if self_hash_i != peer_hash_i:
@@ -121,7 +123,7 @@ def processPeerBlocks(new_blocks_hex, use_threading=True):
             
             comparison_block_height = comparison_block_height + 1
         
-        prev_block = getBlockInformation(comparison_block_height).prev_block
+        prev_block = getBlock(comparison_block_height).get('prev_block')
         prior_block = getBlock(comparison_block_height - 1)
         
         valid_blocks = validateBlocksMemory(peer_blocks_split,prev_block,prior_block)

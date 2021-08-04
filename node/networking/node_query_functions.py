@@ -9,7 +9,7 @@ import json
 from node.information.blocks import (
     getMaxBlockInformation,
     getBlock,
-    getBlocks
+    getBlocksSerialized
     )
 
 
@@ -27,7 +27,7 @@ def get_block_by_height(block_height):
 
 def get_blocks_start_end(start_block, end_block):
     
-    blocks = getBlocks(start_block, end_block)
+    blocks = getBlocksSerialized(start_block, end_block)
     start_block = blocks[0][0]
     block_list = []
     for i in range(0,len(blocks)):

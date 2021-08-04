@@ -10,7 +10,11 @@ from node.blockchain.block_serialization import deserialize_block, serialize_blo
 from node.blockchain.transaction_serialization import serialize_transaction
 from node.blockchain.queries import *
 from collections import Counter
-from node.information.blocks import getMaxBlockHeight, getBlock
+from node.information.blocks import (
+    getMaxBlockHeight, 
+    getBlock,
+    getBlockSerialized
+    )
 
 
 def validateBlock(block, realtime_validation=True, prev_block_input=None):
@@ -64,8 +68,8 @@ def validateBlockHeader(block, realtime_validation=True, prior_block=None):
     #prior block calculations for validation
     if prior_block == None:
         prev_block_hex = hexlify(prev_block).decode('utf-8')
-        prior_block_height = getBlockInformation(header_hash=prev_block_hex).id
-        prior_block_hex = getBlock(prior_block_height)
+        prior_block_height = getBlock(header_hash=prev_block_hex).get('id')
+        prior_block_hex = getBlockSerialized(prior_block_height)
         prior_block = unhexlify(prior_block_hex)
     
     prior_block_header = deserialize_block_header(prior_block)

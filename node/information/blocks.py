@@ -12,55 +12,20 @@ def getMaxBlockHeight():
     return executeSql('select * from bitland.max_block;')[0]
 
 
-def getBlockInformation(block_id = 0, block_header = ''):
-    select = ("select id, header_hash , version, prev_block , mrkl_root , time, bits, bitcoin_block_height , miner_bitcoin_address, nonce from bitland.block b "
-              +" where id = " + str(block_id) + " or header_hash = '" + str(block_header) + "' ;")
-    
-    try:
-        db_block = executeSql(select)
-        columns = namedtuple('columns', ['id', 'header_hash', 'version', 'prev_block', 'mrkl_root', 'time', 'bits', 'bitcoin_block_height', 'miner_bitcoin_address', 'nonce'])
-        block = columns(
-                        db_block[0],
-                        db_block[1],
-                        db_block[2],
-                        db_block[3],
-                        db_block[4],
-                        db_block[5],
-                        db_block[6],
-                        db_block[7],
-                        db_block[8],
-                        db_block[9]
-                        )
-
-    except Exception as error:
-        print('no block_found' + str(error))
-        block = 'no block_found'
-    
-    return block 
-
-
 def getMaxBlockInformation():
     
     max_block = getMaxBlockHeight()
     
-    return getBlockInformation(block_id = max_block)
+    return getBlock(block_id = max_block)
 
 
-def getBlock(block_id):
-    
-    query = ('select block from bitland.block_serialized where id = ' + str(block_id) + ';')
-    block = executeSql(query)[0]
-    
-    return block
-
-
-def getBlocks(start_block_id, end_block_id):
+def getBlocksSerialized(start_block_id, end_block_id):
     
     blocks = []
     
     for i in range(start_block_id, end_block_id + 1): #+1 to make it inclusive
         
-        blocks.append([i,getBlock(i)])
+        blocks.append([i,getBlockSerialized(i)])
     
     return blocks
 
@@ -82,17 +47,79 @@ def getPrevBlock():
     return prev_block 
 
 
-if __name__ == '__main__':
+def getMaxBlock():
+
+    return executeSql('select * from bitland.max_block;')[0]
+
+
+def getPriorBlock():
     
-    #x = getBlocks(1,51)
-    #print(x.get(1))
+    max_block = getMaxBlock()
+    select = ('select header_hash, bits, id from bitland.block b where id = ' + str(max_block) + ';')
+    return executeSql(select)
+
+
+def getBlock(block_id = -1, header_hash = ''):
+    select = ("select id, header_hash , version, prev_block , mrkl_root , time, bits, bitcoin_block_height , miner_bitcoin_address, nonce from bitland.block b "
+              +" where id = " + str(block_id) + " or header_hash = '" + str(header_hash) + "' ;")
     
+    try:
+        db_block = executeSql(select)
+        block = {
+            'status': 'block identified',
+            'id': db_block[0], 
+            'header_hash': db_block[1], 
+            'version': db_block[2], 
+            'prev_block': db_block[3], 
+            'mrkl_root': db_block[4], 
+            'time': db_block[5], 
+            'bits': db_block[6], 
+            'bitcoin_block_height': db_block[7], 
+            'miner_bitcoin_address': db_block[8], 
+            'nonce': db_block[9]
+        }
+
+    except Exception as error:
+        block = {
+            'status': 'no block found',
+        }    
+
+    return block 
+
+
+def getBlockSerialized(block_id):
     
-    mydict = {}
-    mydict[1]='abc'
-    print(mydict)
-    mydict[2]='def'
-    print(mydict)
+    select = ("select block from bitland.block_serialized where id = " +str(block_id))
+
+    try:
+        block = executeSql(select)[0]
+        
+    except Exception as error:
+        block = 'no block found'  
+
+    return block 
+
+
+def getBlockHeaders(start_block_height, end_block_height):
     
-    print(json.dumps(mydict))
+    start_block_height = str(start_block_height)
+    end_block_height = str(end_block_height)
+    select = ("select header_hash from bitland.block where id between " + start_block_height + " and " + end_block_height + " ;")
+    return executeSqlMultipleRows(select)
+
+
+def getMedianBlockTime11():
+    
+    select = ("with max_id as ("
+        "\n select max(id) as max_id from bitland.block"
+        "\n )"
+        "\n select PERCENTILE_CONT(0.5) within group(ORDER BY b.time)"
+        "\n from max_id m"
+        "\n join bitland.block b on b.id >= (m.max_id - 10)")
+    
+    median_time_11 = executeSql(select)[0]
+
+    return median_time_11
+
+
 

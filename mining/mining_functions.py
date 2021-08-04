@@ -18,7 +18,7 @@ from utilities.difficulty import (
     )
 from utilities.serialization import deserialize_text, serialize_text
 from node.information.blocks import getMaxBlockHeight
-from node.networking.node_update_functions import queue_new_block_from_peer
+from node.networking.node_update_functions import queueNewBlockFromPeer
 from mining.create_landbase_transaction import getLandbaseTransaction
 from system_variables import block_height_url
 from node.blockchain.header_operations import getPrevBlockGuarded

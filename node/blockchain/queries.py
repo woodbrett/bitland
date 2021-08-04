@@ -139,15 +139,6 @@ def updateClaimLeading(id, block):
     return claim_id
 
 
-def countUnspentParcel(transaction_hash, vout):
-    
-    select = ("select count(*) from bitland.unspent_parcel" 
-    + "\n where transaction_hash = '" + transaction_hash + "' and vout = " + str(vout) + ";")
-    
-    parcel_info = executeSql(select)
-    return parcel_info
-
-
 def AddParcel(
         planet_id,
         parcel_key,
@@ -169,106 +160,7 @@ def AddParcel(
     parcel_id = executeSql(insert_parcel)
 
     return parcel_id[0]
-
-
-def getMaxBlock():
-
-    return executeSql('select * from bitland.max_block;')[0]
-
-
-def getPriorBlock():
-    max_block = getMaxBlock()
-    select = ('select header_hash, bits, id from bitland.block b where id = ' + str(max_block) + ';')
-    return executeSql(select)
-
-
-def getBlockById(block_id):
-    select = ("select * from bitland.block b where id = " + str(block_id) + ";")
-    return executeSql(select)
-
-
-def getBlockInformation(block_id = -1, header_hash = ''):
-    select = ("select id, header_hash , version, prev_block , mrkl_root , time, bits, bitcoin_block_height , miner_bitcoin_address, nonce from bitland.block b "
-              +" where id = " + str(block_id) + " or header_hash = '" + str(header_hash) + "' ;")
-    
-    try:
-        db_block = executeSql(select)
-        columns = namedtuple('columns', ['id', 'header_hash', 'version', 'prev_block', 'mrkl_root', 'time', 'bits', 'bitcoin_block_height', 'miner_bitcoin_address', 'nonce'])
-        block = columns(
-                        db_block[0],
-                        db_block[1],
-                        db_block[2],
-                        db_block[3],
-                        db_block[4],
-                        db_block[5],
-                        db_block[6],
-                        db_block[7],
-                        db_block[8],
-                        db_block[9]
-                        )
-
-    except Exception as error:
-        print('no block_found' + str(error))
-        block = 'no block_found'
-    
-    return block 
-
-
-def getBlockHeaders(start_block_height, end_block_height):
-    start_block_height = str(start_block_height)
-    end_block_height = str(end_block_height)
-    select = ("select header_hash from bitland.block where id between " + start_block_height + " and " + end_block_height + " ;")
-    return executeSqlMultipleRows(select)
-
-#UPDATE - may be more elegant to get transactions from that table vs distincting UTXOs
-def getExpiringCollateralTransactions(bitcoin_block_id):
-    select = ("select id from bitland.transaction_contingency where miner_fee_sats <> 0 and miner_fee_status is null and bitcoin_block_height + miner_fee_blocks < " + str(bitcoin_block_id) + ";")
-    return executeSqlMultipleRows(select)
-
-
-def getExpiringTransferFeeTransactions(bitcoin_block_id):
-    select = ("select id from bitland.transaction_contingency where transfer_fee_sats <> 0 and transfer_fee_status is null and bitcoin_block_height + miner_fee_blocks < " + str(bitcoin_block_id) + ";")
-    return executeSqlMultipleRows(select)
-    
-
-def getContingencyStatus(output_id):
-    output_id = str(output_id)
-    select = ("select status, output_parcel_id, output_parcel_type, contingency_transaction_id, contingency_fee_vout, contingency_block_height, recorded_status_bitcoin_block_height ,recorded_status_bitland_block_height from bitland.contingency_status where output_parcel_id = " + str(output_id) + ";")
-    
-    try:
-        contingency_sql = executeSql(select)
-        columns = namedtuple('columns', ['status', 'output_parcel_id', 'output_parcel_type', 'contingency_transaction_id', 'contingency_fee_vout', 'contingency_block_height', 'recorded_status_bitcoin_block_height', 'recorded_status_bitland_block_height'])
-        contingency_output = columns(
-                        contingency_sql[0],
-                        contingency_sql[1],
-                        contingency_sql[2],
-                        contingency_sql[3],
-                        contingency_sql[4],
-                        contingency_sql[5],
-                        contingency_sql[6],
-                        contingency_sql[7]
-                        )
-        
-    except Exception as error:
-        print('no contingency record found for output' + str(error))
-        columns = namedtuple('columns', ['status'])
-        contingency_output = columns(
-                        'no contingency db records for output')
-    
-    return contingency_output  
-      
               
 
-def getMedianBlockTime11():
-    
-    select = ("with max_id as ("
-        "\n select max(id) as max_id from bitland.block"
-        "\n )"
-        "\n select PERCENTILE_CONT(0.5) within group(ORDER BY b.time)"
-        "\n from max_id m"
-        "\n join bitland.block b on b.id >= (m.max_id - 10)")
-    
-    median_time_11 = executeSql(select)[0]
 
-    return median_time_11
 

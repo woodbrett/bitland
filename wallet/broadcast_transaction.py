@@ -3,7 +3,7 @@ Created on Jul 20, 2021
 
 @author: brett_wood
 '''
-from node.networking.node_update_functions import queue_new_transaction_from_peer
+from node.networking.node_update_functions import queueNewTransactionFromPeer
 from wallet.transaction_creation import createSimpleTransactionTransfer
 from binascii import hexlify, unhexlify
 from node.blockchain.transaction_operations import validateMempoolTransaction
@@ -12,7 +12,7 @@ from node.blockchain.transaction_serialization import deserialize_transaction
 
 def broadcastTransaction(transaction, use_threading=True):
     
-    queue_new_transaction_from_peer(transaction, use_threading)
+    queueNewTransactionFromPeer(transaction, use_threading)
 
     return True
 
