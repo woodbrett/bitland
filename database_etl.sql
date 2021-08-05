@@ -76,7 +76,7 @@ create table bitland.input_parcel (
  );
 
 drop table if exists bitland.contingency_status;
-create table bitland.contingency_status (transaction_id int, type varchar, recorded_status_bitcoin_block_height int, recorded_status_bitland_block_height int, status varchar, bitcoin_transaction_id varchar);
+create table bitland.contingency_status (transaction_id int, type varchar, recorded_status_bitcoin_block_height int, recorded_status_bitland_block_height int, status varchar, bitcoin_transaction_id varchar, validation_bitcoin_height int);
 
 drop table if exists bitland.geography_definition;
 create table bitland.geography_definition(id serial PRIMARY key, x_split int, y_count int, start_y_ratio float8, y_ratio_increase float8);
@@ -636,7 +636,7 @@ join bitland.block b on t.block_id = b.id;
 
 drop view if exists bitland.vw_contingency_status;
 create view bitland.vw_contingency_status as (
-select ct.*, coalesce(cs.status, 'no recorded status') as recorded_status, recorded_status_bitcoin_block_height
+select ct.*, coalesce(cs.status, 'no recorded status') as recorded_status, recorded_status_bitcoin_block_height, validation_bitcoin_height
 from 
 (select t.id, t.transaction_hash, 'miner_fee' as type, b.miner_bitcoin_address as bitcoin_address, miner_fee_sats as fee_sats, miner_fee_blocks as fee_blocks, t.block_id as bitland_block, b.bitcoin_block_height, b.bitcoin_block_height + miner_fee_blocks as bitcoin_expiration_height
 from bitland.transaction t
