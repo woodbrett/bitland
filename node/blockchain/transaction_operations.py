@@ -531,8 +531,8 @@ def validContingencyStatusSpendTypes(spend_type):
     #NO_CLAIM, OUTSTANDING_CLAIM, SUCCESSFUL_CLAIM
     
     if spend_type == 1:
-        transfer_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
-        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
+        transfer_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
+        miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
         claim_status = []
         outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
         input_utxo_type = [0,1,2]
@@ -545,8 +545,8 @@ def validContingencyStatusSpendTypes(spend_type):
         input_utxo_type = [2]
         
     elif spend_type == 3:
-        transfer_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
-        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
+        transfer_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
+        miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
         claim_status = []
         outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
         input_utxo_type = [0,1,2,3]
@@ -560,7 +560,7 @@ def validContingencyStatusSpendTypes(spend_type):
     
     elif spend_type == 5:
         transfer_fee_status = []
-        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
+        miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
         claim_status = ['SUCCESSFUL_CLAIM']
         outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
         input_utxo_type = [3]

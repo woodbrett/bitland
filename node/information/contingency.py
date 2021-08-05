@@ -36,11 +36,44 @@ def getClaim(claimed_output_parcel_id = 0, claim_action_output_parcel_id = 0):
     return claim_info     
 
 
+def getClaims(claimed_output_parcel_id = 0, claim_action_output_parcel_id = 0):
+    
+    claimed_output_parcel_id = str(claimed_output_parcel_id)
+    claim_action_output_parcel_id = str(claim_action_output_parcel_id)
+    select = ("select id, claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, leading_claim, invalidated_claim, invalidation_input_parcel_id"
+              +" from bitland.claim "
+              + "where claimed_output_parcel_id = " + claimed_output_parcel_id + " or claim_action_output_parcel_id = " + claim_action_output_parcel_id + ";")
+    
+    claim_info = []
+    
+    try:
+        claim_sql = executeSqlMultipleRows(select)
+        for i in range(0,len(claim_sql)):
+            claim_info.append ({
+                'status':'claim identified',
+                'id': claim_sql[i][0], 
+                'claimed_output_parcel_id': claim_sql[i][1], 
+                'claim_action_output_parcel_id': claim_sql[i][2], 
+                'claim_fee_sats': claim_sql[i][3], 
+                'claim_block_height': claim_sql[i][4], 
+                'leading_claim': claim_sql[i][5], 
+                'invalidated_claim': claim_sql[i][6], 
+                'invalidation_input_parcel_id': claim_sql[i][7]
+            })
+        
+    except Exception as error:
+        claim_info = {
+            'status':'no claim found'
+        }
+        
+    return claim_info  
+
+
 def getContingencyStatusDb(transaction_id=0, transaction_hash='', type=''):
     
     transaction_id = str(transaction_id)
     
-    select = ("select id, transaction_hash, type, bitcoin_address, fee_sats, fee_blocks, bitland_block, bitcoin_block_height, bitcoin_expiration_height, recorded_status, recorded_status_bitcoin_block_height "
+    select = ("select id, transaction_hash, type, bitcoin_address, fee_sats, fee_blocks, bitland_block, bitcoin_block_height, bitcoin_expiration_height, recorded_status, recorded_status_bitcoin_block_height, validation_bitcoin_height "
               +" from bitland.vw_contingency_status "
               + "where (id="+ transaction_id + " or transaction_hash = '" + transaction_hash + "') and type='" + type + "' ;")
 
@@ -58,7 +91,8 @@ def getContingencyStatusDb(transaction_id=0, transaction_hash='', type=''):
             'bitcoin_block_height': contingency_sql[7],
             'bitcoin_expiration_height': contingency_sql[8], 
             'recorded_status': contingency_sql[9], 
-            'recorded_status_bitcoin_block_height': contingency_sql[10]
+            'recorded_status_bitcoin_block_height': contingency_sql[10],
+            'validation_bitcoin_height': contingency_sql[11]
         }
         
     except Exception as error:

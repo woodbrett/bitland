@@ -19,8 +19,6 @@ def getTransaction(transaction_hash = '', id = 0):
              "where (transaction_hash = '" + transaction_hash + "' or id = " + id +");"
              )
     
-    print(query)
-    
     try:
         transaction = executeSql(query)
         transaction_info = {
