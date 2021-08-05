@@ -359,6 +359,7 @@ def addParcelInput(transaction_id, vin, input_version,input_transaction_hash,inp
     return input_parcel_id
 
 
+#UPDATE to the new way of doing contingencies
 def updateMinerFeeList(bitcoin_block, bitland_block):
     #look if any miner fees expired since last bitcoin block and then check on blockchain if they are successful or not
     confirmed_bitcoin_block = bitcoin_block - contingency_validation_blocks
@@ -393,6 +394,7 @@ def updateMinerFeeList(bitcoin_block, bitland_block):
     return len(expiring_transaction_miner_fees)
 
 
+#UPDATE to the new way of doing contingencies
 def updateTransferFeeList(bitcoin_block, bitland_block):
     #similar to updating miner fee list
     

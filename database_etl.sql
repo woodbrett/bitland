@@ -75,21 +75,8 @@ create table bitland.input_parcel (
   CONSTRAINT input_output_parcel_id_fkey FOREIGN KEY (output_parcel_id) REFERENCES bitland.output_parcel(id)
  );
 
-/*
-drop view if exists bitland.unspent_parcel;
-create view bitland.unspent_parcel (id, parcel_id, transaction_id, pub_key, vout) as 
-select op.*, t.transaction_hash
-from bitland.output_parcel op
-left join bitland.input_parcel ip on op.parcel_id = ip.parcel_id
-join bitland.parcel p on op.parcel_id = p.id
-join bitland.transaction t on op.transaction_id = t.id
-where ip.parcel_id is null;
-*/
-
-drop view if exists bitland.max_block;
-create view bitland.max_block as
-select coalesce(max(id),0) as max_block
-from bitland.block;
+drop table if exists bitland.contingency_status;
+create table bitland.contingency_status (transaction_id int, type varchar, recorded_status_bitcoin_block_height int, recorded_status_bitland_block_height int, status varchar, bitcoin_transaction_id varchar);
 
 drop table if exists bitland.geography_definition;
 create table bitland.geography_definition(id serial PRIMARY key, x_split int, y_count int, start_y_ratio float8, y_ratio_increase float8);
@@ -358,76 +345,6 @@ update testing.land_divide set area = st_area(geom::geography);
 update testing.land_divide set pt1 = st_geomfromtext('POINT (' || long1 || ' ' || lat1 || ')'); 
 update testing.land_divide set pt2 = st_geomfromtext('POINT (' || long2 || ' ' || lat2 || ')');
 update testing.land_divide set pt3 = st_geomfromtext('POINT (' || long3 || ' ' || lat3 || ')');
-
-/*
-CREATE OR REPLACE FUNCTION xml_escape(TEXT)
-RETURNS TEXT AS $$
-  SELECT replace(replace(replace($1, '&', '&amp;'), '<', '&lt;'), '>', '&gt;');
-$$ LANGUAGE sql IMMUTABLE STRICT;
- 
-CREATE OR REPLACE FUNCTION kml_wrap(TEXT)
-RETURNS TEXT AS $$
-  SELECT
-    '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>'
-    || $1 || '</Document></kml>';
-$$ LANGUAGE sql IMMUTABLE STRICT;
- 
-CREATE OR REPLACE FUNCTION kml_concat(TEXT, geometry)
-RETURNS TEXT AS $$
-  SELECT $1 || '<Placemark>' || st_askml($2) || '</Placemark>';
-$$ LANGUAGE sql IMMUTABLE STRICT;
- 
-CREATE AGGREGATE as_kmldoc(geometry) (
-    sfunc = kml_concat,
-    finalfunc = kml_wrap,
-    stype = TEXT,
-    initcond = ''
-);
- 
-CREATE OR REPLACE FUNCTION kml_concat(TEXT, geometry, anyelement)
-RETURNS TEXT AS $$
-  SELECT $1 || '<Placemark><name>' || xml_escape(cast($3 AS TEXT)) || '</name>'
-  || st_askml($2) || '</Placemark>';
-$$ LANGUAGE sql IMMUTABLE STRICT;
- 
-CREATE AGGREGATE as_kmldoc(geometry, anyelement) (
-    sfunc = kml_concat,
-    finalfunc = kml_wrap,
-    stype = TEXT,
-    initcond = ''
-);
- 
-CREATE OR REPLACE FUNCTION kml_concat(TEXT, geometry, anyelement, anyelement)
-RETURNS TEXT AS $$
-  SELECT $1 || '<Placemark><name>' || xml_escape(cast($3 AS TEXT))
-  || '</name><description>' || xml_escape(cast($4 AS TEXT))
-  || '</description>' || st_askml($2) || '</Placemark>';
-$$ LANGUAGE sql IMMUTABLE STRICT;
- 
-CREATE AGGREGATE as_kmldoc(geometry, anyelement, anyelement) (
-    sfunc = kml_concat,
-    finalfunc = kml_wrap,
-    stype = TEXT,
-    initcond = ''
-);
- 
-CREATE OR REPLACE FUNCTION join_kmldocs(VARIADIC TEXT[])
-RETURNS TEXT AS $$
-  SELECT kml_wrap(
-    replace(
-      replace(
-        ARRAY_TO_STRING($1, ''),
-        '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>',
-        '<Folder>'
-       ),
-       '</Document></kml>',
-       '</Folder>'
-    )
-  );
-$$ LANGUAGE sql IMMUTABLE STRICT;
-
-select as_kmldoc(geom) from testing.land_divide ld;
-*/
 
 create table testing.iteration_table (id int);
 
@@ -717,24 +634,31 @@ left join bitland.miner_fee_transaction mft on t.id = mft.transaction_id
 left join bitland.transfer_fee_transaction tft on t.id = tft.transaction_id
 join bitland.block b on t.block_id = b.id;
 
+drop view if exists bitland.vw_contingency_status;
+create view bitland.vw_contingency_status as (
+select ct.*, coalesce(cs.status, 'no recorded status') as recorded_status, recorded_status_bitcoin_block_height
+from 
+(select t.id, t.transaction_hash, 'miner_fee' as type, b.miner_bitcoin_address as bitcoin_address, miner_fee_sats as fee_sats, miner_fee_blocks as fee_blocks, t.block_id as bitland_block, b.bitcoin_block_height, b.bitcoin_block_height + miner_fee_blocks as bitcoin_expiration_height
+from bitland.transaction t
+join bitland.block b on t.block_id = b.id
+where miner_fee_sats > 0 
+union 
+select t.id, t.transaction_hash, 'transfer_fee' as type, transfer_fee_address as bitcoin_address, transfer_fee_sats as fee_sats, transfer_fee_blocks as fee_blocks, t.block_id as bitland_block, b.bitcoin_block_height, b.bitcoin_block_height + transfer_fee_blocks as bitcoin_expiration_height
+from bitland.transaction t
+join bitland.block b on t.block_id = b.id
+where transfer_fee_sats > 0) ct 
+left join bitland.contingency_status cs on ct.id = cs.transaction_id and ct.type = cs.type
+);
+
+drop view if exists bitland.max_block;
+create view bitland.max_block as
+select coalesce(max(id),0) as max_block
+from bitland.block;
+
 --
 --OTHER
 --
 
-/*
-drop table if exists bitland.contingency_status;
-create table bitland.contingency_status (
-  status varchar, 
-  output_parcel_id int, 
-  output_parcel_type int, 
-  contingency_transaction_id varchar, 
-  contingency_fee_vout int, 
-  contingency_block_height int, 
-  recorded_status_bitcoin_block_height int,
-  recorded_status_bitland_block_height int,
-  CONSTRAINT contingency_output_id_fkey FOREIGN KEY (output_parcel_id) REFERENCES bitland.output_parcel(id)
-);
-*/
 
 /* RESET SCRIPT
 truncate bitland.block cascade;

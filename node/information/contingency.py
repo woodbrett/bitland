@@ -40,9 +40,9 @@ def getContingencyStatusDb(transaction_id=0, transaction_hash='', type=''):
     
     transaction_id = str(transaction_id)
     
-    select = ("select id, transaction_hash, type, bitcoin_address, fee_sats, fee_blocks, bitland_block, bitcoin_block_height, bitcoin_expiration_height, recorded_status, recorded_status_bitcoin_block_height"
-              +" bitland.vw_contingency_status "
-              + "where (id="+ transaction_id + " or transaction_hash = " + transaction_hash + ") and type='" + type + "' ;")
+    select = ("select id, transaction_hash, type, bitcoin_address, fee_sats, fee_blocks, bitland_block, bitcoin_block_height, bitcoin_expiration_height, recorded_status, recorded_status_bitcoin_block_height "
+              +" from bitland.vw_contingency_status "
+              + "where (id="+ transaction_id + " or transaction_hash = '" + transaction_hash + "') and type='" + type + "' ;")
 
     try:
         contingency_sql = executeSql(select)
