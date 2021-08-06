@@ -304,7 +304,7 @@ def analyzeClaimsForOutput(output_id, bitcoin_height, bitland_height):
         claim_contingency_status = utxoCombinedContingencyStatus(claim_action_output_parcel_id, bitcoin_height, bitland_height)
         claim_status = claim_contingency_status.get('status')
         claim_validation_block_height = claim_contingency_status.get('bitcoin_block_height')
-        miner_fee_sats = claims[i].get('miner_fee_sats')
+        miner_fee_sats = claims[i].get('claim_fee_sats')
         claims_array.append([claim_action_output_parcel_id,claim_status,claim_validation_block_height,miner_fee_sats])
     
     return claims_array

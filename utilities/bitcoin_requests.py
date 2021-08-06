@@ -66,8 +66,6 @@ def validateBitcoinAddressFromExternalAPI(address_utf8):
 
 if __name__ == '__main__':
     
-    rpc_user = 'admin'
-    rpc_password = 'password'
     
     # rpc_user and rpc_password are set in the bitcoin.conf file
     rpc_connection = AuthServiceProxy("http://%s:%s@192.168.86.34:8332"%(rpc_user, rpc_password))
