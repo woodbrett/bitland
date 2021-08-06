@@ -13,6 +13,7 @@ from system_variables import (
     )
 
 
+#UPDATE add in transaction id
 def spendByAddressBitcoinBlock(bitcoin_block, bitcoin_height, insert_into_db=False):
     
     transactions = bitcoin_block.get('tx')
@@ -38,7 +39,7 @@ def spendByAddressBitcoinBlock(bitcoin_block, bitcoin_height, insert_into_db=Fal
     if insert_into_db == True:   
         insertBitcoinTransactionDb(insert_statement)
     
-    return None
+    return len(address_value_array)
 
 
 def insertBitcoinTransactionDb(insert_query):
