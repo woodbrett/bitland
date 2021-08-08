@@ -19,7 +19,8 @@ from node.blockchain.validate_block import (
     )
 from node.information.blocks import (
     getBlockCount,
-    getMaxBlockHeight
+    getMaxBlockHeight,
+    getBlock
     )
 from node.information.utxo import (
     getUtxo
@@ -32,6 +33,8 @@ from node.information.contingency import (
 from node.information.transaction import (
     getTransaction
     )
+from utilities.bitcoin.bitcoin_transactions import countTransactionBlocks,\
+    insertRelevantTransactions
 
 def addBlock(block):
     
@@ -58,12 +61,16 @@ def addBlock(block):
     addTransactions(serialized_transactions, block_height)
 
     bitcoin_block = int.from_bytes(deserialized_block[0][5],'big')
+    prior_bitcoin_block_height = getBlock(block_id=block_height-1).get('bitcoin_block_height')
     
-    updateMinerFeeList(bitcoin_block, block_height)
-    print('updated miner fee list')
+    updateContingencies(bitcoin_block, prior_bitcoin_block_height, block_height)
+    print('updated contingencies')
     
-    updateTransferFeeList(bitcoin_block, block_height)
-    print('updated transfer fee list')
+    #updateMinerFeeList(bitcoin_block, block_height)
+    #print('updated miner fee list')
+    
+    #updateTransferFeeList(bitcoin_block, block_height)
+    #print('updated transfer fee list')
     
     removeTransactionsFromMempool(block_height)
     print('removed transactions from mempool')
@@ -428,6 +435,19 @@ def updateTransferFeeList(bitcoin_block, bitland_block):
     #4 make it easy to roll this back, maybe put the recorded block into the table so it can be delete as part of the delete script
     
     return len(expiring_transaction_transfer_fees)
+
+
+def updateContingencies(bitcoin_block_height, prior_bitcoin_block_height, bitland_block_height):
+    
+    db_blocks = countTransactionBlocks(prior_bitcoin_block_height,bitcoin_block_height)    
+    
+    if db_blocks != bitcoin_block_height - prior_bitcoin_block_height:
+        return "error"
+        #UPDATE to make it add in the blocks that are missing
+        
+    inserted_transactions = insertRelevantTransactions(prior_bitcoin_block_height, bitcoin_block_height, bitland_block_height)
+    
+    return inserted_transactions
 
 
 def updateDbLandbase(parcel_id, block_height):

@@ -73,7 +73,7 @@ def getContingencyStatusDb(transaction_id=0, transaction_hash='', type=''):
     
     transaction_id = str(transaction_id)
     
-    select = ("select id, transaction_hash, type, bitcoin_address, fee_sats, fee_blocks, bitland_block, bitcoin_block_height, bitcoin_expiration_height, recorded_status, recorded_status_bitcoin_block_height, validation_bitcoin_height "
+    select = ("select id, transaction_hash, type, bitcoin_address, fee_sats, fee_blocks, bitland_block, bitcoin_block_height, bitcoin_expiration_height, validation_bitcoin_block_height, validation_address, validation_value, validation_txid, validation_recorded_bitland_block_height"
               +" from bitland.vw_contingency_status "
               + "where (id="+ transaction_id + " or transaction_hash = '" + transaction_hash + "') and type='" + type + "' ;")
 
@@ -90,9 +90,11 @@ def getContingencyStatusDb(transaction_id=0, transaction_hash='', type=''):
             'bitland_block': contingency_sql[6], 
             'bitcoin_block_height': contingency_sql[7],
             'bitcoin_expiration_height': contingency_sql[8], 
-            'recorded_status': contingency_sql[9], 
-            'recorded_status_bitcoin_block_height': contingency_sql[10],
-            'validation_bitcoin_height': contingency_sql[11]
+            'validation_bitcoin_block_height': contingency_sql[9], 
+            'validation_address': contingency_sql[10],
+            'validation_value': contingency_sql[11],
+            'validation_txid': contingency_sql[12],
+            'validation_recorded_bitland_block_height': contingency_sql[13]
         }
         
     except Exception as error:
@@ -140,4 +142,32 @@ def getContingencyStatus(output_id):
                         'no contingency db records for output')
     
     return contingency_output  
-      
+
+
+def updateExpiredClaims(bitcoin_block_height, confirmation_blocks, bitland_block_height):
+    
+    bitcoin_block_height = str(bitcoin_block_height)
+    confirmation_blocks = str(confirmation_blocks) 
+    bitland_block_height = str(bitland_block_height)
+    
+    query = ("select bitland.update_expired_claims (" + bitcoin_block_height + "," + confirmation_blocks + "," + bitland_block_height + ");")
+
+    update_sql = executeSql(query)
+    
+    return update_sql
+
+
+def updateInvalidatedClaims(bitland_block_height):
+    
+    bitland_block_height = str(bitland_block_height)
+    
+    query = ("select bitland.update_invalidated_claims (" + bitland_block_height + ");")
+
+    update_sql = executeSql(query)
+    
+    return update_sql
+
+
+if __name__ == '__main__':
+
+    print(getContingencyStatusDb(transaction_id=828, type='miner_fee'))

@@ -103,6 +103,35 @@ def executeSqlDeleteUpdate (sql_statement):
     return rows_deleted
 
 
+def executeSqlInsert (sql_statement):
+    
+    conn = None
+    
+    try:
+        # read database configuration
+        params = config()
+        # connect to the PostgreSQL database
+        conn = psycopg2.connect(**params)
+        # create a new cursor
+        cur = conn.cursor()
+        # execute the INSERT statement
+        cur.execute(sql_statement)
+        # get the number of updated rows
+        rows_inserted = cur.rowcount
+        # commit the changes to the database
+        conn.commit()
+        # execute the UPDATE statement
+        # close communication with the database
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return rows_inserted
+
+
 if __name__ == '__main__':
     print("hello")
     print(executeSql("select 1")[0])
