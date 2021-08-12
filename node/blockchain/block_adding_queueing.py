@@ -14,7 +14,9 @@ from node.blockchain.block_operations import addBlock, removeBlocks
 from utilities.hashing import calculateHeaderHashFromBlock
 import json
 from node.blockchain.block_serialization import deserialize_block
-from binascii import unhexlify
+from binascii import (unhexlify,hexlify)
+from node.blockchain.header_serialization import deserialize_block_header,\
+    serialize_block_header
 
 block_queue = []
 
@@ -183,7 +185,13 @@ def validateAddBlocksAlreadyQueue(blocks):
     
 if __name__ == '__main__':
 
-    block = '0001000000064f5f3d4da12737503392aecb5e44618f371fcf2e2ebdb9d204b5fafceb273cec6e827551016b30b1b667f1581be73b9ead2e9f684006719651cec8fd00610c52e71d0ffff0000a9848002a6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b777300000000000011a656100001000100010061504f4c59474f4e28282d36362e30393337352038332e39363830322c2d36362e30393337352038332e37353437322c2d36372e352038332e37353437322c2d36372e352038332e39363830322c2d36362e30393337352038332e3936383032292940d355277178ce525caa9720018b28b987ee26e00d780548c8152355b14dfdf811851c4835e7bb5c6d36d6e81fafbd5d1152ba442be61b2fcd6096826176a391180000000000000000000000000000000000'
+    block = '000100000009342b0a8a1d73e0244332bdbdf7d71d32d0583bb8ee7e20d98c942e0c7181362acb3058fc191cac3b2dbcf1058975d26c1cb8063899f0f612a3edfc350061155f791d0ffff0000a9c7d002a6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b77730000000000000b11af1e0001000100010054504f4c59474f4e28282d32322e352038392e313436382c2d32322e352038382e39373230322c2d33332e37352038382e39373230322c2d33332e37352038392e313436382c2d32322e352038392e31343638292940c2fb60f77699c330148952c6126b1214002043a6e967ce85d28f037d023906c4f1543b38a4e667604b89cda1c40501dcbbe8fa3177c264d335cf73cf57fa48f70000000000000000000000000000000000'
     block_bytes = unhexlify(block)
+    
+    #print(deserialize_block(block_bytes))
+    #desrialized_header = deserialize_block_header(block_bytes)
+    #print(hexlify(serialize_block_header(desrialized_header[0],desrialized_header[1],desrialized_header[2],desrialized_header[3],desrialized_header[4],desrialized_header[5],desrialized_header[6],desrialized_header[7])))
+    #prior_block_hash = calculateHeaderHashFromBlock(block_bytes=prior_block)
+    #prior_block_bitcoin_height = prior_block_header[5]    
     
     x = validateAddBlock(block_bytes, use_threading=False,realtime_validation=False)

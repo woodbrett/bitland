@@ -85,9 +85,9 @@ create table bitland.claim(
   claim_action_output_parcel_id int,
   claim_fee_sats int,
   claim_block_height int,
-  leading_claim boolean,
-  invalidated_claim boolean,
   invalidation_input_parcel_id int,
+  status varchar,
+  claim_end_block int,
   from_bitland_block_height int,
   to_bitland_block_height int,
   CONSTRAINT claimed_output_parcel_id_fkey FOREIGN KEY (claimed_output_parcel_id) REFERENCES bitland.output_parcel(id),
@@ -132,6 +132,9 @@ create table bitcoin.recent_transactions(bitcoin_block_height int, address varch
 
 drop table if exists bitcoin.relevant_contingency_transaction;
 create table bitcoin.relevant_contingency_transaction (bitcoin_block_height int, address varchar, value float8, txid varchar, recorded_bitland_block_height int);
+
+drop table if exists bitcoin.block;
+create table bitcoin.block(block_height int, block_hash varchar);
 
 
 --
@@ -619,6 +622,60 @@ begin
 end;
 $$;
 
+drop view if exists bitland.utxo;
+create view bitland.utxo as 
+select op.*, t.transaction_hash, t.block_id, t.miner_fee_sats, t.miner_fee_blocks, t.transfer_fee_sats, t.transfer_fee_blocks, t.transfer_fee_address, b.bitcoin_block_height, b.miner_bitcoin_address, opl.pub_key as miner_landbase_address, ipop.pub_key as transfer_fee_failover_address, c.claim_fee_sats, c.claim_block_height, mft.status as miner_fee_status, tft.status as transfer_fee_status, mft.bitcoin_block_height as miner_fee_status_block_height, tft.bitcoin_block_height as transfer_fee_status_block_height
+from bitland.output_parcel op
+left join bitland.input_parcel ip on op.id = ip.output_parcel_id and ip.input_version = 1
+join bitland.transaction t on op.transaction_id = t.id
+join bitland.block b on t.block_id = b.id
+left join bitland.transaction tl on b.id = tl.block_id and tl.is_landbase = true
+left join bitland.output_parcel opl on tl.id = opl.transaction_id
+left join bitland.input_parcel ip2 on ip2.transaction_id = op.transaction_id and ip2.vin = 0
+left join bitland.output_parcel ipop on ip2.output_parcel_id = ipop.id
+left join bitland.claim c on c.claimed_output_parcel_id = op.id and c.to_bitland_block_height is null
+left join bitland.miner_fee_transaction mft on op.transaction_id = mft.transaction_id
+left join bitland.transfer_fee_transaction tft on op.transaction_id = tft.transaction_id
+where ip.id is null;
+
+drop view if exists bitland.transaction_contingency;
+create view bitland.transaction_contingency as 
+select t.*, b.bitcoin_block_height, mft.status as miner_fee_status, tft.status as transfer_fee_status, 
+mft.bitcoin_block_height as miner_fee_status_block_height, 
+tft.bitcoin_block_height as transfer_fee_status_block_height,
+b.miner_bitcoin_address 
+from bitland.transaction t
+left join bitland.miner_fee_transaction mft on t.id = mft.transaction_id 
+left join bitland.transfer_fee_transaction tft on t.id = tft.transaction_id
+join bitland.block b on t.block_id = b.id;
+
+drop view if exists bitland.vw_contingency_status;
+create view bitland.vw_contingency_status as (
+select 
+  ct.*, 
+  rct.bitcoin_block_height as validation_bitcoin_block_height, 
+  rct.address as validation_address, 
+  rct.value as validation_value, 
+  rct.txid as validation_txid, 
+  rct.recorded_bitland_block_height as validation_recorded_bitland_block_height
+from 
+(select t.id, t.transaction_hash, 'miner_fee' as type, b.miner_bitcoin_address as bitcoin_address, miner_fee_sats as fee_sats, miner_fee_blocks as fee_blocks, t.block_id as bitland_block, b.bitcoin_block_height, b.bitcoin_block_height + miner_fee_blocks as bitcoin_expiration_height
+from bitland.transaction t
+join bitland.block b on t.block_id = b.id
+where miner_fee_sats > 0 
+union 
+select t.id, t.transaction_hash, 'transfer_fee' as type, transfer_fee_address as bitcoin_address, transfer_fee_sats as fee_sats, transfer_fee_blocks as fee_blocks, t.block_id as bitland_block, b.bitcoin_block_height, b.bitcoin_block_height + transfer_fee_blocks as bitcoin_expiration_height
+from bitland.transaction t
+join bitland.block b on t.block_id = b.id
+where transfer_fee_sats > 0) ct 
+left join bitcoin.relevant_contingency_transaction rct on ct.bitcoin_address = rct.address and ct.fee_sats = rct.value and rct.bitcoin_block_height > ct.bitcoin_block_height and rct.bitcoin_block_height <= ct.bitcoin_expiration_height
+);
+
+drop view if exists bitland.max_block;
+create view bitland.max_block as
+select coalesce(max(id),0) as max_block
+from bitland.block;
+
 drop function if exists bitland.update_expired_claims (bitcoin_block_height int, confirmation_blocks int, bitland_block_height int);
 create function bitland.update_expired_claims (bitcoin_block_height int, confirmation_blocks int, bitland_block_height int)
 returns int
@@ -637,9 +694,15 @@ begin
 	join bitland.vw_contingency_status vcs on op.transaction_id = vcs.id
 	  and vcs.bitcoin_expiration_height < $1 + $2
 	  and vcs.validation_bitcoin_block_height is null
+	),
+	insert_new_record as (
+	insert into bitland.claim(claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, invalidation_input_parcel_id, status, claim_end_block, from_bitland_block_height)
+	select claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, invalidation_input_parcel_id, 'EXPIRED_CONFIRMED', claim_end_block, $3
+	from bitland.claim c
+	join expired e on c.id = e.id
 	)
 	update bitland.claim c
-	set status = 'EXPIRED_CONFIRMED', status_recorded_bitland_block = $3
+	set to_bitland_block_height = $3
 	from expired e
 	where e.id = c.id;
 
@@ -672,18 +735,24 @@ begin
 		join bitland.input_parcel ip on op.id = ip.output_parcel_id 
 		join bitland.transaction t on ip.transaction_id = t.id
 	)
+	, insert_new_record as (
+	insert into bitland.claim(claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, invalidation_input_parcel_id, status, claim_end_block, from_bitland_block_height)
+	select claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, invalidation_input_parcel_id, e.status, claim_end_block, $1
+	from bitland.claim c
+	join moved_parcels e on c.id = e.id
+	)
 	update bitland.claim c
-	set status = e.status, status_recorded_bitland_block = $1
+	set to_bitland_block_height = $1
 	from moved_parcels e
-	where e.id = c.id;		
+	where e.id = c.id;
 
 	return $1;
 
 end;
 $$;
 
-drop function if exists bitland.update_leading_claim (bitland_block_height int, claim_blocks int, claim_increase float8);
-create function bitland.update_leading_claim (bitland_block_height int, claim_blocks int, claim_increase float8)
+drop function if exists bitland.update_leading_claims (bitland_block_height int, claim_blocks int, claim_increase float8);
+create function bitland.update_leading_claims (bitland_block_height int, claim_blocks int, claim_increase float8)
 returns int
 language plpgsql
 as
@@ -758,71 +827,42 @@ begin
 end;
 $$;
 
-drop view if exists bitland.utxo;
-create view bitland.utxo as 
-select op.*, t.transaction_hash, t.block_id, t.miner_fee_sats, t.miner_fee_blocks, t.transfer_fee_sats, t.transfer_fee_blocks, t.transfer_fee_address, b.bitcoin_block_height, b.miner_bitcoin_address, opl.pub_key as miner_landbase_address, ipop.pub_key as transfer_fee_failover_address, c.claim_fee_sats, c.claim_block_height, mft.status as miner_fee_status, tft.status as transfer_fee_status, mft.bitcoin_block_height as miner_fee_status_block_height, tft.bitcoin_block_height as transfer_fee_status_block_height
-from bitland.output_parcel op
-left join bitland.input_parcel ip on op.id = ip.output_parcel_id and ip.input_version = 1
-join bitland.transaction t on op.transaction_id = t.id
-join bitland.block b on t.block_id = b.id
-left join bitland.transaction tl on b.id = tl.block_id and tl.is_landbase = true
-left join bitland.output_parcel opl on tl.id = opl.transaction_id
-left join bitland.input_parcel ip2 on ip2.transaction_id = op.transaction_id and ip2.vin = 0
-left join bitland.output_parcel ipop on ip2.output_parcel_id = ipop.id
-left join bitland.claim c on c.claimed_output_parcel_id = op.id and c.to_bitland_block_height is null
-left join bitland.miner_fee_transaction mft on op.transaction_id = mft.transaction_id
-left join bitland.transfer_fee_transaction tft on op.transaction_id = tft.transaction_id
-where ip.id is null;
+drop function if exists bitland.update_successful_claims (bitland_block_height int, claim_blocks int);
+create function bitland.update_successful_claims (bitland_block_height int, claim_blocks int)
+returns int
+language plpgsql
+as
+$$
+declare
 
+begin
 
-drop view if exists bitland.transaction_contingency;
-create view bitland.transaction_contingency as 
-select t.*, b.bitcoin_block_height, mft.status as miner_fee_status, tft.status as transfer_fee_status, 
-mft.bitcoin_block_height as miner_fee_status_block_height, 
-tft.bitcoin_block_height as transfer_fee_status_block_height,
-b.miner_bitcoin_address 
-from bitland.transaction t
-left join bitland.miner_fee_transaction mft on t.id = mft.transaction_id 
-left join bitland.transfer_fee_transaction tft on t.id = tft.transaction_id
-join bitland.block b on t.block_id = b.id;
+	with successful_claims as (
+	select c.id, 'SUCCESSFUL' as status
+	from bitland.claim c
+	where c.status = 'LEADING' 
+	  and c.to_bitland_block_height is null 
+	  and c.claim_end_block + $2 = $1
+	)
+	, insert_new_record as (
+	insert into bitland.claim(claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, invalidation_input_parcel_id, status, claim_end_block, from_bitland_block_height)
+	select claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, invalidation_input_parcel_id, e.status, claim_end_block, $1
+	from bitland.claim c
+	join successful_claims e on c.id = e.id
+	)
+	update bitland.claim c
+	set to_bitland_block_height = $1
+	from successful_claims e
+	where e.id = c.id;	
 
-drop view if exists bitland.vw_contingency_status;
-create view bitland.vw_contingency_status as (
-select 
-  ct.*, 
-  rct.bitcoin_block_height as validation_bitcoin_block_height, 
-  rct.address as validation_address, 
-  rct.value as validation_value, 
-  rct.txid as validation_txid, 
-  rct.recorded_bitland_block_height as validation_recorded_bitland_block_height
-from 
-(select t.id, t.transaction_hash, 'miner_fee' as type, b.miner_bitcoin_address as bitcoin_address, miner_fee_sats as fee_sats, miner_fee_blocks as fee_blocks, t.block_id as bitland_block, b.bitcoin_block_height, b.bitcoin_block_height + miner_fee_blocks as bitcoin_expiration_height
-from bitland.transaction t
-join bitland.block b on t.block_id = b.id
-where miner_fee_sats > 0 
-union 
-select t.id, t.transaction_hash, 'transfer_fee' as type, transfer_fee_address as bitcoin_address, transfer_fee_sats as fee_sats, transfer_fee_blocks as fee_blocks, t.block_id as bitland_block, b.bitcoin_block_height, b.bitcoin_block_height + transfer_fee_blocks as bitcoin_expiration_height
-from bitland.transaction t
-join bitland.block b on t.block_id = b.id
-where transfer_fee_sats > 0) ct 
-left join bitcoin.relevant_contingency_transaction rct on ct.bitcoin_address = rct.address and ct.fee_sats = rct.value and rct.bitcoin_block_height > ct.bitcoin_block_height and rct.bitcoin_block_height <= ct.bitcoin_expiration_height
-);
+	return $1;
 
-drop view if exists bitcoin.transaction_blocks;
-create view bitcoin.transaction_blocks as (
-  select distinct bitcoin_block_height
-  from bitcoin.recent_transactions
-);
-
-drop view if exists bitland.max_block;
-create view bitland.max_block as
-select coalesce(max(id),0) as max_block
-from bitland.block;
+end;
+$$;
 
 --
 --OTHER
 --
-
 
 /* RESET SCRIPT
 truncate bitland.block cascade;
@@ -832,6 +872,8 @@ truncate bitland.output_parcel cascade;
 truncate bitland.claim cascade;
 truncate bitland.transfer_fee_transaction;
 truncate bitland.miner_fee_transaction;
+truncate bitcoin.relevant_contingency_transaction;
+truncate bitcoin.recent_transactions;
 update landbase_enum set valid_claim = false;
 update landbase_enum set block_claim = null;
 update landbase_enum set valid_claim = true, valid_enabled_block = 0 where y_id in (1,975);
@@ -841,6 +883,8 @@ truncate bitland.transaction_mempool;
 insert into bitland.block(id, header_hash) values
 (0, '0000000000000000000000000000000000000000000000000000000000000000');
 
+insert into bitland.block_serialized values 
+(0,'00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000');
 
  */
 

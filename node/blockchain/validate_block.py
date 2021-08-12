@@ -67,15 +67,16 @@ def validateBlockHeader(block, realtime_validation=True, prior_block=None):
     
     #prior block calculations for validation
     if prior_block == None:
-        prev_block_hex = hexlify(prev_block).decode('utf-8')
-        prior_block_height = getBlock(header_hash=prev_block_hex).get('id')
+        
+        #prev_block_hex = hexlify(prev_block).decode('utf-8')
+        #prior_block_height = getBlock(header_hash=prev_block_hex).get('id')
+        prior_block_height = getMaxBlock()
         prior_block_hex = getBlockSerialized(prior_block_height)
         prior_block = unhexlify(prior_block_hex)
     
     prior_block_header = deserialize_block_header(prior_block)
     prior_block_hash = calculateHeaderHashFromBlock(block_bytes=prior_block)
     prior_block_bitcoin_height = prior_block_header[5]
-    prior_block_time = prior_block_header[3]
     
     valid_header = True
     failure_reason = ''
@@ -211,6 +212,8 @@ def validateTransactions(block=b'', block_height=None, transactions=[]):
     
         if landbase_counter > 1:
             valid_transactions = [False, '>1 landbase transactions', 0]    
+    
+    #UPDATE validate that no claims are made on same utxo with same claim amount (can be on same utxo though)
     
     return valid_transactions
 

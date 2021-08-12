@@ -168,6 +168,31 @@ def updateInvalidatedClaims(bitland_block_height):
     return update_sql
 
 
+def updateLeadingClaims(bitland_block_height, claim_blocks, claim_increase):
+    
+    bitland_block_height = str(bitland_block_height)
+    claim_blocks = str(claim_blocks)
+    claim_increase = str(claim_increase) 
+    
+    query = ("select bitland.update_leading_claims (" + bitland_block_height + "," + claim_blocks + "," + claim_increase + ");")
+
+    update_sql = executeSql(query)
+    
+    return update_sql
+
+
+def updateSuccessfulClaims(bitland_block_height, claim_blocks):
+    
+    bitland_block_height = str(bitland_block_height)
+    claim_blocks = str(claim_blocks)
+    
+    query = ("select bitland.update_successful_claims (" + bitland_block_height + "," + claim_blocks + ");")
+    
+    update_sql = executeSql(query)
+    
+    return update_sql    
+    
+
 if __name__ == '__main__':
 
     print(getContingencyStatusDb(transaction_id=828, type='miner_fee'))

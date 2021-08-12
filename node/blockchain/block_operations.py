@@ -12,6 +12,10 @@ from utilities.sqlUtils import executeSql
 from utilities.hashing import calculateHeaderHash, calculateTransactionHash
 from node.blockchain.contingency_operations import *
 from node.blockchain.mempool_operations import removeTransactionsFromMempool
+from node.blockchain.global_variables import (
+    contingency_validation_blocks,
+    claim_required_percentage_increase
+    )
 import threading
 from node.blockchain.validate_block import (
     validateBlock, 
@@ -34,7 +38,7 @@ from node.information.transaction import (
     getTransaction
     )
 from utilities.bitcoin.bitcoin_transactions import countTransactionBlocks,\
-    insertRelevantTransactions
+    insertRelevantTransactions, synchWithBitcoin
 
 def addBlock(block):
     
@@ -65,12 +69,6 @@ def addBlock(block):
     
     updateContingencies(bitcoin_block, prior_bitcoin_block_height, block_height)
     print('updated contingencies')
-    
-    #updateMinerFeeList(bitcoin_block, block_height)
-    #print('updated miner fee list')
-    
-    #updateTransferFeeList(bitcoin_block, block_height)
-    #print('updated transfer fee list')
     
     removeTransactionsFromMempool(block_height)
     print('removed transactions from mempool')
@@ -242,18 +240,9 @@ def addTransaction(transaction, block_height):
         parcel_id = addParcelOutput(transaction_id, output_version, pub_key, i, planet_id, shape)
         
         if output_version == 3:
-            
-            #mark superceded claims
-            override_claim_info = getClaim(output_parcel_id)
-            if override_claim_info.get('status') == 'claim identified':
-                updateClaimLeading(override_claim_info.get('id'), block_height)
 
-            #add new claims to DB
-            leading_claim = 'true'
-            invalidated_claim = 'false'
-            add_claim = addClaimToDb(claim_input_id, parcel_id, miner_fee_sats, block_height, leading_claim, invalidated_claim, block_height)
-
-
+            status = 'OPEN'
+            add_claim = addClaimToDb(claim_input_id, parcel_id, miner_fee_sats, block_height, status, block_height)
 
     if (is_landbase):
         updateDbLandbase(parcel_id, block_height)
@@ -439,13 +428,18 @@ def updateTransferFeeList(bitcoin_block, bitland_block):
 
 def updateContingencies(bitcoin_block_height, prior_bitcoin_block_height, bitland_block_height):
     
-    db_blocks = countTransactionBlocks(prior_bitcoin_block_height,bitcoin_block_height)    
+    if bitland_block_height == 1:
+        return None
+
+    synch = synchWithBitcoin(prior_bitcoin_block_height,bitcoin_block_height)
     
-    if db_blocks != bitcoin_block_height - prior_bitcoin_block_height:
-        return "error"
-        #UPDATE to make it add in the blocks that are missing
+    if synch == 'synched':    
+        inserted_transactions = insertRelevantTransactions(prior_bitcoin_block_height, bitcoin_block_height, bitland_block_height)
+        #update claims
+        updated_claims = updateClaims(bitcoin_block_height, contingency_validation_blocks, bitland_block_height, claim_blocks, claim_required_percentage_increase)
         
-    inserted_transactions = insertRelevantTransactions(prior_bitcoin_block_height, bitcoin_block_height, bitland_block_height)
+    else:
+        return 'error'
     
     return inserted_transactions
 

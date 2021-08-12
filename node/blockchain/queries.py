@@ -90,23 +90,20 @@ def addTransferFeeStatusToDb(transaction_id, bitcoin_block_height, bitcoin_trans
 
 
 #What is invalidation input parcel id?
-def addClaimToDb(claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, leading_claim, invalidated_claim, from_bitland_block_height):
+def addClaimToDb(claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, status, from_bitland_block_height):
 
     claimed_output_parcel_id = str(claimed_output_parcel_id)
     claim_action_output_parcel_id = str(claim_action_output_parcel_id)
     claim_fee_sats = str(claim_fee_sats) 
     claim_block_height =  str(claim_block_height)
-    leading_claim =  str(leading_claim)
-    invalidated_claim =  str(invalidated_claim)
     from_bitland_block_height =  str(from_bitland_block_height)
     
-    query = ("insert into bitland.claim (claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, leading_claim, invalidated_claim,from_bitland_block_height) values " +
+    query = ("insert into bitland.claim (claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, status ,from_bitland_block_height) values " +
             "(" + claimed_output_parcel_id + "," +
             claim_action_output_parcel_id + "," +  
             claim_fee_sats + "," +  
             claim_block_height + "," +  
-            "'" + leading_claim + "'," + 
-            "'" + invalidated_claim + "'," + 
+            "'" + status + "'," +  
             from_bitland_block_height + ") "
             "RETURNING id;"
             )

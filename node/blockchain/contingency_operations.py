@@ -14,7 +14,8 @@ from node.information.transaction import (
     getTransaction
     )
 from node.information.contingency import (
-    getClaim, getContingencyStatusDb, getClaims, updateExpiredClaims
+    getClaim, getContingencyStatusDb, getClaims, updateExpiredClaims,
+    updateInvalidatedClaims, updateLeadingClaims, updateSuccessfulClaims
     )
 from utilities.sqlUtils import executeSql
 
@@ -66,11 +67,12 @@ def getContingency(transaction_hash,type,bitcoin_height,bitland_height,utxo_bitc
     
     #check DB
     db_contingency = getContingencyStatusDb(transaction_hash=transaction_hash, type=type)
-    expiration_block = db_contingency.get('bitcoin_expiration_height')
-    expiration_confirmed_block = expiration_block + contingency_validation_blocks
-    validation_bitcoin_block_height = db_contingency.get('validation_bitcoin_block_height')
     
     if db_contingency.get('status') == 'contingency identified' : 
+        
+        expiration_block = db_contingency.get('bitcoin_expiration_height')
+        expiration_confirmed_block = expiration_block + contingency_validation_blocks
+        validation_bitcoin_block_height = db_contingency.get('validation_bitcoin_block_height')
         
         if validation_bitcoin_block_height == None:
             if bitcoin_height > expiration_confirmed_block:
@@ -152,24 +154,30 @@ def utxoCombinedContingencyStatus(utxo_id, bitcoin_height, bitland_height):
 
 
 ################CLAIM CALCULATIONS AND DB OPERATIONS
-def updateClaims(bitcoin_block_height, confirmation_blocks, bitland_block_height):
+def updateClaims(bitcoin_block_height, confirmation_blocks, bitland_block_height, claim_blocks, claim_increase):
 
-    '''
-    1. update claims where miner fee/transfer fee expired
-    2. update ones that were invalidated by a move
-    3. update ones where miner fee/transfer fee was successful
-     -> invalidate old ones that were beaten
-    '''
+    #UPDATE rollback function to handle claims table and bitcoin transaction table
+    
+    #OPEN
+    #EXPIRED_CONFIRMED
+    #SUPERCEDED
+    #LEADING
+    #INVALIDATED
+    #SUCCESSFUL
     
     #update claims where miner fee/transfer fee expired
     update_expired_claims = updateExpiredClaims(bitcoin_block_height, confirmation_blocks, bitland_block_height)
     
-    #update ones that were invalidated by a move
+    #update claims that were invalidated by utxo owner moving the parcel
+    update_invalidated_claims = updateInvalidatedClaims(bitland_block_height)
     
-    #update ones where miner fee/transfer fee was successful
-    # -> invalidate old ones that were beaten
+    #update claims where miner fee/transfer fee was successful and invalidate old ones that were beaten
+    update_leading_claims = updateLeadingClaims(bitland_block_height, claim_blocks, claim_increase)
     
-    return None
+    #update claims that have won - 52500
+    update_successful_claims = updateSuccessfulClaims(bitland_block_height, claim_blocks)
+    
+    return True
 
 
 def findClaimsForOutput(output_id):

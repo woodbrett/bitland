@@ -293,7 +293,7 @@ if __name__ == '__main__':
     
     ############ CLAIM TRANSACTION ################
     
-    claim_transaction = createTransactionClaim('11e0177991e5b50d90c1e3492c5d8b2cae1fa2c1d0fdd856a96458682f859cfa', 0, 35000, 350)
+    claim_transaction = createTransactionClaim('4f651474a9f41af5b7d480afdd8ec65730eaaf1872009be993b829a7d69e6bd4', 0, 11000, 350)
     print(hexlify(claim_transaction).decode('utf-8'))
     
     
