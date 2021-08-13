@@ -48,7 +48,7 @@ def start_node():
 def run_node():
     
     while True:
-        time.sleep(60)
+        time.sleep(120)
         
         print('checking peer blocks')
         check_peer_blocks()

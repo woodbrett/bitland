@@ -26,7 +26,7 @@ app.register_blueprint(peer)
 app.register_blueprint(local)
     
 #start node ongoing functions (managing peers, pinging, garbage collecting transactions)
-node = True
+node = False
 if node == True:
     start_node()
     t1 = threading.Thread(target=run_node,daemon=True)
@@ -34,7 +34,7 @@ if node == True:
     print('starting node', flush=True)
     
 #start mining if true
-run_mining = True
+run_mining = False
 if run_mining == True:
     
     t2 = threading.Thread(target=mining_process,daemon=True)

@@ -175,7 +175,7 @@ def updateClaims(bitcoin_block_height, confirmation_blocks, bitland_block_height
     update_leading_claims = updateLeadingClaims(bitland_block_height, claim_blocks, claim_increase)
     
     #update claims that have won - 52500
-    update_successful_claims = updateSuccessfulClaims(bitland_block_height, claim_blocks)
+    update_successful_claims = updateSuccessfulClaims(bitland_block_height)
     
     return True
 

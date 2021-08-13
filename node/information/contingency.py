@@ -181,12 +181,11 @@ def updateLeadingClaims(bitland_block_height, claim_blocks, claim_increase):
     return update_sql
 
 
-def updateSuccessfulClaims(bitland_block_height, claim_blocks):
+def updateSuccessfulClaims(bitland_block_height):
     
     bitland_block_height = str(bitland_block_height)
-    claim_blocks = str(claim_blocks)
     
-    query = ("select bitland.update_successful_claims (" + bitland_block_height + "," + claim_blocks + ");")
+    query = ("select bitland.update_successful_claims (" + bitland_block_height + ");")
     
     update_sql = executeSql(query)
     

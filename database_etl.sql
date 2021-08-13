@@ -833,8 +833,8 @@ begin
 end;
 $$;
 
-drop function if exists bitland.update_successful_claims (bitland_block_height int, claim_blocks int);
-create function bitland.update_successful_claims (bitland_block_height int, claim_blocks int)
+drop function if exists bitland.update_successful_claims (bitland_block_height int);
+create function bitland.update_successful_claims (bitland_block_height int)
 returns int
 language plpgsql
 as
@@ -848,7 +848,7 @@ begin
 	from bitland.claim c
 	where c.status = 'LEADING' 
 	  and c.to_bitland_block_height is null 
-	  and c.claim_end_block + $2 = $1
+	  and c.claim_end_block = $1
 	)
 	, insert_new_record as (
 	insert into bitland.claim(claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, invalidation_input_parcel_id, status, claim_end_block, from_bitland_block_height)
