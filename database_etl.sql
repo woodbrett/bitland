@@ -753,7 +753,6 @@ begin
 end;
 $$;
 
-
 drop function if exists bitland.update_leading_claims (bitland_block_height int, claim_blocks int, claim_increase float8);
 create function bitland.update_leading_claims (bitland_block_height int, claim_blocks int, claim_increase float8)
 returns int
@@ -763,15 +762,16 @@ $$
 declare
 
 begin
-
+	
 	with fee_paid_claims as (
-	select c.id, c.claim_fee_sats, claimed_output_parcel_id, c.claim_block_height, c.claim_action_output_parcel_id , c.invalidation_input_parcel_id 
+	select c.id, c.claim_fee_sats, claimed_output_parcel_id, c.claim_block_height, c.claim_action_output_parcel_id , c.invalidation_input_parcel_id, c.claim_end_block 
 	from bitland.claim c
 	join bitland.output_parcel op on c.claim_action_output_parcel_id = op.id
 	  and c.status in ('OPEN') and c.to_bitland_block_height is null
 	join bitland.vw_contingency_status vcs on op.transaction_id = vcs.id
 	  and vcs.validation_recorded_bitland_block_height = $1 
 	)
+	--select * from fee_paid_claims
 	--these three steps are needed to settle ties of multiple claims on same utxo
 	, max_fee as (
 	select claimed_output_parcel_id, max(claim_fee_sats) as max_claim_fee_sats
@@ -789,21 +789,24 @@ begin
 	from fee_paid_claims fpc
 	join earliest_block_max_fee ebmf on ebmf.claimed_output_parcel_id = fpc.claimed_output_parcel_id and ebmf.claim_fee_sats = fpc.claim_fee_sats and ebmf.min_claim_block_height = claim_block_height
 	)
+	--select * from winning_claims
 	, valid_fee_increase as (
 	select wc.id, wc.claimed_output_parcel_id, wc.claim_action_output_parcel_id, wc.claim_fee_sats, wc.claim_block_height, wc.invalidation_input_parcel_id, 'LEADING' as status, $1 + $2 as claim_end_block
 	from winning_claims wc
 	left join bitland.claim c on wc.claimed_output_parcel_id = c.claimed_output_parcel_id 
 	  and c.status = 'LEADING' and c.to_bitland_block_height is null
-	where (wc.claim_fee_sats / coalesce(c.claim_fee_sats,1) - 1) > $3
+	where (wc.claim_fee_sats::float8 / coalesce(c.claim_fee_sats,1)::float8) > $3
 	)
+	--select * from valid_fee_increase
 	, superceded_claims as (
 	select c.id, c.claimed_output_parcel_id, c.claim_action_output_parcel_id, c.claim_fee_sats, c.claim_block_height, c.invalidation_input_parcel_id, 'SUPERCEDED' as status, c.claim_end_block
 	from valid_fee_increase v
 	join bitland.claim c on v.claimed_output_parcel_id = c.claimed_output_parcel_id 
 	  and c.status = 'LEADING' and c.to_bitland_block_height is null
 	)
+	--select * from superceded_claims
 	, losing_or_invalid_claims as (
-	select vfi.id, vfi.claimed_output_parcel_id, vfi.claim_action_output_parcel_id, vfi.claim_fee_sats, vfi.claim_block_height, vfi.invalidation_input_parcel_id, 'SUPERCEDED' as status, vfi.claim_end_block
+	select fpc.id, fpc.claimed_output_parcel_id, fpc.claim_action_output_parcel_id, fpc.claim_fee_sats, fpc.claim_block_height, fpc.invalidation_input_parcel_id, 'SUPERCEDED' as status, fpc.claim_end_block
 	from fee_paid_claims fpc
 	left join valid_fee_increase vfi on vfi.id = fpc.id
 	where vfi.id is null

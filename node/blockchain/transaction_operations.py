@@ -481,11 +481,14 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
                 failure_reason = 'invalid input utxo type for the spend type'  
     
     #check if its valid to make a claim
+    #removed this because any claim i think can attempt to be made, it may just fail
+    '''
     if (valid_input == True and input_version == 3):
         utxo_current_claim_sats = input_utxo.get('claim_fee_sats')
         valid_input = validateClaimAttempt(miner_fee_sats, utxo_current_claim_sats)
         if(valid_input == False):
             failure_reason = 'insufficient bid for claim'          
+    '''
     
     #validate signature, but not for making a claim
     if (valid_input == True and input_version != 3):

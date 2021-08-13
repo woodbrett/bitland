@@ -106,36 +106,42 @@ def getBlockInformationNodeDb(block_height=0):
         }
 
 
-def synchWithBitcoin(prior_bitcoin_block_height=0,bitcoin_block_height=0):
+def synchWithBitcoin(start_bitcoin_height=0,end_bitcoin_height=0,synch_last_10=True):
+
+    if synch_last_10 == True:
     
-    #UPDATE to do rollbacks in case bitcoin has a chain rollback
-    synched = False
-    
-    while synched == False:
+        #UPDATE to do rollbacks in case bitcoin has a chain rollback
+        synched = False
         
-        block_info = getBlockInformationNodeDb()
-        
-        if block_info.get('equal_heights') == True and block_info.get('equal_hashes') == True:
-            synched = True
-        
-        elif block_info.get('db_block_height') == None:
-            processBitcoinBlocks(block_info.get('node_block_height') - 100, block_info.get('node_block_height'))
-        
-        #UPDATE to ensure they start at same hash
-        elif block_info.get('node_block_height') > block_info.get('db_block_height'):
-            processBitcoinBlocks(block_info.get('db_block_height') + 1, block_info.get('node_block_height'))
+        while synched == False:
             
-        else:
-            break
+            block_info = getBlockInformationNodeDb()
+            
+            if block_info.get('equal_heights') == True and block_info.get('equal_hashes') == True:
+                synched = True
+            
+            elif block_info.get('db_block_height') == None:
+                processBitcoinBlocks(block_info.get('node_block_height') - 10, block_info.get('node_block_height'))
+            
+            #UPDATE to ensure they start at same hash
+            elif block_info.get('node_block_height') > block_info.get('db_block_height'):
+                processBitcoinBlocks(block_info.get('db_block_height') + 1, block_info.get('node_block_height'))
+                
+            else:
+                break
+            
+        if synched == False:
+            return 'error'
         
-    if synched == False:
-        return 'error'
+        elif synched == True:
+            return 'synched'
+        
+        else:
+            return 'error'
     
-    elif synched == True:
-        return 'synched'
-    
-    else:
-        return 'error'
+    if start_bitcoin_height != 0 and end_bitcoin_height != 0:
+        
+        return True
         
 
 #QUERIES
