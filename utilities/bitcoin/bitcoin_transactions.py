@@ -108,10 +108,11 @@ def getBlockInformationNodeDb(block_height=0):
 
 def synchWithBitcoin(start_bitcoin_height=0,end_bitcoin_height=0,synch_last_10=True):
 
+    synched = False
+
     if synch_last_10 == True:
     
         #UPDATE to do rollbacks in case bitcoin has a chain rollback
-        synched = False
         
         while synched == False:
             
@@ -130,14 +131,6 @@ def synchWithBitcoin(start_bitcoin_height=0,end_bitcoin_height=0,synch_last_10=T
             else:
                 break
             
-        if synched == False:
-            return 'error'
-        
-        elif synched == True:
-            return 'synched'
-        
-        else:
-            return 'error'
     
     if start_bitcoin_height != 0 and end_bitcoin_height != 0:
         
@@ -153,8 +146,16 @@ def synchWithBitcoin(start_bitcoin_height=0,end_bitcoin_height=0,synch_last_10=T
             if i not in block_heights:
                 processBitcoinBlock(i)
         
-        return True
-        
+        synched = True
+
+    if synched == False:
+        return 'error'
+    
+    elif synched == True:
+        return 'synched'
+    
+    else:
+        return 'error'        
 
 #QUERIES
 def insertRelevantTransactions(prior_bitcoin_block_height, bitcoin_block_height, bitland_block_height):
@@ -273,10 +274,10 @@ if __name__ == '__main__':
     
     for i in range(693844,694501):
         print(processBitcoinBlock(i))
-    '''
-    
+        
     print(getBitcoinTransactionBlocks(5,15))
     print(getBitcoinTransactionBlocks(695216,695225))
     x = synchWithBitcoin(start_bitcoin_height=695216,end_bitcoin_height=695225,synch_last_10=False)
-
+    '''
     
+    print(processBitcoinBlock(695600))
