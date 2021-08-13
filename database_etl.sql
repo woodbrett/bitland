@@ -880,9 +880,9 @@ truncate bitland.transfer_fee_transaction;
 truncate bitland.miner_fee_transaction;
 truncate bitcoin.relevant_contingency_transaction;
 truncate bitcoin.recent_transactions;
-update landbase_enum set valid_claim = false;
-update landbase_enum set block_claim = null;
-update landbase_enum set valid_claim = true, valid_enabled_block = 0 where y_id in (1,975);
+update bitland.landbase_enum set valid_claim = false;
+update bitland.landbase_enum set block_claim = null;
+update bitland.landbase_enum set valid_claim = true, valid_enabled_block = 0 where y_id in (1,975);
 truncate bitland.transaction_mempool;
 --	truncate wallet.addresses;
 

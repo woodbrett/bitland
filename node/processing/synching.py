@@ -34,6 +34,10 @@ def start_node():
     
     pingPeers()
     #findPeers()
+
+    synchBitcoin()
+    print('synched bitcoin')
+    
     check_peer_blocks()
     print('checked peers')
     garbageCollectMempool()
