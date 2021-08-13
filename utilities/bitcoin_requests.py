@@ -25,7 +25,7 @@ def getCurrentBitcoinBlockHeight():
     return calculated_block_height
 
 
-def validateBitcoinAddressFromNode(address_utf8):
+def validateBitcoinAddressFromBitcoinNode(address_utf8):
 
     rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
     
