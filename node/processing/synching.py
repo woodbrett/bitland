@@ -23,7 +23,8 @@ from node.blockchain.validate_block import (
 from utilities.hashing import calculateHeaderHashFromBlock
 import time
 import threading
-from node.blockchain.block_adding_queueing import processPeerBlocks
+from node.blockchain.block_adding_queueing import processPeerBlocks,\
+    synchBitcoin
 from node.blockchain.mempool_operations import garbageCollectMempool
 from ipaddress import ip_address
 from node.blockchain.global_variables import bitland_version
@@ -44,8 +45,12 @@ def run_node():
     
     while True:
         time.sleep(60)
-        check_peer_blocks()
+        
         print('checking peer blocks')
+        check_peer_blocks()
+        
+        print('synching bitcoin')
+        synchBitcoin()
 
 
 def pingPeers():

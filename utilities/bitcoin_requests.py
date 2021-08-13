@@ -17,6 +17,7 @@ from binascii import unhexlify, hexlify
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 
 
+#UPDATE make this from node
 def getCurrentBitcoinBlockHeight():
     calculated_block_height = int(requests.get(block_height_url).text)
     return calculated_block_height

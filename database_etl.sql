@@ -589,9 +589,18 @@ begin
 	delete from bitland.transaction
 	where id in (select distinct transaction_id from block_joins bj)
 	)
-	,delete_claim as (
+	--,delete_claim as (
+	--delete from bitland.claim
+	--where claim_block_height = $1
+	--)
+	,delete_claim_smd as (
 	delete from bitland.claim
-	where claim_block_height = $1
+	where from_bitland_block_height = $1
+	)
+	,update_claim_smd as (
+	update bitland.claim
+	set to_bitland_block_height = null
+	where to_bitland_block_height = $1
 	)
 	,delete_block_entry as (
 	delete from bitland.block
@@ -600,14 +609,6 @@ begin
 	,delete_serialized_block as (
 	delete from bitland.block_serialized
 	where id in (select distinct block_id from delete_block)
-	)
-	,delete_additions_to_miner_fee_status as (
-	delete from bitland.miner_fee_transaction
-	where bitland_block_height in (select distinct block_id from delete_block)
-	)
-	,delete_additions_to_transfer_fee_status as (
-	delete from bitland.transfer_fee_transaction
-	where bitland_block_height in (select distinct block_id from delete_block)
 	)
 	,reset_landbase_enum as (
 	update bitland.landbase_enum le
@@ -621,6 +622,7 @@ begin
 	return $1;
 end;
 $$;
+
 
 drop view if exists bitland.utxo;
 create view bitland.utxo as 
@@ -751,6 +753,7 @@ begin
 end;
 $$;
 
+
 drop function if exists bitland.update_leading_claims (bitland_block_height int, claim_blocks int, claim_increase float8);
 create function bitland.update_leading_claims (bitland_block_height int, claim_blocks int, claim_increase float8)
 returns int
@@ -762,7 +765,7 @@ declare
 begin
 
 	with fee_paid_claims as (
-	select c.id, c.claim_fee_sats, claimed_output_parcel_id, c.claim_block_height
+	select c.id, c.claim_fee_sats, claimed_output_parcel_id, c.claim_block_height, c.claim_action_output_parcel_id , c.invalidation_input_parcel_id 
 	from bitland.claim c
 	join bitland.output_parcel op on c.claim_action_output_parcel_id = op.id
 	  and c.status in ('OPEN') and c.to_bitland_block_height is null
@@ -787,7 +790,7 @@ begin
 	join earliest_block_max_fee ebmf on ebmf.claimed_output_parcel_id = fpc.claimed_output_parcel_id and ebmf.claim_fee_sats = fpc.claim_fee_sats and ebmf.min_claim_block_height = claim_block_height
 	)
 	, valid_fee_increase as (
-	select wc.id, c.claimed_output_parcel_id, c.claim_action_output_parcel_id, c.claim_fee_sats, c.claim_block_height, c.invalidation_input_parcel_id, 'LEADING' as status, $1 + $2 as claim_end_block
+	select wc.id, wc.claimed_output_parcel_id, wc.claim_action_output_parcel_id, wc.claim_fee_sats, wc.claim_block_height, wc.invalidation_input_parcel_id, 'LEADING' as status, $1 + $2 as claim_end_block
 	from winning_claims wc
 	left join bitland.claim c on wc.claimed_output_parcel_id = c.claimed_output_parcel_id 
 	  and c.status = 'LEADING' and c.to_bitland_block_height is null
