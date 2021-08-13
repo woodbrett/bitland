@@ -19,11 +19,21 @@ from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 
 #UPDATE make this from node
 def getCurrentBitcoinBlockHeight():
-    calculated_block_height = int(requests.get(block_height_url).text)
+    
+    rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
+    calculated_block_height = rpc_connection.getblockcount()
     return calculated_block_height
 
 
-def validateV1BitcoinAddress(address):
+def validateBitcoinAddressFromNode(address_utf8):
+
+    rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
+    
+    return rpc_connection.validateaddress(address_utf8).get('isvalid')
+
+
+#OLD - node on the web
+def validateV1BitcoinAddressExternalApi(address):
 
     base58Decoder = base58.b58decode(address).hex()
     prefixAndHash = base58Decoder[:len(base58Decoder)-8]
@@ -40,14 +50,12 @@ def validateV1BitcoinAddress(address):
     return is_valid
 
 
-def validateBitcoinAddressFromBitcoinNode(address_utf8):
-
-    rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
-    
-    return rpc_connection.validateaddress(address_utf8).get('isvalid')
+def getCurrentBitcoinBlockHeightExternalApi():
+    calculated_block_height = int(requests.get(block_height_url).text)
+    return calculated_block_height
 
 
-def validateBitcoinAddressFromExternalAPI(address_utf8):
+def validateBitcoinAddressFromExternalApi(address_utf8):
     
     transaction_validation_url_sub = transaction_validation_url.replace(':address', address_utf8)
     print(transaction_validation_url_sub)
@@ -80,8 +88,6 @@ if __name__ == '__main__':
     block_times = [ block["time"] for block in blocks ]
     print(block_times)    
     
-    print(validateBitcoinAddressFromBitcoinNode('abc'))
-    print(validateBitcoinAddressFromBitcoinNode('bc1qsdmlzvq79spjameemz5d8g2xfxxxgcp74h7j5w'))
     
     
     

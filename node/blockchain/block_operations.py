@@ -431,7 +431,7 @@ def updateContingencies(bitcoin_block_height, prior_bitcoin_block_height, bitlan
     if bitland_block_height == 1:
         return None
 
-    synch = synchWithBitcoin(prior_bitcoin_block_height,bitcoin_block_height)
+    synch = synchWithBitcoin(start_bitcoin_height=prior_bitcoin_block_height, end_bitcoin_height=bitcoin_block_height, synch_last_10=False)
     
     if synch == 'synched':    
         inserted_transactions = insertRelevantTransactions(prior_bitcoin_block_height, bitcoin_block_height, bitland_block_height)

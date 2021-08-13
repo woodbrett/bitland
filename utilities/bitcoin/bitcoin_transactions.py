@@ -36,7 +36,7 @@ def spendByAddressBitcoinBlock(bitcoin_block, bitcoin_height, insert_into_db=Fal
                 
                 counter = counter + 1
 
-    if insert_into_db == True:   
+    if insert_into_db == True and counter > 0:   
         insertBitcoinTransactionDb(insert_statement)
     
     return len(address_value_array)
@@ -141,6 +141,18 @@ def synchWithBitcoin(start_bitcoin_height=0,end_bitcoin_height=0,synch_last_10=T
     
     if start_bitcoin_height != 0 and end_bitcoin_height != 0:
         
+        blocks = getBitcoinTransactionBlocks(start_bitcoin_height, end_bitcoin_height)
+        print(blocks)
+        block_heights = []
+        for i in range(0,len(blocks)):
+            block_heights.append(blocks[i][0])
+        
+        print(block_heights)    
+        
+        for i in range(start_bitcoin_height,end_bitcoin_height+1):
+            if i not in block_heights:
+                processBitcoinBlock(i)
+        
         return True
         
 
@@ -172,10 +184,10 @@ def getBitcoinTransactionBlocks(start_block_height, end_block_height):
     start_block_height = str(start_block_height)
     end_block_height = str(end_block_height)
     
-    query = ("select bitcoin_block_height from bitcoin.transaction_blocks where bitcoin_block_height >= " + start_block_height + " and bitcoin_block_height <= " + end_block_height + ";"
+    query = ("select block_height,block_hash from bitcoin.block where block_height >= " + start_block_height + " and block_height <= " + end_block_height + ";"
             )
-    
-    blocks = executeSqlMultipleRows(query)[0]
+        
+    blocks = executeSqlMultipleRows(query)
     
     return blocks
 
@@ -185,7 +197,7 @@ def countTransactionBlocks(prior_block_height, block_height):
     prior_block_height = str(prior_block_height)
     block_height = str(block_height)
     
-    query = ("select count(*) as block_count from bitcoin.transaction_blocks where bitcoin_block_height > " + prior_block_height + " and bitcoin_block_height <= " + block_height + ";"
+    query = ("select count(*) as block_count from bitcoin.block where block_height > " + prior_block_height + " and block_height <= " + block_height + ";"
             )
     
     count = executeSql(query)[0]
@@ -263,6 +275,8 @@ if __name__ == '__main__':
         print(processBitcoinBlock(i))
     '''
     
-    print(synchWithBitcoin())
+    print(getBitcoinTransactionBlocks(5,15))
+    print(getBitcoinTransactionBlocks(695216,695225))
+    x = synchWithBitcoin(start_bitcoin_height=695216,end_bitcoin_height=695225,synch_last_10=False)
 
     
