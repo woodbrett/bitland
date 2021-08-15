@@ -440,7 +440,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
         #get summary of utxo - what is its transfer fee status, miner fee status
         #UPDATE to pull data from contingency logic
         transfer_fee_status = inspected_parcel.get('transfer_fee_status')
-        claim_status = inspected_parcel.get('claim_status')
+        claim_status = inspected_parcel.get('claim_status') #for investigating if a claim can be spent
         outstanding_claim = inspected_parcel.get('outstanding_claims')
         miner_fee_status = inspected_parcel.get('miner_fee_status')
         
@@ -453,7 +453,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
         transfer_fee_status_valid = ((transfer_fee_status in valid_transfer_fee_types) or valid_transfer_fee_types == [])
         miner_fee_status_valid = ((miner_fee_status in valid_miner_fee_types) or valid_miner_fee_types == [])
         claim_status_valid = ((claim_status in valid_claim_types) or valid_claim_types == [])
-        outstanding_claim_valid = ((outstanding_claim in valid_claim_types) or valid_claim_types == [])
+        outstanding_claim_valid = ((outstanding_claim in valid_outstanding_claim_types) or valid_outstanding_claim_types == [])
         input_utxo_type_valid = ((input_utxo_version in valid_input_utxo_types) or valid_input_utxo_types == [])
         
         valid_input = transfer_fee_status_valid == True 
@@ -537,35 +537,36 @@ def validContingencyStatusSpendTypes(spend_type):
         transfer_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
         miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
         claim_status = []
-        outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        #outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        outstanding_claim = ['UNCLAIMED']
         input_utxo_type = [0,1,2]
         
     elif spend_type == 2:
         transfer_fee_status = []
         miner_fee_status = ['EXPIRED_CONFIRMED']
         claim_status = []
-        outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        outstanding_claim = ['UNCLAIMED']
         input_utxo_type = [2]
         
     elif spend_type == 3:
         transfer_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
         miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
         claim_status = []
-        outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        outstanding_claim = ['UNCLAIMED']
         input_utxo_type = [0,1,2,3]
         
     elif spend_type == 4:
         transfer_fee_status = ['EXPIRED_CONFIRMED']
         miner_fee_status = []
         claim_status = []
-        outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        outstanding_claim = ['UNCLAIMED']
         input_utxo_type = [0,1,2]
     
     elif spend_type == 5:
         transfer_fee_status = []
         miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
-        claim_status = ['SUCCESSFUL_CLAIM']
-        outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        claim_status = ['SUCCESSFUL_CONFIRMED']
+        outstanding_claim = ['UNCLAIMED']
         input_utxo_type = [3]
     
     else:

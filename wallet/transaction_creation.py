@@ -216,17 +216,18 @@ if __name__ == '__main__':
     order by block_id desc
     '''
 
-    input_public_key = 'af6d999747d695f7a21370cb2cee05b3e49182219ba6eee24e1e35576be0d719aa995e98fe10288e0937921b98fa806378b511506794d80f8f6a1a7ca2e52124'
-    input_private_key = '7e01de010c7f5903f0625006f73fb190307315d7da11746688aa52af24c9f715'
-    polygon = "POLYGON((-60.382165 84.41892,-60.46875 84.41892,-60.46875 84.6585,-60.46875 84.90942,-60.363055 84.90942,-60.382165 84.41892))"
+
+    input_public_key = '1b7beb5bab2937b5719d63d54f542c05f306fb56cc89812689512d37adbfed6f0cfbe437d5748813ce01bf53ac78b29e8ff9a21ef6fb37f982b96183b0c3f392'
+    input_private_key = '34f5e78af875958d9c9571c0060f1b40bef61a1804703849ca37ec6aff78797f'
+    polygon = "POLYGON((0 90,0 89.74674,-90 89.74674,-90 90,0 90))"
     planet_id = 1
-    vout = 2
-    input_transaction_hash = 'a8788b7873e8c5671d62c2f3936b34ec3207bfc68062ea4250e4b10182dd8845'
+    vout = 0
+    input_transaction_hash = '1dcd19cde1eaf19ef60025047526bfabe1d0db09be362379a2ebe8ced5de6bd1'
     input_spend_type = 1
     
-    #simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
-    #print(hexlify(simple_transaction).decode('utf-8'))
-    #print(deserialize_transaction(simple_transaction))
+    simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
+    print(hexlify(simple_transaction).decode('utf-8'))
+    print(deserialize_transaction(simple_transaction))
     
     
     ############ MORE COMPLEX TRANSACTION ################
@@ -294,7 +295,7 @@ if __name__ == '__main__':
     ############ CLAIM TRANSACTION ################
     
     claim_transaction = createTransactionClaim('4f651474a9f41af5b7d480afdd8ec65730eaaf1872009be993b829a7d69e6bd4', 0, 17500, 350)
-    print(hexlify(claim_transaction).decode('utf-8'))
+    #print(hexlify(claim_transaction).decode('utf-8'))
     
     
     

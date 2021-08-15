@@ -40,6 +40,8 @@ TEST CASES
 	- accept spending utxo non-collateral as user after mining fee has expired 	
 
 *****transactions - claims*****
+	- TESTED 8/14 - reject spending utxo as original address when successful claim has been made
+		transaction = 000201011dcd19cde1eaf19ef60025047526bfabe1d0db09be362379a2ebe8ced5de6bd10040cd4e4b405fe63f3ec9fcaf0a25b43b2b9cb4552697efa45d29546ba7333646a5791b3b9099a0f2c64e871e1a8d4ba57411a88f65b676fc9355995151e6ec13050101010033504f4c59474f4e2828302039302c302038392e37343637342c2d39302038392e37343637342c2d39302039302c30203930292940d11d60d86a26c0d8adab0f60dae9917dc5a864ffb4bcf2ac91409cad0a5a03eb1e4f35541130b9b2e2e058e0e8c97a4040b83757f2f6009695926a55912a470c0000000000000000000000000000000000
 
 *****transactions - structure*****
 	- reject polygon with more than 6 decimals
