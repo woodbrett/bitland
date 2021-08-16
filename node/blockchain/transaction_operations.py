@@ -29,7 +29,7 @@ from utilities.gis_functions import (
     queryUnionPolygonAreaMeters
     )
 
-#input version 1 - standard spend (which could be a scuessful collateral)
+#input version 1 - standard spend (which could be a successful collateral)
 #input version 2 - spending as collateral
 #input version 3 - make claim
 #input version 4 - spend failed transfer
@@ -444,11 +444,13 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
         outstanding_claim = inspected_parcel.get('outstanding_claims')
         miner_fee_status = inspected_parcel.get('miner_fee_status')
         
-        valid_transfer_fee_types = validContingencyStatusSpendTypes(input_version)[0]
-        valid_miner_fee_types = validContingencyStatusSpendTypes(input_version)[1]
-        valid_claim_types = validContingencyStatusSpendTypes(input_version)[2]
-        valid_outstanding_claim_types = validContingencyStatusSpendTypes(input_version)[3]
-        valid_input_utxo_types = validContingencyStatusSpendTypes(input_version)[4]
+        valid_contingency_status_spends = validContingencyStatusSpendTypes(input_version, input_utxo_version)
+        
+        valid_transfer_fee_types = valid_contingency_status_spends.get('transfer_fee_status')
+        valid_miner_fee_types = valid_contingency_status_spends.get('miner_fee_status')
+        valid_claim_types = valid_contingency_status_spends.get('claim_status')
+        valid_outstanding_claim_types = valid_contingency_status_spends.get('outstanding_claim')
+        valid_input_utxo_types = valid_contingency_status_spends.get('input_utxo_type')
         
         transfer_fee_status_valid = ((transfer_fee_status in valid_transfer_fee_types) or valid_transfer_fee_types == [])
         miner_fee_status_valid = ((miner_fee_status in valid_miner_fee_types) or valid_miner_fee_types == [])
@@ -524,7 +526,7 @@ def getPublicKeySpendTypes(spend_type, utxo_public_key, utxo_transfer_failover_k
     return public_key
     
 
-def validContingencyStatusSpendTypes(spend_type):
+def validContingencyStatusSpendTypes(spend_type, output_type):
     #NO_FEE - transaction didn't have a transfer fee
     #OPEN - fee not paid, but timing not expired
     #VALIDATED_UNCONFIRMED - fee was paid but not through the confirmation period
@@ -533,13 +535,21 @@ def validContingencyStatusSpendTypes(spend_type):
     #EXPIRED_CONFIRMED - fee not paid, waiting period complete, parcel is returned to original address
     #NO_CLAIM, OUTSTANDING_CLAIM, SUCCESSFUL_CLAIM
     
-    if spend_type == 1:
+    if spend_type == 1 and output_type != 2:
         transfer_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
-        miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
+        miner_fee_status = []
         claim_status = []
         #outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
         outstanding_claim = ['UNCLAIMED']
-        input_utxo_type = [0,1,2]
+        input_utxo_type = [0,1]
+    
+    elif spend_type == 1 and output_type == 2:
+        transfer_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
+        miner_fee_status = []
+        claim_status = []
+        #outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        outstanding_claim = ['UNCLAIMED']
+        input_utxo_type = [2]
         
     elif spend_type == 2:
         transfer_fee_status = []
@@ -576,7 +586,13 @@ def validContingencyStatusSpendTypes(spend_type):
         outstanding_claim = 'error'
         input_utxo_type = 'error'
 
-    return transfer_fee_status, miner_fee_status, claim_status, outstanding_claim, input_utxo_type
+    return {
+        'transfer_fee_status': transfer_fee_status, 
+        'miner_fee_status': miner_fee_status, 
+        'claim_status': claim_status, 
+        'outstanding_claim': outstanding_claim, 
+        'input_utxo_type': input_utxo_type
+        }
 
 
 def validateClaimAttempt(miner_fee_sats, utxo_current_claim_sats):
