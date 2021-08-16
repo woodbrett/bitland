@@ -12,6 +12,10 @@ create table bitland.contingency (
   CONSTRAINT contingency_output_parcel_id_fkey FOREIGN KEY (output_parcel_id) REFERENCES bitland.output_parcel(id)
 );
 
+alter table bitland.block add column bitcoin_hash varchar;
+alter table bitland.block add column bitcoin_last_64_mrkl varchar;
+
+
 
 RERUN VIEWS
 

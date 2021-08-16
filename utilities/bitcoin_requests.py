@@ -17,12 +17,23 @@ from binascii import unhexlify, hexlify
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 
 
-#UPDATE make this from node
 def getCurrentBitcoinBlockHeight():
     
     rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
     calculated_block_height = rpc_connection.getblockcount()
     return calculated_block_height
+
+
+def getBlockHeightFromHash(bitcoin_hash):
+    
+    try:
+        rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
+        block_height = rpc_connection.getblockheader(bitcoin_hash).get('height')
+    
+    except:
+        block_height = 'no_block_found'
+    
+    return block_height
 
 
 def validateBitcoinAddressFromBitcoinNode(address_utf8):
@@ -75,7 +86,7 @@ def validateBitcoinAddressFromExternalApi(address_utf8):
 
 if __name__ == '__main__':
     
-    
+    '''
     # rpc_user and rpc_password are set in the bitcoin.conf file
     rpc_connection = AuthServiceProxy("http://%s:%s@192.168.86.34:8332"%(rpc_user, rpc_password))
     best_block_hash = rpc_connection.getbestblockhash()
@@ -87,8 +98,9 @@ if __name__ == '__main__':
     blocks = rpc_connection.batch_([ [ "getblock", h ] for h in block_hashes ])
     block_times = [ block["time"] for block in blocks ]
     print(block_times)    
+    '''
     
-    
+    print(getBlockHeightFromHash('0000000000000000000fd641f66a7da2e7efd7c6a93b959ca59fa5d7809f6e71'))
     
     
 

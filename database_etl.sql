@@ -24,7 +24,9 @@ create table bitland.block (
   mrkl_root varchar,
   time bigint,
   bits bigint,
+  bitcoin_hash varchar,
   bitcoin_block_height bigint,
+  bitcoin_last_64_mrkl varchar,
   miner_bitcoin_address varchar,
   nonce bigint
  );
