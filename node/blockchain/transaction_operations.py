@@ -423,10 +423,10 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
     
     #validate it is an outstanding utxo
     if (valid_input == True):
-        valid_input = input_utxo != 'no matched utxo'
+        valid_input = input_utxo.get('status') != 'no utxo found'
         print(valid_input)
         if(valid_input == False):
-            failure_reason = 'no matched utxo'
+            failure_reason = 'no utxo found'
     
     if (valid_input == True):
 
@@ -565,7 +565,7 @@ def validContingencyStatusSpendTypes(spend_type):
     elif spend_type == 5:
         transfer_fee_status = []
         miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
-        claim_status = ['SUCCESSFUL_CONFIRMED']
+        claim_status = ['SUCCESSFUL']
         outstanding_claim = ['UNCLAIMED']
         input_utxo_type = [3]
     

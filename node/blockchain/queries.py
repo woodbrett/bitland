@@ -113,31 +113,6 @@ def addClaimToDb(claimed_output_parcel_id, claim_action_output_parcel_id, claim_
     return claim_id
 
 
-def updateClaimInvalidate(id, block, invalidation_parcel_id):
-    
-    id = str(id)
-    block = str(block)
-    invalidation_parcel_id = str(invalidation_parcel_id)
-    
-    query = ("update bitland.claim set invalidated_claim = true, to_bitland_block_height = " + block + ", invalidation_input_parcel_id = " + invalidation_parcel_id + " where id = " + id + " RETURNING id")
-    claim_id = executeSql(query)[0]
-    
-    return claim_id
-
-
-def updateClaimLeading(id, block):
-    
-    id = str(id)
-    block = str(block)
-    
-    query = ("update bitland.claim set leading_claim = false, to_bitland_block_height = " + block + " where id = " + id + " RETURNING id")
-    print(query)
-
-    claim_id = executeSql(query)[0]
-    
-    return claim_id
-
-
 def AddParcel(
         planet_id,
         parcel_key,

@@ -592,6 +592,15 @@ begin
 	left join bitland.output_parcel op on t.id = op.transaction_id 
 	left join bitland.input_parcel ip on t.id = ip.transaction_id
 	)
+	,delete_contingency_smd as (
+	delete from bitland.contingency
+	where from_bitland_block_height = $1
+	)
+	,update_contingency_smd as (
+	update bitland.contingency
+	set to_bitland_block_height = null
+	where to_bitland_block_height = $1
+	)
 	,delete_input_parceL as (
 	delete from bitland.input_parcel 
 	where id in (select distinct input_parcel_id from block_joins bj)
@@ -610,15 +619,6 @@ begin
 	)
 	,update_claim_smd as (
 	update bitland.claim
-	set to_bitland_block_height = null
-	where to_bitland_block_height = $1
-	)
-	,delete_contingency_smd as (
-	delete from bitland.contingency
-	where from_bitland_block_height = $1
-	)
-	,update_contingency_smd as (
-	update bitland.contingency
 	set to_bitland_block_height = null
 	where to_bitland_block_height = $1
 	)
@@ -785,8 +785,8 @@ begin
 		    when status = 'LEADING' and t.block_id < claim_end_block then 'INVALIDATED'
 		    when status = 'LEADING' and t.block_id >= claim_end_block then 'ERROR - moved when should have been successful claim'
 		  end as status
-		  , c.id
-		from bitland.claim c
+		  , c.id, ip.id as invalidation_input_parcel_id
+		from bitland.active_claim c
 		join bitland.output_parcel op on c.claimed_output_parcel_id = op.id
 		  and c.status in ('OPEN','LEADING')
 		join bitland.input_parcel ip on op.id = ip.output_parcel_id 
@@ -794,7 +794,7 @@ begin
 	)
 	, insert_new_record as (
 	insert into bitland.claim(claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, invalidation_input_parcel_id, status, claim_end_block, from_bitland_block_height)
-	select claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, invalidation_input_parcel_id, e.status, claim_end_block, $1
+	select claimed_output_parcel_id, claim_action_output_parcel_id, claim_fee_sats, claim_block_height, e.invalidation_input_parcel_id, e.status, claim_end_block, $1
 	from bitland.claim c
 	join moved_parcels e on c.id = e.id
 	)
@@ -820,9 +820,9 @@ begin
 	
 	with fee_paid_claims as (
 	select c.id, c.claim_fee_sats, claimed_output_parcel_id, c.claim_block_height, c.claim_action_output_parcel_id , c.invalidation_input_parcel_id, c.claim_end_block 
-	from bitland.claim c
+	from bitland.active_claim c
 	join bitland.output_parcel op on c.claim_action_output_parcel_id = op.id
-	  and c.status in ('OPEN') and c.to_bitland_block_height is null
+	  and c.status in ('OPEN')
 	join bitland.vw_contingency_status vcs on op.transaction_id = vcs.id
 	  and vcs.validation_recorded_bitland_block_height = $1 
 	)
@@ -848,8 +848,8 @@ begin
 	, valid_fee_increase as (
 	select wc.id, wc.claimed_output_parcel_id, wc.claim_action_output_parcel_id, wc.claim_fee_sats, wc.claim_block_height, wc.invalidation_input_parcel_id, 'LEADING' as status, $1 + $2 as claim_end_block
 	from winning_claims wc
-	left join bitland.claim c on wc.claimed_output_parcel_id = c.claimed_output_parcel_id 
-	  and c.status = 'LEADING' and c.to_bitland_block_height is null
+	left join bitland.active_claim c on wc.claimed_output_parcel_id = c.claimed_output_parcel_id 
+	  and c.status = 'LEADING' 
 	where (wc.claim_fee_sats::float8 / coalesce(c.claim_fee_sats,1)::float8) > $3
 	)
 	--select * from valid_fee_increase
@@ -961,9 +961,9 @@ begin
 	    else 'error'
 	  end as status
 	from bitland.vw_contingency_status vcs 
-	where vcs.validation_recorded_bitland_block_height = $1 or (vcs.validation_recorded_bitland_block_height is null and bitcoin_expiration_height >= $3)
+	where vcs.validation_recorded_bitland_block_height = $1 or (vcs.validation_recorded_bitland_block_height is null and bitcoin_expiration_height <= $3)
 	)
-    , miner_fee_updates as (
+	, miner_fee_updates as (
 	select c.id, c.output_parcel_id, bu.status as miner_fee_status
 	from bitland.contingency c
 	join bitland.output_parcel op on c.output_parcel_id = op.id

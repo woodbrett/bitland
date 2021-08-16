@@ -81,7 +81,7 @@ def updateContingencies(bitland_block_height, confirmation_blocks, bitcoin_block
     #NO_CONTINGENCY
     
     #add new entries for new transactions
-    add_new_contingencies = addNewContingenciesDb(bitcoin_block_height)
+    add_new_contingencies = addNewContingenciesDb(bitland_block_height)
     
     #update contingencies that succeeeded and update contingencies that failed
     update_contingencies = updateContingenciesDb(bitland_block_height, confirmation_blocks, bitcoin_block_height)

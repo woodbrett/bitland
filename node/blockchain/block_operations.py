@@ -220,12 +220,6 @@ def addTransaction(transaction, block_height):
         if input_version != 3:
             input_parcel_id = addParcelInput(transaction_id,vin, input_version,input_transaction_hash,input_transaction_id,vout,output_parcel_id,sig)
             
-            #mark any invalidated claims
-            #UPDATE can make this way more efficient by doing all transactions at once probably            
-            claim_info = getClaim(output_parcel_id)
-            if claim_info.get('status') == 'claim identified':
-                updateClaimInvalidate(claim_info.get('claim_id'), block_height, input_parcel_id)
-            
         if input_version == 3:
             claim_input_id = output_parcel_id
         
