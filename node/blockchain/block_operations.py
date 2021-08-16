@@ -480,7 +480,7 @@ def updateDbLandbase(parcel_id, block_height):
         landbase_claim = executeSql(query_update_valid_landbase)[0]
     
     except Exception as error:
-        print('error updating landbase valid update' + str(error))    
+        print('no new landbases enabled' + str(error))    
     
     return parcel_id
 
