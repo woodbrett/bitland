@@ -9,8 +9,8 @@ from flask_restplus import Namespace, Resource, fields, Api
 from http import HTTPStatus
 from node.networking.peering_functions import authenticate_peer
 from node.networking.node_update_functions import (
-    queue_new_block_from_peer,
-    queue_new_transaction_from_peer
+    queueNewBlockFromPeer,
+    queueNewTransactionFromPeer
     )
 
 namespace = Namespace('node_updates', 'Node Updates')
@@ -51,7 +51,7 @@ class send_new_block(Resource):
         block = request.json['block']
         ip_address = request.remote_addr
         
-        x = queue_new_block_from_peer(block_height,block,ip_address)
+        x = queueNewBlockFromPeer(block_height,block,ip_address)
         print(x)
         
         status = 'received'
@@ -76,7 +76,7 @@ class send_new_transaction(Resource):
         transaction = request.json['transaction']
         ip_address = request.remote_addr
         
-        x = queue_new_transaction_from_peer(transaction_hex=transaction,peer=ip_address)
+        x = queueNewTransactionFromPeer(transaction_hex=transaction,peer=ip_address)
         print(x)
         
         status = 'received'

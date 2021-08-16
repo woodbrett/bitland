@@ -7,50 +7,54 @@ from utilities.sqlUtils import *
 from collections import namedtuple
 import json
 
-def getUtxoInfo (transaction_hash = '', vout = 0, id = 0):
+def getTransaction(transaction_hash = '', id = 0):
     
     transaction_hash = str(transaction_hash)
-    vout = str(vout)
     id = str(id)
     
-    query = ("select planet_id, st_astext(geom) as shape, pub_key, id, vout, transaction_hash, transaction_id, block_id, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address, bitcoin_block_height, miner_bitcoin_address, miner_landbase_address, output_version, transfer_fee_failover_address, claim_fee_sats, claim_block_height, miner_fee_status, transfer_fee_status, miner_fee_status_block_height, transfer_fee_status_block_height " +
-             "from bitland.utxo " +
-             "where (transaction_hash = '" + transaction_hash + "'" +
-             "  and vout = " + vout + ") or id = " + id
+    transaction_info = {}
+    
+    query = ("select id, block_id, transaction_hash, version, is_landbase, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address, bitcoin_block_height, miner_fee_status, transfer_fee_status, miner_fee_status_block_height, transfer_fee_status_block_height, miner_bitcoin_address " +
+             "from bitland.transaction_contingency " +
+             "where (transaction_hash = '" + transaction_hash + "' or id = " + id +");"
              )
     
     try:
-        output_parcel = executeSql(query)
-        columns = namedtuple('columns', ['planet_id', 'shape', 'pub_key', 'id', 'vout', 'transaction_hash', 'transaction_id', 'block_id', 'miner_fee_sats', 'miner_fee_blocks', 'transfer_fee_sats', 'transfer_fee_blocks', 'transfer_fee_address', 'bitcoin_block_height', 'miner_bitcoin_address', 'miner_landbase_address', 'output_version', 'transfer_fee_failover_address', 'claim_fee_sats', 'claim_block_height', 'miner_fee_status', 'transfer_fee_status', 'miner_fee_status_block_height', 'transfer_fee_status_block_height'])
-        utxo_output = columns(
-                        output_parcel[0],
-                        output_parcel[1],
-                        output_parcel[2],
-                        output_parcel[3],
-                        output_parcel[4],
-                        output_parcel[5],
-                        output_parcel[6],
-                        output_parcel[7],
-                        output_parcel[8],
-                        output_parcel[9],
-                        output_parcel[10],
-                        output_parcel[11],
-                        output_parcel[12],
-                        output_parcel[13],
-                        output_parcel[14],
-                        output_parcel[15],
-                        output_parcel[16],
-                        output_parcel[17],
-                        output_parcel[18],
-                        output_parcel[19],
-                        output_parcel[20],
-                        output_parcel[21],
-                        output_parcel[22],
-                        output_parcel[23]
-                        )
+        transaction = executeSql(query)
+        transaction_info = {
+            'status':'transaction identified',
+            'id': transaction[0], 
+            'block_id': transaction[1], 
+            'transaction_hash': transaction[2], 
+            'version': transaction[3], 
+            'is_landbase': transaction[4], 
+            'miner_fee_sats': transaction[5], 
+            'miner_fee_blocks': transaction[6], 
+            'transfer_fee_sats': transaction[7], 
+            'transfer_fee_blocks': transaction[8], 
+            'transfer_fee_address': transaction[9], 
+            'bitcoin_block_height': transaction[10],
+            'miner_fee_status': transaction[11], 
+            'transfer_fee_status': transaction[12], 
+            'miner_fee_status_block_height': transaction[13], 
+            'transfer_fee_status_block_height': transaction[14], 
+            'miner_bitcoin_address': transaction[15]
+        }
+        
 
     except Exception as error:
-        print('no utxo found' + str(error))
-        utxo_output = 'no matched utxo'
+        transaction_info = {
+            'status':'no transaction found',
+        }
+        
+    return transaction_info 
+
+
+def getTransactionIdByHash(transaction_hash):
     
-    return utxo_output 
+    select = ("select id from bitland.transaction where transaction_hash = '" + transaction_hash + "';")
+    
+    transaction_id = executeSql(select)
+    return transaction_id
+
+

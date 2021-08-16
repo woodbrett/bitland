@@ -4,7 +4,6 @@ Created on Dec 23, 2020
 @author: brett_wood
 '''
 from utilities.sqlUtils import executeSql
-from node.blockchain.queries import *
 import struct, codecs
 from binascii import unhexlify, hexlify
 from hashlib import sha256
@@ -23,6 +22,13 @@ from utilities.difficulty import get_target_from_bits
 from utilities.bitcoin_requests import *
 from node.blockchain.global_variables import *
 from node.blockchain.header_serialization import serialize_block_header_utf8
+from node.information.blocks import (
+    getBlockCount,
+    getPrevBlock,
+    getMaxBlock,
+    getBlock,
+    getMedianBlockTime11
+    )
 
 def validateVer(version):
     
@@ -40,13 +46,13 @@ def validatePrevBlock(prev_block, prev_block_input):
     return is_valid  
 
 
-def getPrevBlock():
+def getPrevBlockGuarded():
     
     if getBlockCount() == 0:
         node_prev_block = genesis_prev_block
     
     else:
-        node_prev_block_hex = queryGetPrevBlock()
+        node_prev_block_hex = getPrevBlock()
         node_prev_block = unhexlify(node_prev_block_hex)
     
     return node_prev_block  
@@ -158,13 +164,13 @@ def getHeaders(start_hash,end_hash):
         start_block = 1
     
     else:
-        start_block = getBlockInformation(block_header = 'start_header')
+        start_block = getBlock(block_header = 'start_header')
         
     if end_hash == unhexlify('0000000000000000000000000000000000000000000000000000000000000000'.encode('utf-8')):
         end_block = start_block + max_headers_send
     
     else:
-        end_block = getBlockInformation(block_header = 'end_header')
+        end_block = getBlock(block_header = 'end_header')
     
     end_block = min(end_block, start_block + max_headers_send, getMaxBlock())
         
@@ -172,21 +178,19 @@ def getHeaders(start_hash,end_hash):
     print(start_block,end_block)
     
     for i in range(start_block, end_block):
-        b = getBlockInformation(block_id = i)
+        b = getBlock(block_id = i)
         serialized_header = serialize_block_header_utf8(
-            b.version,
-            b.prev_block,     
-            b.mrkl_root,
-            b.time,
-            b.bits,
-            b.bitcoin_block_height,
-            b.miner_bitcoin_address,
-            b.nonce
+            b.get('version'),
+            b.get('prev_block'),     
+            b.get('mrkl_root'),
+            b.get('time'),
+            b.get('bits'),
+            b.get('bitcoin_block_height'),
+            b.get('miner_bitcoin_address'),
+            b.get('nonce')
         )
         
         data.append(serialized_header)
-    
-    print(data)
     
     return data
 

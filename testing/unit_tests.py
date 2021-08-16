@@ -5,11 +5,13 @@ Created on Jul 25, 2021
 '''
 from node.blockchain.transaction_serialization import deserialize_transaction
 from binascii import hexlify, unhexlify
-from node.blockchain.queries import queryPolygonRules
 from node.blockchain.header_serialization import serialize_block_header_utf8,\
     deserialize_block_header
 from _datetime import datetime
 from utilities.bitcoin_requests import validateBitcoinAddressFromBitcoinNode
+from utilities.gis_functions import (
+    queryPolygonRules
+    )
 
 
 ######### TRANSACTION TESTS #########

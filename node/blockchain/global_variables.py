@@ -25,7 +25,7 @@ genesis_prev_block = unhexlify('000000000000000000000000000000000000000000000000
 contingency_validation_blocks = 10
 
 claim_required_percentage_increase = 0.5
-claim_blocks = 105000  # number of blocks from when a claim is made until it wins the land, 2 years
+claim_blocks = 20  # number of blocks from when a claim is made until it wins the land, 1 years
 max_headers_send = 2000
 
 bitland_version = 1

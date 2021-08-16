@@ -13,7 +13,11 @@ from system_variables import (
     peering_port,
     peering_host
     )
-from node.processing.synching import start_node
+from node.processing.synching import (
+    start_node,
+    run_node
+    )
+import time
 
 app = Flask(__name__)
 app.config['RESTPLUS_MASK_SWAGGER'] = False
@@ -22,15 +26,17 @@ app.register_blueprint(peer)
 app.register_blueprint(local)
     
 #start node ongoing functions (managing peers, pinging, garbage collecting transactions)
-run_node = True
-if run_node == True:
-    t1 = threading.Thread(target=start_node,daemon=True)
+node = True
+if node == True:
+    start_node()
+    t1 = threading.Thread(target=run_node,daemon=True)
     t1.start()
     print('starting node', flush=True)
     
 #start mining if true
 run_mining = True
 if run_mining == True:
+    
     t2 = threading.Thread(target=mining_process,daemon=True)
     t2.start()
     print('started mining', flush=True)
@@ -44,4 +50,4 @@ if __name__ == "__main__":
     #t1 = threading.Thread(target=local_app.run,args=(peering_port,),daemon=True)
     #t1.start()
     
-    
+        

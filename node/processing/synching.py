@@ -4,9 +4,7 @@ Created on Jul 14, 2021
 @author: brett_wood
 '''
 from node.information.blocks import (
-    getBlocks,
-    getMaxBlockHeight,
-    getBlockInformation
+    getMaxBlockHeight
     )
 from node.blockchain.block_serialization import deserialize_block
 from binascii import unhexlify,hexlify
@@ -25,7 +23,8 @@ from node.blockchain.validate_block import (
 from utilities.hashing import calculateHeaderHashFromBlock
 import time
 import threading
-from node.blockchain.block_adding_queueing import processPeerBlocks
+from node.blockchain.block_adding_queueing import processPeerBlocks,\
+    synchBitcoin
 from node.blockchain.mempool_operations import garbageCollectMempool
 from ipaddress import ip_address
 from node.blockchain.global_variables import bitland_version
@@ -35,11 +34,13 @@ def start_node():
     
     pingPeers()
     #findPeers()
+
+    synchBitcoin()
+    print('synched bitcoin')
+    
     check_peer_blocks()
     print('checked peers')
     garbageCollectMempool()
-    
-    run_node()
     
     return True
 
@@ -47,9 +48,13 @@ def start_node():
 def run_node():
     
     while True:
-        time.sleep(60)
-        check_peer_blocks()
+        time.sleep(120)
+        
         print('checking peer blocks')
+        check_peer_blocks()
+        
+        print('synching bitcoin')
+        synchBitcoin()
 
 
 def pingPeers():
@@ -96,6 +101,9 @@ def check_peer_blocks(use_threading=True):
     
     if max_height_peer != 'self':
         #UPDATE to only ask for max of X blocks, 50?
+        
+        synched_with_peers = 'out of synch'
+        
         new_blocks = ask_peer_for_blocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
         
         if use_threading==True:

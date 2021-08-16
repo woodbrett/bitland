@@ -11,12 +11,10 @@ from node.blockchain.global_variables import (
     starting_bits,
     difficulty_adjustment_blocks
     )
-from node.blockchain.queries import (
+from node.information.blocks import (
     getPriorBlock,
     getMaxBlock,
-    getBlockById)
-from node.information.blocks import (
-    getBlockInformation
+    getBlock
     )
 
 def get_bits_from_target(target):
@@ -71,7 +69,7 @@ def get_bits_current_block():
 def get_difficulty_adjustment(start_block, end_block):
 #difficulty is tied to trying to make the blocks line up with bitcoin blocks
     
-    block_timespan = getBlockInformation(end_block).bitcoin_block_height - getBlockInformation(start_block).bitcoin_block_height
+    block_timespan = getBlock(end_block).get('bitcoin_block_height') - getBlock(start_block).get('bitcoin_block_height')
     adjustment = target_timespan_bitcoin_blocks / block_timespan
     
     return adjustment

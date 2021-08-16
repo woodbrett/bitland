@@ -10,7 +10,7 @@ from node.blockchain.transaction_serialization import (
 )
 from wallet.key_generation import *
 import ecdsa
-from node.information.transaction import getUtxoInfo
+from node.information.utxo import getUtxo
 import json
 
 def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type):
@@ -90,7 +90,8 @@ def createTransaction1(transaction_version, inputs, outputs, contingencies):
         input_public_key = inputs[i][3]
         input_private_key = inputs[i][4]
         
-        coordinates = getUtxoInfo(transaction_hash=input_transaction_hash, vout=input_vout).shape
+        utxo = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout)
+        coordinates = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout).get('shape')
         coordinates = coordinates.replace(", ","," ) # remove all spaces
         coordinates = coordinates.replace(" (","(" ) # remove all spaces
         
@@ -151,9 +152,61 @@ def createTransaction1(transaction_version, inputs, outputs, contingencies):
     return serialized_transaction
     
 
+def createTransactionClaim(input_transaction_hash, input_vout, miner_fee_sats, miner_fee_blocks):
+    
+    utxo = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout)
+    polygon = utxo.get('shape')
+    polygon_bytes = polygon.encode('utf-8')
+    planet_id = utxo.get('planet_id')
+    
+    output_keys = generateRandomKeys()
+    output_private_key = output_keys[0]
+    output_public_key = output_keys[1]
+
+    savePublicPrivateKeysDb(output_private_key, output_public_key)
+    
+    transaction_version = 2
+    transaction_version = transaction_version.to_bytes(2, byteorder = 'big')
+        
+    #input 1 - claim
+    type = 3 
+    transaction_hash = input_transaction_hash
+    vout = input_vout
+    signature = b''
+    input_1 = [type.to_bytes(1, byteorder = 'big'), unhexlify(transaction_hash), vout.to_bytes(1, byteorder = 'big'), signature]
+
+    inputs = [input_1]
+    
+    #output 1 - claim
+    type = 3
+    planet_id = planet_id
+    coordinates = polygon
+    public_key = output_public_key
+    output_1 = [type.to_bytes(1, byteorder = 'big'), planet_id.to_bytes(1, byteorder = 'big'), coordinates.encode('utf-8'), unhexlify(public_key)]
+
+    outputs = [output_1]
+
+    #contingencies
+    miner_fee_sats = miner_fee_sats #this is also the claim amount
+    miner_fee_blocks = miner_fee_blocks #12960 max 
+    transfer_fee_sats = 0
+    transfer_fee_blocks = 0 #12960 max
+    transfer_fee_address = ''
+    contingencies = [miner_fee_sats.to_bytes(6, byteorder = 'big'),
+                     miner_fee_blocks.to_bytes(2, byteorder = 'big'),
+                     transfer_fee_sats.to_bytes(6, byteorder = 'big'),
+                     transfer_fee_blocks.to_bytes(2, byteorder = 'big'),
+                     transfer_fee_address.encode('utf-8')
+                     ]
+
+    serialized_transaction = serialize_transaction(transaction_version, inputs, outputs, contingencies)
+    
+    return serialized_transaction    
+    
+
 if __name__ == '__main__':
 
-    #simple transaction
+    ############## SIMPLE TRANSACTION #################
     '''
     select 
     '["' || pub_key || '","' || private_key || '","' || st_astext(geom) || '",' || planet_id::varchar || ',' || vout::varchar || ',"' || transaction_hash::varchar || '"]',
@@ -162,21 +215,21 @@ if __name__ == '__main__':
     join wallet.addresses a on u.pub_key = a.public_key 
     order by block_id desc
     '''
-
-    input_public_key = 'af6d999747d695f7a21370cb2cee05b3e49182219ba6eee24e1e35576be0d719aa995e98fe10288e0937921b98fa806378b511506794d80f8f6a1a7ca2e52124'
-    input_private_key = '7e01de010c7f5903f0625006f73fb190307315d7da11746688aa52af24c9f715'
-    polygon = "POLYGON((-60.382165 84.41892,-60.46875 84.41892,-60.46875 84.6585,-60.46875 84.90942,-60.363055 84.90942,-60.382165 84.41892))"
+    
+    input_public_key = '816009931ee0e6ec5faa49d2850cb0696c27076ec347ab44fe6107756d29a39215209d19b98634e5ada5b0c4dd0011b44fec28892f43fc9385b87a3f0cf193bc'
+    input_private_key = 'df93acca345c312079fc42133d0ffd0e1cce9c4fc63ca632e53c28f449a4a306'
+    polygon = "POLYGON((-22.5 88.97202,-22.5 88.82298,-33.75 88.82298,-33.75 88.97202,-22.5 88.97202))"
     planet_id = 1
-    vout = 2
-    input_transaction_hash = 'a8788b7873e8c5671d62c2f3936b34ec3207bfc68062ea4250e4b10182dd8845'
+    vout = 0
+    input_transaction_hash = '4f651474a9f41af5b7d480afdd8ec65730eaaf1872009be993b829a7d69e6bd4'
     input_spend_type = 1
     
-    simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
-    print(hexlify(simple_transaction).decode('utf-8'))
-    print(deserialize_transaction(simple_transaction))
+    #simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
+    #print(hexlify(simple_transaction).decode('utf-8'))
+    #print(deserialize_transaction(simple_transaction))
     
     
-    ############ more complex transaction ################
+    ############ MORE COMPLEX TRANSACTION ################
     #INPUTS
     '''
         select 
@@ -188,9 +241,13 @@ if __name__ == '__main__':
     order by block_id desc
     '''    
     
-    input_1 = [1,"a09bf469d5f2f03b6efdc67ed08fc16ffeb0c85a604ad0d8d68df8751878e014",0,"bb975c0184fb17d02277f672816601169783dced038775adf2a9fb6aacd68125f17ad2fe6128d78df685ee1085fdb64513343a899cace23c3f1239e66d9d1814","05c14395a986351bcff7aa05f7c7d2d0f443b588ba3f0f72ebe0f0f9030d59ca"]
-    input_2 = [1,"558fa3ff81c645a4136a8fd6ababbe3ae9aeb6c64410f56c85f45a2ff6bdaead",0,"5a3058c716ed7820479fc5e51c0ee2bff83e1003f85f4505766e32db271a0dd9595e6a55e50df4599c6324f950dce46b52c2440af4e523f36db8ffe86b53d6fb","72822e8f5cb71755b40e02f0300641b76541b1fabffeed1e8d783e1f4465beff"]
-    input_3 = [1,"5f8c3a04eac19d080c90915fbfde0496f05c7892e8586ca28d9174a974611ec9",0,"b4030ad2dca040e9c05eaad31250f3cf120bccbc97e0914ca664a87ef911734db0bde4dabc6055e94c54679d8bc7fcf27cbe7cd4ba47b6cff8243aad8417d6bd","54a4bf48340d4b518f2fe68793ae78fdfdd3964a75890466cb62bde634a668a9"]
+    
+
+
+    
+    input_1 = [1,"0e3e9dd6ebd7c566c652b9a022927481e98f71335edf433824839601a9ce6c9c",0,"f644679e9c43223e7c9c550e9838a7f6ce7766aa08cbcab60a3f597ce2d1d5f5760437c918b9d3b8dff64946183ed70c50991ca60a75765502d0f7abc22f5c11","4c248c531c6b8df07eaead7d9e4f2513ee12f607c312ee437b26973b680ec893"]
+    input_2 = [1,"282f2cbebae089d3de7074da083807911e40247c780552a9377cb773ac053a09",0,"a7c5d805aa2dfba25499e59c1840d629a0cb51c44bc50fca9fe9ab9139fa15ff7e5fa24ca14de0827a06147d104158e44598bbf004666e8f9aea298f7882de03","85061d709c81c1eb17234d01fb7fd413bfe9a83f19a15fbc01031a91db8baf84"]
+    input_3 = [1,"14247b34415fb7982dd74141dd5070b5e3c230b8ff32aa5f77e0027f7b04464b",0,"77518b2b01ad8fdb4495483262a60dc58a999bbbaff6671435c8d200905b8ea1b14f3f556cf6ab74793878e3d1fa3b45040f8998ae3f2c06f32c128c8701c2b5","4f2f5b877eb85b31a1cc2291efefbc4b3cb04e3bfd7a7271b70d755e4a46d1d4"]
     inputs = [input_1,input_2,input_3]
     #inputs = [input_1]
     
@@ -220,21 +277,35 @@ if __name__ == '__main__':
     from intersections
     '''
     
-    output_1 = [1,1,'MULTIPOLYGON(((-59.919629 84.41892,-60.382165 84.41892,-60.363055 84.90942,-59.825561 84.90942,-59.919629 84.41892)),((-56.25 85.31082,-56.25 85.1733,-59.0625 85.1733,-59.0625 85.31082,-56.25 85.31082)))',None]
-    output_2 = [1,1,'POLYGON((-59.0625 84.6585,-59.0625 84.41892,-59.919629 84.41892,-59.825561 84.90942,-59.0625 84.90942,-59.0625 84.6585))',None]
+    output_1 = [1,1,'POLYGON((-57.65625 84.90942,-57.65625 84.6585,-58.677282 84.6585,-58.615489 85.03956,-56.793906 85.03956,-56.792279 84.90942,-57.65625 84.90942))',None]
+    output_2 = [1,1,'MULTIPOLYGON(((-59.0625 84.6585,-59.0625 84.41892,-60.46875 84.41892,-60.46875 84.6585,-59.0625 84.6585)),((-58.677282 84.6585,-59.0625 84.6585,-59.0625 84.90942,-59.0625 85.03956,-58.615489 85.03956,-58.677282 84.6585)))',None]
     #collateral
-    output_3 = [2,1,'POLYGON((-60.382165 84.41892,-60.46875 84.41892,-60.46875 84.6585,-60.46875 84.90942,-60.363055 84.90942,-60.382165 84.41892))',None]
+    output_3 = [2,1,'POLYGON((-56.793906 85.03956,-56.25 85.03956,-56.25 84.90942,-56.792279 84.90942,-56.793906 85.03956))',None]
     outputs = [output_1, output_2, output_3]
     #outputs = [output_1]
     
     #CONTINGENCIES
     #contingencies [miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address]
-    transfer_fee_address_1 = 'bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws'
-    contingencies = [50000,2000,50000,2000,hexlify(transfer_fee_address_1.encode('utf-8')).decode('utf-8')]
+    transfer_fee_address_1 = 'bc1qh2kwf0yfrlt3pqs97j5na82t8kdqzq74ycftgn'
+    contingencies = [41010,100,13052,100,hexlify(transfer_fee_address_1.encode('utf-8')).decode('utf-8')]
     #contingencies = [0,0,0,0,'']
         
-    #complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
-    #print(hexlify(complex_transaction).decode('utf-8'))
-    #print(deserialize_transaction(complex_transaction))
+    complex_transaction = createTransaction1(2,inputs,outputs,contingencies)
+    print(hexlify(complex_transaction).decode('utf-8'))
+    print(deserialize_transaction(complex_transaction))
+    
+    
+    ############ CLAIM TRANSACTION ################
+    
+    #claim_transaction = createTransactionClaim('4f651474a9f41af5b7d480afdd8ec65730eaaf1872009be993b829a7d69e6bd4', 0, 17500, 350)
+    #print(hexlify(claim_transaction).decode('utf-8'))
+    
+    
+    
+    
+    
+    
+    
+    
     
     

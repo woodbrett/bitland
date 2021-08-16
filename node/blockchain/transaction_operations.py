@@ -8,7 +8,6 @@ from node.blockchain.transaction_serialization import deserialize_transaction,\
     serialize_transaction
 from utilities.serialization import deserialize_text
 from utilities.sqlUtils import executeSql
-import psycopg2
 from utilities.config import config
 from binascii import unhexlify, hexlify
 import ecdsa
@@ -17,13 +16,18 @@ from collections import namedtuple
 from node.blockchain.global_variables import *
 from system_variables import address_search_url
 import requests
-from utilities.bitcoin_requests import *
 from node.blockchain.contingency_operations import *
 from utilities.hashing import calculateTransactionHash
 from utilities.bitcoin_requests import getCurrentBitcoinBlockHeight
 from node.blockchain.header_serialization import deserialize_block_header
 from node.information.blocks import getMaxBlockHeight
 from node.information.mempool import getMempoolInformation
+from utilities.gis_functions import (
+    queryPolygonEquality,
+    queryPolygonRules,
+    queryPolygonAreaMeters,
+    queryUnionPolygonAreaMeters
+    )
 
 #input version 1 - standard spend (which could be a scuessful collateral)
 #input version 2 - spending as collateral
@@ -270,8 +274,8 @@ def validateInputOutputClaims(inputs, outputs):
         transaction_vout = int.from_bytes(inputs[i][2],'big')
         if input_version == 3:
             input_claim_count = input_claim_count + 1
-            output_parcel = getOutputParcelByTransactionVout(transaction_hash, transaction_vout)
-            input_shape_str = output_parcel[1]
+            output_parcel = getUtxo(transaction_hash=transaction_hash, vout=transaction_vout)
+            input_shape_str = output_parcel.get('shape')
             input_claim_geom = "st_geomfromtext('" + input_shape_str + "',4326)"
     
     for i in range(0, len(outputs)):
@@ -298,6 +302,8 @@ def validateInputOutputClaims(inputs, outputs):
         valid_input = queryPolygonEquality(input_claim_geom, output_claim_geom)
         if(valid_input == False):
             failure_reason = 'claim geometries dont match'
+    
+    #logic that claim has to be 50% higher than previous one is captured in the input validation
     
     return valid_input, failure_reason
 
@@ -343,8 +349,8 @@ def getInputUnionShape(inputs):
     for i in range(0, input_length):
         transaction_hash = hexlify(inputs[i][1]).decode('utf-8')
         transaction_vout = int.from_bytes(inputs[i][2],'big')
-        output_parcel = getOutputParcelByTransactionVout(transaction_hash, transaction_vout)
-        shape_str = output_parcel[1]
+        output_parcel = getUtxo(transaction_hash=transaction_hash, vout=transaction_vout)
+        shape_str = output_parcel.get('shape')
         shape = shape_str.encode('utf-8')
         
         if (i == 0):
@@ -388,7 +394,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
     transaction_hash = hexlify(input[1]).decode('utf-8')
     transaction_vout = int.from_bytes(input[2],'big')
     input_signature = input[3]
-    input_utxo = getOutputParcelByTransactionVout(transaction_hash, transaction_vout)
+    input_utxo = getUtxo(transaction_hash=transaction_hash, vout=transaction_vout)
 
     if block_height == None:
         block_height = getMaxBlockHeight() + 1
@@ -417,26 +423,26 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
     
     #validate it is an outstanding utxo
     if (valid_input == True):
-        valid_input = input_utxo != 'no matched utxo'
+        valid_input = input_utxo.get('status') != 'no utxo found'
         print(valid_input)
         if(valid_input == False):
-            failure_reason = 'no matched utxo'
+            failure_reason = 'no utxo found'
     
     if (valid_input == True):
 
-        input_utxo_version = input_utxo.output_version
-        input_utxo_id = input_utxo.id
-        input_utxo_shape = input_utxo.shape
-        input_utxo_pub_key = input_utxo.pub_key
-        input_utxo_collateral_pub_key = input_utxo.miner_landbase_address
-        input_utxo_failed_transfer_pub_key = input_utxo.transfer_fee_failover_address
+        input_utxo_version = input_utxo.get('output_version')
+        input_utxo_id = input_utxo.get('id')
+        input_utxo_shape = input_utxo.get('shape')
+        input_utxo_pub_key = input_utxo.get('pub_key')
+        input_utxo_collateral_pub_key = input_utxo.get('miner_landbase_address')
+        input_utxo_failed_transfer_pub_key = input_utxo.get('transfer_fee_failover_address')
     
         #get summary of utxo - what is its transfer fee status, miner fee status
         #UPDATE to pull data from contingency logic
-        transfer_fee_status = inspected_parcel.transfer_fee_status
-        claim_status = inspected_parcel.claim_status
-        outstanding_claim = inspected_parcel.outstanding_claims
-        miner_fee_status = inspected_parcel.miner_fee_status
+        transfer_fee_status = inspected_parcel.get('transfer_fee_status')
+        claim_status = inspected_parcel.get('claim_status') #for investigating if a claim can be spent
+        outstanding_claim = inspected_parcel.get('outstanding_claims')
+        miner_fee_status = inspected_parcel.get('miner_fee_status')
         
         valid_transfer_fee_types = validContingencyStatusSpendTypes(input_version)[0]
         valid_miner_fee_types = validContingencyStatusSpendTypes(input_version)[1]
@@ -447,7 +453,7 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
         transfer_fee_status_valid = ((transfer_fee_status in valid_transfer_fee_types) or valid_transfer_fee_types == [])
         miner_fee_status_valid = ((miner_fee_status in valid_miner_fee_types) or valid_miner_fee_types == [])
         claim_status_valid = ((claim_status in valid_claim_types) or valid_claim_types == [])
-        outstanding_claim_valid = ((outstanding_claim in valid_claim_types) or valid_claim_types == [])
+        outstanding_claim_valid = ((outstanding_claim in valid_outstanding_claim_types) or valid_outstanding_claim_types == [])
         input_utxo_type_valid = ((input_utxo_version in valid_input_utxo_types) or valid_input_utxo_types == [])
         
         valid_input = transfer_fee_status_valid == True 
@@ -475,11 +481,14 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
                 failure_reason = 'invalid input utxo type for the spend type'  
     
     #check if its valid to make a claim
+    #removed this because any claim i think can attempt to be made, it may just fail
+    '''
     if (valid_input == True and input_version == 3):
-        utxo_current_claim_sats = input_utxo.claim_fee_sats
+        utxo_current_claim_sats = input_utxo.get('claim_fee_sats')
         valid_input = validateClaimAttempt(miner_fee_sats, utxo_current_claim_sats)
         if(valid_input == False):
             failure_reason = 'insufficient bid for claim'          
+    '''
     
     #validate signature, but not for making a claim
     if (valid_input == True and input_version != 3):
@@ -525,38 +534,39 @@ def validContingencyStatusSpendTypes(spend_type):
     #NO_CLAIM, OUTSTANDING_CLAIM, SUCCESSFUL_CLAIM
     
     if spend_type == 1:
-        transfer_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
-        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
+        transfer_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
+        miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
         claim_status = []
-        outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        #outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        outstanding_claim = ['UNCLAIMED']
         input_utxo_type = [0,1,2]
         
     elif spend_type == 2:
         transfer_fee_status = []
         miner_fee_status = ['EXPIRED_CONFIRMED']
         claim_status = []
-        outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        outstanding_claim = ['UNCLAIMED']
         input_utxo_type = [2]
         
     elif spend_type == 3:
-        transfer_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
-        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
+        transfer_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
+        miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED', 'EXPIRED_CONFIRMED']
         claim_status = []
-        outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        outstanding_claim = ['UNCLAIMED']
         input_utxo_type = [0,1,2,3]
         
     elif spend_type == 4:
         transfer_fee_status = ['EXPIRED_CONFIRMED']
         miner_fee_status = []
         claim_status = []
-        outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        outstanding_claim = ['UNCLAIMED']
         input_utxo_type = [0,1,2]
     
     elif spend_type == 5:
         transfer_fee_status = []
-        miner_fee_status = ['NO_FEE', 'VALIDATED_CONFIRMED']
-        claim_status = ['SUCCESSFUL_CLAIM']
-        outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
+        miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
+        claim_status = ['SUCCESSFUL']
+        outstanding_claim = ['UNCLAIMED']
         input_utxo_type = [3]
     
     else:
@@ -570,6 +580,9 @@ def validContingencyStatusSpendTypes(spend_type):
 
 
 def validateClaimAttempt(miner_fee_sats, utxo_current_claim_sats):
+    
+    if utxo_current_claim_sats == None or utxo_current_claim_sats == 0:
+        return True
     
     #claim must be larger than prior claims by 50% (global variable)
     valid_claim_increase = (miner_fee_sats / utxo_current_claim_sats - 1) > claim_required_percentage_increase

@@ -18,6 +18,9 @@ global local_api_username
 global local_api_password
 global peer_list
 global transaction_validation_url
+global rpc_user
+global rpc_password 
+global node_url
 
 #bitcoin information
 block_height_url = 'https://blockstream.info/api/blocks/tip/height'
@@ -33,3 +36,8 @@ mining_path = 'MULTILINESTRING ((-24.32582123586823 89.84080925775434, -74.62860
 local_api_username = 'admin'
 local_api_password = 'password'
 peer_list = []
+
+#local bitcoin node information rpc_user and rpc_password are set in the bitcoin.conf file
+rpc_user = 'admin'
+rpc_password = 'password'
+node_url = '192.168.86.34:8332'

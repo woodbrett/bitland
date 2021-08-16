@@ -10,7 +10,11 @@ from node.blockchain.block_serialization import deserialize_block, serialize_blo
 from node.blockchain.transaction_serialization import serialize_transaction
 from node.blockchain.queries import *
 from collections import Counter
-from node.information.blocks import getMaxBlockHeight, getBlock
+from node.information.blocks import (
+    getMaxBlockHeight, 
+    getBlock,
+    getBlockSerialized
+    )
 
 
 def validateBlock(block, realtime_validation=True, prev_block_input=None):
@@ -63,15 +67,16 @@ def validateBlockHeader(block, realtime_validation=True, prior_block=None):
     
     #prior block calculations for validation
     if prior_block == None:
-        prev_block_hex = hexlify(prev_block).decode('utf-8')
-        prior_block_height = getBlockInformation(header_hash=prev_block_hex).id
-        prior_block_hex = getBlock(prior_block_height)
+        
+        #prev_block_hex = hexlify(prev_block).decode('utf-8')
+        #prior_block_height = getBlock(header_hash=prev_block_hex).get('id')
+        prior_block_height = getMaxBlock()
+        prior_block_hex = getBlockSerialized(prior_block_height)
         prior_block = unhexlify(prior_block_hex)
     
     prior_block_header = deserialize_block_header(prior_block)
     prior_block_hash = calculateHeaderHashFromBlock(block_bytes=prior_block)
     prior_block_bitcoin_height = prior_block_header[5]
-    prior_block_time = prior_block_header[3]
     
     valid_header = True
     failure_reason = ''
@@ -177,7 +182,7 @@ def validateTransactions(block=b'', block_height=None, transactions=[]):
         for j in range(0, len(transaction_inputs)):
             transaction_hash = hexlify(transaction_inputs[j][1]).decode('utf-8')
             transaction_vout = int.from_bytes(transaction_inputs[j][2],'big')
-            input_utxo_id = getOutputParcelByTransactionVout(transaction_hash, transaction_vout)[3]
+            input_utxo_id = getUtxo(transaction_hash=transaction_hash, vout=transaction_vout).get('id')
             transaction_input_utxo.append(input_utxo_id)
         
         if (valid_transactions[0] == False):
@@ -207,6 +212,8 @@ def validateTransactions(block=b'', block_height=None, transactions=[]):
     
         if landbase_counter > 1:
             valid_transactions = [False, '>1 landbase transactions', 0]    
+    
+    #UPDATE validate that no claims are made on same utxo with same claim amount (can be on same utxo though)
     
     return valid_transactions
 
