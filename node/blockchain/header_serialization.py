@@ -18,7 +18,9 @@ prev_block_bytes_len = 32
 mrkl_root_bytes_len = 32
 time_bytes_len = 5
 bits_bytes_len = 4
+bitcoin_hash_bytes_len = 32
 bitcoin_height_bytes_len = 4
+bitcoin_last_64_mrkl_bytes_len = 32
 miner_bitcoin_address_bytes_len = 50
 miner_bitcoin_address_len_bytes_len = 2
 nonce_bytes_len = 4
@@ -30,7 +32,9 @@ def serialize_block_header_utf8(
         mrkl_root ,
         time_ ,
         bits ,
+        bitcoin_hash,
         bitcoin_height,
+        bitcoin_last_64_mrkl,
         miner_bitcoin_address,
         nonce
         ):
@@ -40,7 +44,9 @@ def serialize_block_header_utf8(
     mrkl_root_bytes = unhexlify(mrkl_root)
     time_bytes = time_.to_bytes(time_bytes_len, byteorder = 'big')
     bits_bytes = bits.to_bytes(bits_bytes_len, byteorder = 'big')
+    bitcoin_hash_bytes = unhexlify(bitcoin_hash)
     bitcoin_height_bytes = bitcoin_height.to_bytes(bitcoin_height_bytes_len, byteorder = 'big')
+    bitcoin_last_64_mrkl_bytes = unhexlify(bitcoin_last_64_mrkl)
     miner_bitcoin_address_bytes = unhexlify(miner_bitcoin_address) 
     nonce_bytes = nonce.to_bytes(nonce_bytes_len, byteorder = 'big')
     
@@ -50,7 +56,9 @@ def serialize_block_header_utf8(
         mrkl_root_bytes,
         time_bytes ,
         bits_bytes ,
+        bitcoin_hash_bytes,
         bitcoin_height_bytes,
+        bitcoin_last_64_mrkl_bytes,
         miner_bitcoin_address_bytes,
         nonce_bytes
         )
@@ -64,14 +72,16 @@ def serialize_block_header(
         mrkl_root_bytes,
         time_bytes ,
         bits_bytes ,
+        bitcoin_hash_bytes,
         bitcoin_height_bytes,
+        bitcoin_last_64_mrkl_bytes,
         miner_bitcoin_address_bytes,
         nonce_bytes
         ):
     
     miner_bitcoin_address_combined_bytes = serializeMinerAddress(miner_bitcoin_address_bytes)
     
-    header = (version_bytes + prev_block_bytes + mrkl_root_bytes + time_bytes + bits_bytes + bitcoin_height_bytes + miner_bitcoin_address_combined_bytes + nonce_bytes )
+    header = (version_bytes + prev_block_bytes + mrkl_root_bytes + time_bytes + bits_bytes + bitcoin_hash_bytes + bitcoin_height_bytes + bitcoin_last_64_mrkl_bytes + miner_bitcoin_address_combined_bytes + nonce_bytes )
 
     return header
 
@@ -109,8 +119,14 @@ def deserialize_block_header(header, start_pos=0):
     bits = header[counter:(counter + bits_bytes_len)]
     counter = counter + bits_bytes_len
     
+    bitcoin_hash = header[counter:(counter + bitcoin_hash_bytes_len)]
+    counter = counter + bitcoin_hash_bytes_len
+    
     bitcoin_height = header[counter:(counter + bitcoin_height_bytes_len)]
     counter = counter + bitcoin_height_bytes_len
+    
+    bitcoin_last_64_mrkl = header[counter:(counter + bitcoin_last_64_mrkl_bytes_len)]
+    counter = counter + bitcoin_last_64_mrkl_bytes_len
     
     miner_bitcoin_address_full = header[counter:(counter + miner_bitcoin_address_bytes_len)]
     counter = counter + miner_bitcoin_address_bytes_len
@@ -124,15 +140,17 @@ def deserialize_block_header(header, start_pos=0):
     counter_bytes = counter.to_bytes(4, byteorder = 'big')
     
     #change this to dict i think, lots of downstream calls on it though
-    return(        
-        version,
-        prev_block, 
-        mrkl_root ,
-        time_ ,
-        bits ,
-        bitcoin_height,
-        miner_bitcoin_address,
-        nonce,
-        counter_bytes
+    return {        
+        'version': version,
+        'prev_block': prev_block, 
+        'mrkl_root': mrkl_root ,
+        'time': time_ ,
+        'bits': bits ,
+        'bitcoin_hash': bitcoin_hash,
+        'bitcoin_height': bitcoin_height,
+        'bitcoin_last_64_mrkl': bitcoin_last_64_mrkl,
+        'miner_bitcoin_address': miner_bitcoin_address,
+        'nonce': nonce,
+        'counter_bytes': counter_bytes
     )
     

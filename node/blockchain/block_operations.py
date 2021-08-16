@@ -94,21 +94,25 @@ def addDeserializedBlock(block, block_height):
 
     header = deserialize_block_header(block)
         
-    version = header[0]
-    prev_block = header[1]
-    mrkl_root = header[2]
-    time_ = header[3]
-    bits = header[4]
-    bitcoin_height = header[5]
-    miner_bitcoin_address = header[6]
-    nonce = header[7]
+    version = header.get('version')
+    prev_block = header.get('prev_block')
+    mrkl_root = header.get('mrkl_root')
+    time_ = header.get('time')
+    bits = header.get('bits')
+    bitcoin_hash = header.get('bitcoin_hash')
+    bitcoin_height = header.get('bitcoin_height')
+    bitcoin_last_64_mrkl = header.get('bitcoin_last_64_mrkl')
+    miner_bitcoin_address = header.get('miner_bitcoin_address')
+    nonce = header.get('nonce')
     header_hash = calculateHeaderHash(version,
         prev_block, 
         mrkl_root ,
         time_ ,
         bits ,
+        bitcoin_hash,
         bitcoin_height,
         miner_bitcoin_address,
+        bitcoin_last_64_mrkl,
         nonce)
     
     block_height = str(block_height)
@@ -118,19 +122,22 @@ def addDeserializedBlock(block, block_height):
     mrkl_root = str(hexlify(mrkl_root).decode('utf-8'))
     time_ = str(int.from_bytes(time_, 'big'))
     bits = str(int.from_bytes(bits, 'big'))
+    bitcoin_hash = str(hexlify(bitcoin_hash).decode('utf-8'))
     bitcoin_height = str(int.from_bytes(bitcoin_height, 'big'))
+    bitcoin_last_64_mrkl = str(hexlify(bitcoin_last_64_mrkl).decode('utf-8'))
     miner_bitcoin_address = miner_bitcoin_address.decode('utf-8')
     nonce = str(int.from_bytes(nonce, 'big'))
     
     query_insert_deserialized_block = ("insert into bitland.block(id, header_hash, version, prev_block, mrkl_root, time, bits, bitcoin_block_height, miner_bitcoin_address, nonce) values "
-                "(" + block_height + ","
-                "'" + header_hash + "',"
-                 + version + ","
-                "'" + prev_block + "',"
-                "'" + mrkl_root + "',"
-                 + time_ + ","
-                 + bits + ","
-                 + bitcoin_height + ","
+                "(" + block_height + "," +
+                "'" + header_hash + "'," +
+                version + "," +
+                "'" + prev_block + "'," +
+                "'" + mrkl_root + "'," +
+                time_ + "," +
+                bits + "," +
+                "'" + header_hash + "'," + 
+                bitcoin_height + "," +
                 "'" + miner_bitcoin_address + "',"
                  + nonce 
                 + ") RETURNING id;"

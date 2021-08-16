@@ -89,6 +89,12 @@ def validateTime(time_,realtime_validation=True):
     
     return is_valid
 
+
+#UPDATE
+def validateBitcoinHash()    
+
+    return True
+
     
 def validateBitcoinBlock(block_height, prior_block_bitcoin_height, realtime_validation=True):
     
@@ -109,6 +115,12 @@ def validateBitcoinBlock(block_height, prior_block_bitcoin_height, realtime_vali
         is_valid = block_height_int >= prior_block_bitcoin_height_int
     
     return is_valid    
+
+
+#UPDATE
+def validateBitcoinLast64Mrkl()
+    
+    return True
     
     
 def validateBits(bits):
