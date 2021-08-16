@@ -570,6 +570,7 @@ drop table if exists bitland.address;
 --VIEWS AND FUNCTIONS
 --
 
+
 drop function if exists bitland.rollback_block (rollback_block_id int);
 create function bitland.rollback_block (rollback_block_id int)
 returns int
@@ -603,16 +604,21 @@ begin
 	delete from bitland.transaction
 	where id in (select distinct transaction_id from block_joins bj)
 	)
-	--,delete_claim as (
-	--delete from bitland.claim
-	--where claim_block_height = $1
-	--)
 	,delete_claim_smd as (
 	delete from bitland.claim
 	where from_bitland_block_height = $1
 	)
 	,update_claim_smd as (
 	update bitland.claim
+	set to_bitland_block_height = null
+	where to_bitland_block_height = $1
+	)
+	,delete_contingency_smd as (
+	delete from bitland.contingency
+	where from_bitland_block_height = $1
+	)
+	,update_contingency_smd as (
+	update bitland.contingency
 	set to_bitland_block_height = null
 	where to_bitland_block_height = $1
 	)
@@ -623,6 +629,10 @@ begin
 	,delete_serialized_block as (
 	delete from bitland.block_serialized
 	where id in (select distinct block_id from delete_block)
+	)
+	,delete_bitcoin_relevant_transactions as (
+	delete from bitcoin.relevant_contingency_transaction
+	where recorded_bitland_block_height = $1
 	)
 	,reset_landbase_enum as (
 	update bitland.landbase_enum le
@@ -639,15 +649,21 @@ begin
 end;
 $$;
 
-drop view if exists bitland.active_contingency;
+drop view if exists bitland.active_contingency cascade;
 create view bitland.active_contingency as 
 select *
 from bitland.contingency
 where to_bitland_block_height is null;
 
+drop view if exists bitland.active_claim cascade;
+create view bitland.active_claim as 
+select *
+from bitland.claim
+where to_bitland_block_height is null;
+
 drop view if exists bitland.utxo;
 create view bitland.utxo as 
-select op.*, t.transaction_hash, t.block_id, t.miner_fee_sats, t.miner_fee_blocks, t.transfer_fee_sats, t.transfer_fee_blocks, t.transfer_fee_address, b.bitcoin_block_height, b.miner_bitcoin_address, opl.pub_key as miner_landbase_address, ipop.pub_key as transfer_fee_failover_address, c.status as claim_status, c.claim_fee_sats, c.claim_block_height, c.claim_end_block, coalesce(ac.miner_fee_status,'NO_CONTINGENCY') as miner_fee_status, coalesce(ac.transfer_fee_status,'NO CONTINGENCY') as transfer_fee_status, c2.status as claim_on_parcel
+select op.*, t.transaction_hash, t.block_id, t.miner_fee_sats, t.miner_fee_blocks, t.transfer_fee_sats, t.transfer_fee_blocks, t.transfer_fee_address, b.bitcoin_block_height, b.miner_bitcoin_address, opl.pub_key as miner_landbase_address, ipop.pub_key as transfer_fee_failover_address, c.status as claim_status, c.claim_fee_sats, c.claim_block_height, c.claim_end_block, coalesce(ac.miner_fee_status,'NO_CONTINGENCY') as miner_fee_status, coalesce(ac.transfer_fee_status,'NO_CONTINGENCY') as transfer_fee_status, coalesce(c2.status,'UNCLAIMED') as claim_on_parcel
 from bitland.output_parcel op
 left join bitland.input_parcel ip on op.id = ip.output_parcel_id and ip.input_version = 1
 join bitland.transaction t on op.transaction_id = t.id 
@@ -665,7 +681,7 @@ where ip.id is null
  
 drop view if exists bitland.utxo_superset;
 create view utxo_superset as 
-select op.*, t.transaction_hash, t.block_id, t.miner_fee_sats, t.miner_fee_blocks, t.transfer_fee_sats, t.transfer_fee_blocks, t.transfer_fee_address, b.bitcoin_block_height, b.miner_bitcoin_address, opl.pub_key as miner_landbase_address, ipop.pub_key as transfer_fee_failover_address, c.status as claim_status, c.claim_fee_sats, c.claim_block_height, c.claim_end_block, coalesce(ac.miner_fee_status,'NO_CONTINGENCY') as miner_fee_status, coalesce(ac.transfer_fee_status,'NO CONTINGENCY') as transfer_fee_status, c2.status as claim_on_parcel
+select op.*, t.transaction_hash, t.block_id, t.miner_fee_sats, t.miner_fee_blocks, t.transfer_fee_sats, t.transfer_fee_blocks, t.transfer_fee_address, b.bitcoin_block_height, b.miner_bitcoin_address, opl.pub_key as miner_landbase_address, ipop.pub_key as transfer_fee_failover_address, c.status as claim_status, c.claim_fee_sats, c.claim_block_height, c.claim_end_block, coalesce(ac.miner_fee_status,'NO_CONTINGENCY') as miner_fee_status, coalesce(ac.transfer_fee_status,'NO_CONTINGENCY') as transfer_fee_status, coalesce(c2.status,'UNCLAIMED') as claim_on_parcel
 from bitland.output_parcel op
 left join bitland.input_parcel ip on op.id = ip.output_parcel_id and ip.input_version = 1
 join bitland.transaction t on op.transaction_id = t.id
@@ -1023,11 +1039,6 @@ begin
 end;
 $$;	
 
-drop view if exists bitland.active_claim;
-create view bitland.active_claim as 
-select *
-from bitland.claim
-where to_bitland_block_height is null;
 
 --
 --OTHER

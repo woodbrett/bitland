@@ -194,6 +194,30 @@ def updateSuccessfulClaims(bitland_block_height):
     
     return update_sql    
     
+    
+def addNewContingenciesDb(bitland_block_height):
+
+    bitland_block_height = str(bitland_block_height)
+    
+    query = ("select bitland.add_new_contingencies (" + bitland_block_height + ");")
+    
+    update_sql = executeSql(query)
+    
+    return update_sql    
+
+
+def updateContingenciesDb(bitland_block_height, contingency_blocks, bitcoin_block_height):
+    
+    bitland_block_height = str(bitland_block_height)
+    contingency_blocks = str(contingency_blocks)
+    bitcoin_block_height = str(bitcoin_block_height) 
+    
+    query = ("select bitland.update_contingencies (" + bitland_block_height + "," + contingency_blocks + "," + bitcoin_block_height + ");")
+
+    update_sql = executeSql(query)
+    
+    return update_sql
+
 
 if __name__ == '__main__':
 

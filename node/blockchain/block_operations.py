@@ -67,7 +67,7 @@ def addBlock(block):
     bitcoin_block = int.from_bytes(deserialized_block[0][5],'big')
     prior_bitcoin_block_height = getBlock(block_id=block_height-1).get('bitcoin_block_height')
     
-    updateContingencies(bitcoin_block, prior_bitcoin_block_height, block_height)
+    updateContingenciesAndClaims(bitcoin_block, prior_bitcoin_block_height, block_height)
     print('updated contingencies')
     
     removeTransactionsFromMempool(block_height)
@@ -426,7 +426,7 @@ def updateTransferFeeList(bitcoin_block, bitland_block):
     return len(expiring_transaction_transfer_fees)
 
 
-def updateContingencies(bitcoin_block_height, prior_bitcoin_block_height, bitland_block_height):
+def updateContingenciesAndClaims(bitcoin_block_height, prior_bitcoin_block_height, bitland_block_height):
     
     if bitland_block_height == 1:
         return None
@@ -435,6 +435,10 @@ def updateContingencies(bitcoin_block_height, prior_bitcoin_block_height, bitlan
     
     if synch == 'synched':    
         inserted_transactions = insertRelevantTransactions(prior_bitcoin_block_height, bitcoin_block_height, bitland_block_height)
+        
+        #update contingencies
+        updated_contingencies = updateContingencies(bitland_block_height, contingency_validation_blocks, bitcoin_block_height)
+        
         #update claims
         updated_claims = updateClaims(bitcoin_block_height, contingency_validation_blocks, bitland_block_height, claim_blocks, claim_required_percentage_increase)
         

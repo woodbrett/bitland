@@ -15,7 +15,8 @@ from node.information.transaction import (
     )
 from node.information.contingency import (
     getClaim, getContingencyStatusDb, getClaims, updateExpiredClaims,
-    updateInvalidatedClaims, updateLeadingClaims, updateSuccessfulClaims
+    updateInvalidatedClaims, updateLeadingClaims, updateSuccessfulClaims,
+    addNewContingenciesDb, updateContingenciesDb
     )
 from utilities.sqlUtils import executeSql
 
@@ -69,52 +70,52 @@ def inspectParcel(transaction, vout, bitcoin_block_height, bitland_block):
     return parcel_output
 
 
-################CONTINGENCY CALCULATIONS AND DB OPERATIONS
-def getContingency(transaction_hash,type,bitcoin_height,bitland_height,utxo_bitcoin_block_height):
+def updateContingencies(bitland_block_height, confirmation_blocks, bitcoin_block_height):
     
-    #check DB
-    db_contingency = getContingencyStatusDb(transaction_hash=transaction_hash, type=type)
+    #ENUMERATION OF CONTINGENCY STATES:
+    #OPEN
+    #EXPIRED_CONFIRMED
+    #EXPIRED_UNCONFIRMED
+    #VALIDATED_CONFIRMED
+    #VALIDATED_UNCONFIRMED
+    #NO_CONTINGENCY
     
-    if db_contingency.get('status') == 'contingency identified' : 
-        
-        expiration_block = db_contingency.get('bitcoin_expiration_height')
-        expiration_confirmed_block = expiration_block + contingency_validation_blocks
-        validation_bitcoin_block_height = db_contingency.get('validation_bitcoin_block_height')
-        
-        if validation_bitcoin_block_height == None:
-            if bitcoin_height > expiration_confirmed_block:
-                status = 'EXPIRED_CONFIRMED'
-            elif bitcoin_height > expiration_block:
-                status = 'EXPIRED_UNCONFIRMED'
-            elif bitcoin_height <= expiration_block:
-                status = 'OPEN'
-            
-        elif validation_bitcoin_block_height != None:
-            if validation_bitcoin_block_height > expiration_block:
-                if bitcoin_height > expiration_confirmed_block:
-                    status = 'EXPIRED_CONFIRMED'
-                elif bitcoin_height > expiration_block:
-                    status = 'EXPIRED_UNCONFIRMED'
-            elif validation_bitcoin_block_height <= expiration_block:
-                if bitcoin_height > expiration_confirmed_block:
-                    status = 'VALIDATED_CONFIRMED'
-                elif bitcoin_height > expiration_block:
-                    status = 'VALIDATED_UNCONFIRMED'
-
-        return {
-            'status': status,
-            'validation_bitcoin_height': validation_bitcoin_block_height
-            }
-        
-    elif db_contingency.get('status') == 'no contingency found' : 
-        return {
-            'status': 'NO_CONTINGENCY',
-            'validation_bitcoin_height': utxo_bitcoin_block_height
-            }
-        
-    return None
+    #add new entries for new transactions
+    add_new_contingencies = addNewContingenciesDb(bitcoin_block_height)
+    
+    #update contingencies that succeeeded and update contingencies that failed
+    update_contingencies = updateContingenciesDb(bitland_block_height, confirmation_blocks, bitcoin_block_height)
+    
+    return True
 
 
+################CLAIM CALCULATIONS AND DB OPERATIONS
+def updateClaims(bitcoin_block_height, confirmation_blocks, bitland_block_height, claim_blocks, claim_increase):
+
+    #ENUMERATION OF CLAIM STATES:
+    #OPEN
+    #EXPIRED
+    #SUPERCEDED
+    #LEADING
+    #INVALIDATED
+    #SUCCESSFUL
+    
+    #update claims where miner fee/transfer fee expired
+    update_expired_claims = updateExpiredClaims(bitcoin_block_height, confirmation_blocks, bitland_block_height)
+    
+    #update claims that were invalidated by utxo owner moving the parcel
+    update_invalidated_claims = updateInvalidatedClaims(bitland_block_height)
+    
+    #update claims where miner fee/transfer fee was successful and invalidate old ones that were beaten
+    update_leading_claims = updateLeadingClaims(bitland_block_height, claim_blocks, claim_increase)
+    
+    #update claims that have won - 52500
+    update_successful_claims = updateSuccessfulClaims(bitland_block_height)
+    
+    return True
+
+
+'''
 #UPDATE might not need
 def utxoCombinedContingencyStatus(utxo_id, bitcoin_height, bitland_height):
 
@@ -160,51 +161,53 @@ def utxoCombinedContingencyStatus(utxo_id, bitcoin_height, bitland_height):
     return None
 
 
-def updateContingencies(bitcoin_block_height, confirmation_blocks, bitland_block_height):
-
-    #UPDATE rollback function to handle the contingency table
-    
-    #OPEN
-    #EXPIRED_CONFIRMED
-    #SUPERCEDED
-    #LEADING
-    #INVALIDATED
-    #SUCCESSFUL
-    
-    #add new entries for new transactions
-    
-    #update contingencies that succeeeded 
-    # STILL need to do this update contingencies that failed
-   
-    
-    
-    return True
 
 
+################CONTINGENCY CALCULATIONS AND DB OPERATIONS
+def getContingency(transaction_hash,type,bitcoin_height,bitland_height,utxo_bitcoin_block_height):
+    
+    #check DB
+    db_contingency = getContingencyStatusDb(transaction_hash=transaction_hash, type=type)
+    
+    if db_contingency.get('status') == 'contingency identified' : 
+        
+        expiration_block = db_contingency.get('bitcoin_expiration_height')
+        expiration_confirmed_block = expiration_block + contingency_validation_blocks
+        validation_bitcoin_block_height = db_contingency.get('validation_bitcoin_block_height')
+        
+        if validation_bitcoin_block_height == None:
+            if bitcoin_height > expiration_confirmed_block:
+                status = 'EXPIRED_CONFIRMED'
+            elif bitcoin_height > expiration_block:
+                status = 'EXPIRED_UNCONFIRMED'
+            elif bitcoin_height <= expiration_block:
+                status = 'OPEN'
+            
+        elif validation_bitcoin_block_height != None:
+            if validation_bitcoin_block_height > expiration_block:
+                if bitcoin_height > expiration_confirmed_block:
+                    status = 'EXPIRED_CONFIRMED'
+                elif bitcoin_height > expiration_block:
+                    status = 'EXPIRED_UNCONFIRMED'
+            elif validation_bitcoin_block_height <= expiration_block:
+                if bitcoin_height > expiration_confirmed_block:
+                    status = 'VALIDATED_CONFIRMED'
+                elif bitcoin_height > expiration_block:
+                    status = 'VALIDATED_UNCONFIRMED'
 
-################CLAIM CALCULATIONS AND DB OPERATIONS
-def updateClaims(bitcoin_block_height, confirmation_blocks, bitland_block_height, claim_blocks, claim_increase):
+        return {
+            'status': status,
+            'validation_bitcoin_height': validation_bitcoin_block_height
+            }
+        
+    elif db_contingency.get('status') == 'no contingency found' : 
+        return {
+            'status': 'NO_CONTINGENCY',
+            'validation_bitcoin_height': utxo_bitcoin_block_height
+            }
+        
+    return None
 
-    #OPEN
-    #EXPIRED_CONFIRMED
-    #SUPERCEDED
-    #LEADING
-    #INVALIDATED
-    #SUCCESSFUL
-    
-    #update claims where miner fee/transfer fee expired
-    update_expired_claims = updateExpiredClaims(bitcoin_block_height, confirmation_blocks, bitland_block_height)
-    
-    #update claims that were invalidated by utxo owner moving the parcel
-    update_invalidated_claims = updateInvalidatedClaims(bitland_block_height)
-    
-    #update claims where miner fee/transfer fee was successful and invalidate old ones that were beaten
-    update_leading_claims = updateLeadingClaims(bitland_block_height, claim_blocks, claim_increase)
-    
-    #update claims that have won - 52500
-    update_successful_claims = updateSuccessfulClaims(bitland_block_height)
-    
-    return True
 
 
 def findClaimsForOutput(output_id):
@@ -260,7 +263,7 @@ def getUtxoClaim(utxo_id, bitland_block):
         claim_status = 'ERROR'
         
     return claim_status
-
+'''
 
 if __name__ == '__main__':
 
