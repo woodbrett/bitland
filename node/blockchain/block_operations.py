@@ -195,7 +195,7 @@ def addTransaction(transaction, block_height):
     miner_fee_blocks = int.from_bytes(deserialize_transaction(transaction)[3][1] ,'big')
     transfer_fee_sats = int.from_bytes(deserialize_transaction(transaction)[3][2] ,'big')
     transfer_fee_blocks = int.from_bytes(deserialize_transaction(transaction)[3][3] ,'big')
-    transfer_fee_address = deserialize_transaction(transaction)[3][4].decode('utf-8')
+    transfer_fee_address = unhexlify(deserialize_transaction(transaction)[3][4]).decode('utf-8')
     
     #UPDATE as new transactions are added
     is_landbase = version == 1
@@ -242,12 +242,6 @@ def addTransaction(transaction, block_height):
         updateDbLandbase(parcel_id, block_height)
 
     return transaction_id
-
-
-#UPDATE save the serialized transaction - should I do this?
-def addSerializedTransaction():
-    
-    return None
 
 
 def addTransactionHash(transaction, block_height, version, is_landbase, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address):

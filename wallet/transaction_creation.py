@@ -216,16 +216,18 @@ if __name__ == '__main__':
     order by block_id desc
     '''
     
-    input_public_key = '816009931ee0e6ec5faa49d2850cb0696c27076ec347ab44fe6107756d29a39215209d19b98634e5ada5b0c4dd0011b44fec28892f43fc9385b87a3f0cf193bc'
-    input_private_key = 'df93acca345c312079fc42133d0ffd0e1cce9c4fc63ca632e53c28f449a4a306'
-    polygon = "POLYGON((-22.5 88.97202,-22.5 88.82298,-33.75 88.82298,-33.75 88.97202,-22.5 88.97202))"
-    planet_id = 1
-    vout = 0
-    input_transaction_hash = '4f651474a9f41af5b7d480afdd8ec65730eaaf1872009be993b829a7d69e6bd4'
+    transaction_info = ["ab331f81a45576b5cc1632b63a47c42349b172a68007c4cb1698fbfcf7b20fa9d42b4a2506b1d86379c84456ae306c768ab0ba3f8a19cb09736b067e6a604b6e","8eee93bc01b4052a57df6d57e70698c57049f73cda2c3897f6c6ff0b09b4cb74","MULTIPOLYGON(((-59.0625 84.6585,-59.0625 84.41892,-60.46875 84.41892,-60.46875 84.6585,-59.0625 84.6585)),((-58.677282 84.6585,-59.0625 84.6585,-59.0625 84.90942,-59.0625 85.03956,-58.615489 85.03956,-58.677282 84.6585)))",1,1,"86a376a1e641a30099a01abdf6f1f18dacd74e08b32c6e95df3c46373a8c07fa"]
+    
+    input_public_key = transaction_info[0]
+    input_private_key = transaction_info[1]
+    polygon = transaction_info[2]
+    planet_id = transaction_info[3]
+    vout = transaction_info[4]
+    input_transaction_hash = transaction_info[5]
     input_spend_type = 1
     
-    #simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
-    #print(hexlify(simple_transaction).decode('utf-8'))
+    simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
+    print(hexlify(simple_transaction).decode('utf-8'))
     #print(deserialize_transaction(simple_transaction))
     
     
