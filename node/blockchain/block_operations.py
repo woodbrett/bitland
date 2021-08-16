@@ -138,6 +138,7 @@ def addDeserializedBlock(block, block_height):
                 bits + "," +
                 "'" + header_hash + "'," + 
                 bitcoin_height + "," +
+                "'" + bitcoin_last_64_mrkl + "'," + 
                 "'" + miner_bitcoin_address + "',"
                  + nonce 
                 + ") RETURNING id;"

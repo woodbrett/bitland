@@ -42,17 +42,21 @@ def validateBlock(block, realtime_validation=True, prev_block_input=None):
 def validateBlockHeader(block, realtime_validation=True, prior_block=None):
  
     header = deserialize_block_header(block)
+
+    header = deserialize_block_header(block)
         
-    version = header[0]
-    prev_block = header[1]
-    mrkl_root = header[2]
-    time_ = header[3]
-    bits = header[4]
-    bitcoin_height = header[5]
-    miner_bitcoin_address = header[6]
-    nonce = header[7]
+    version = header.get('version')
+    prev_block = header.get('prev_block')
+    mrkl_root = header.get('mrkl_root')
+    time_ = header.get('time')
+    bits = header.get('bits')
+    bitcoin_hash = header.get('bitcoin_hash')
+    bitcoin_height = header.get('bitcoin_height')
+    bitcoin_last_64_mrkl = header.get('bitcoin_last_64_mrkl')
+    miner_bitcoin_address = header.get('miner_bitcoin_address')
+    nonce = header.get('nonce')
     
-    header_serialized = serialize_block_header(version, prev_block, mrkl_root, time_, bits, nonce, bitcoin_height, miner_bitcoin_address)
+    header_serialized = serialize_block_header(version, prev_block, mrkl_root, time_, bits, nonce, bitcoin_hash, bitcoin_height, bitcoin_last_64_mrkl, miner_bitcoin_address)
     
     deserialized_block = deserialize_block(block)
     transaction_count = len(deserialized_block[1])
@@ -110,11 +114,25 @@ def validateBlockHeader(block, realtime_validation=True, prior_block=None):
             print('validating block header: valid timestamp')
     
     if (valid_header == True):
+        valid_header = validateBitcoinHash(bitcoin_hash, bitcoin_block_height)    
+        if(valid_header == False):
+            failure_reason = 'invalid bitcoin hash'
+        else:
+            print('validating block header: valid bitcoin hash')
+    
+    if (valid_header == True):
         valid_header = validateBitcoinBlock(bitcoin_height, prior_block_bitcoin_height, realtime_validation)    
         if(valid_header == False):
             failure_reason = 'invalid bitcoin block height'
         else:
             print('validating block header: valid bitcoin block height')
+    
+    if (valid_header == True):
+        valid_header = validateBitcoinLast64Mrkl()    
+        if(valid_header == False):
+            failure_reason = 'invalid last 64 bitcoin hashes merkle root'
+        else:
+            print('validating block header: valid last 64 bitcoin hashes merkle root')
     
     if (valid_header == True):
         valid_header = validateBits(bits)    
