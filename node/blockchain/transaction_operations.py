@@ -400,21 +400,10 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
         block_height = getMaxBlockHeight() + 1
 
     if block_header != None:
-        bitcoin_block_height = int.from_bytes(block_header[5],'big')
+        bitcoin_block_height = int.from_bytes(block_header.get('bitcoin_height'),'big')
         
     else:
         bitcoin_block_height = getCurrentBitcoinBlockHeight()
-       
-        '''
-        0 version,
-        1 prev_block, 
-        2 mrkl_root ,
-        3 time_ ,
-        4 bits ,
-        5 bitcoin_height,
-        6 miner_bitcoin_address,
-        7 nonce
-        '''
     
     inspected_parcel = inspectParcel(transaction_hash, transaction_vout, bitcoin_block_height, block_height)
     

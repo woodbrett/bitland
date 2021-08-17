@@ -21,7 +21,8 @@ from node.information.blocks import getMaxBlockHeight
 from node.networking.node_update_functions import queueNewBlockFromPeer
 from mining.create_landbase_transaction import getLandbaseTransaction
 from system_variables import block_height_url
-from node.blockchain.header_operations import getPrevBlockGuarded
+from node.blockchain.header_operations import getPrevBlockGuarded,\
+    calculateMerkleRoot64BitcoinBlocks
 from node.blockchain.block_serialization import serialize_block
 from node.blockchain.global_variables import bitland_version
 from utilities.sqlUtils import (
@@ -33,6 +34,8 @@ from node.blockchain.transaction_serialization import deserialize_transaction
 import threading
 from node.blockchain.block_adding_queueing import validateAddBlock
 from node.blockchain.header_serialization import serializeMinerAddress
+from utilities.bitcoin_requests import getCurrentBitcoinBlockHeight,\
+    getBestBlockHash, getBlockHeightFromHash
 
 #UPDATE - give ability to pull these from a node rather than inside the code
 
@@ -42,7 +45,9 @@ def findValidHeader(
         mrkl_root_byte,
         time_byte,
         bits_byte,
+        bitcoin_hash_byte,
         bitcoin_height_byte,
+        bitcoin_last_64_mrkl_byte,
         miner_bitcoin_address_byte,
         start_nonce_byte,
         current_block_height
@@ -54,8 +59,7 @@ def findValidHeader(
     nonce_byte = start_nonce_byte
     nonce = int.from_bytes(nonce_byte,'big')
 
-    header_byte_no_nonce = (version_byte + prev_block_byte + mrkl_root_byte + time_byte + bits_byte + bitcoin_height_byte + miner_bitcoin_address_full_byte )
-    print()
+    header_byte_no_nonce = (version_byte + prev_block_byte + mrkl_root_byte + time_byte + bits_byte + bitcoin_hash_byte + bitcoin_height_byte + bitcoin_last_64_mrkl_byte + miner_bitcoin_address_full_byte )
     header_byte = (header_byte_no_nonce + nonce_byte) 
     headerhash_byte = sha256(sha256(header_byte).digest()).digest()  
     
@@ -165,7 +169,8 @@ def mining_process():
     version = bitland_version
     time_ = int(round(datetime.utcnow().timestamp(),0))
     start_nonce = 0
-    bitcoin_height = int(requests.get(block_height_url).text)
+    bitcoin_hash = getBestBlockHash()
+    bitcoin_height = getBlockHeightFromHash(bitcoin_hash)
     miner_bitcoin_address = '6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b7773'
     
     version_bytes = version.to_bytes(2, byteorder = 'big')
@@ -173,7 +178,9 @@ def mining_process():
     mrkl_root_bytes = calculateMerkleRoot(transactions)
     time_bytes = time_.to_bytes(5, byteorder = 'big')
     bits_bytes = get_bits_current_block() 
+    bitcoin_hash_bytes = unhexlify(bitcoin_hash)
     bitcoin_height_bytes = bitcoin_height.to_bytes(4, byteorder = 'big')
+    bitcoin_last_64_mrkl_bytes = calculateMerkleRoot64BitcoinBlocks(block_height=bitcoin_height)
     miner_bitcoin_address_bytes = unhexlify(miner_bitcoin_address)
     start_nonce_bytes = start_nonce.to_bytes(4, byteorder = 'big')    
     
@@ -187,7 +194,9 @@ def mining_process():
         mrkl_root_bytes,
         time_bytes,
         bits_bytes,
+        bitcoin_hash_bytes,
         bitcoin_height_bytes,
+        bitcoin_last_64_mrkl_bytes,
         miner_bitcoin_address_bytes,
         start_nonce_bytes,
         current_block_height

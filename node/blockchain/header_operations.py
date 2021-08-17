@@ -93,9 +93,10 @@ def validateTime(time_,realtime_validation=True):
 #UPDATE
 def validateBitcoinHash(bitcoin_hash, bitcoin_block_height):  
     
-    node_height = getBlockHeightFromHash(bitcoin_hash)
+    node_height_int = getBlockHeightFromHash(hexlify(bitcoin_hash).decode('utf-8'))
+    bitcoin_height_int = int.from_bytes(bitcoin_block_height,'big')
     
-    if node_height != bitcoin_block_height:
+    if node_height_int != bitcoin_height_int:
         return False
 
     else:
@@ -124,9 +125,11 @@ def validateBitcoinBlock(block_height, prior_block_bitcoin_height, realtime_vali
 
 
 #UPDATE
-def validateBitcoinLast64Mrkl():
+def validateBitcoinLast64Mrkl(bitcoin_hash_mrkl,bitcoin_height):
     
-    return True
+    bitcoin_height_int = int.from_bytes(bitcoin_height, 'big')
+    calculated_mrkl = calculateMerkleRoot64BitcoinBlocks(block_height=bitcoin_height_int)
+    return calculated_mrkl == bitcoin_hash_mrkl
     
     
 def validateBits(bits):
@@ -151,7 +154,9 @@ def validateHeaderHash(
         mrkl_root ,
         time_ ,
         bits ,
+        bitcoin_hash,
         bitcoin_height,
+        bitcoin_last_64_mrkl,
         miner_bitcoin_address,
         nonce
         ):
@@ -162,7 +167,9 @@ def validateHeaderHash(
         mrkl_root ,
         time_ ,
         bits ,
+        bitcoin_hash,
         bitcoin_height,
+        bitcoin_last_64_mrkl,
         miner_bitcoin_address,
         nonce)
     
@@ -213,9 +220,20 @@ def getHeaders(start_hash,end_hash):
     return data
 
 
+def calculateMerkleRoot64BitcoinBlocks(block_height=None):
+    
+    last_64_hashes = getLastXBitcoinHashes(64, block_height)
+    print(last_64_hashes)
+    
+    last_64_hashes_bytes = []
+    for i in range(0,len(last_64_hashes)):
+        last_64_hashes_bytes.append(unhexlify(last_64_hashes[i]))
+     
+    merkle_root_64_hashes = calculateMerkleRoot(last_64_hashes_bytes)
+    
+    return merkle_root_64_hashes
+
+
 if __name__ == '__main__':
     
-    miner_address_bytes = b'bc1qccs269z2s4mftnu9r99chn537qwng235f28x99'
-    
-    x = validateBitcoinAddress(miner_address_bytes)
-    print(x)
+    print(calculateMerkleRoot64BitcoinBlocks())

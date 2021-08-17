@@ -152,5 +152,5 @@ def deserialize_block_header(header, start_pos=0):
         'miner_bitcoin_address': miner_bitcoin_address,
         'nonce': nonce,
         'counter_bytes': counter_bytes
-    )
+    }
     

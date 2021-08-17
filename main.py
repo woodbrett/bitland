@@ -26,7 +26,7 @@ app.register_blueprint(peer)
 app.register_blueprint(local)
     
 #start node ongoing functions (managing peers, pinging, garbage collecting transactions)
-node = True
+node = False
 if node == True:
     start_node()
     t1 = threading.Thread(target=run_node,daemon=True)

@@ -30,7 +30,7 @@ def serialize_block(
 def deserialize_block(block):
     
     header = deserialize_block_header(block)
-    counter = header[8]
+    counter = header.get('counter_bytes')
     counter_int = int.from_bytes(counter, byteorder='big')
     block_length = len(block)
     

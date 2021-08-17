@@ -64,7 +64,7 @@ def addBlock(block):
         
     addTransactions(serialized_transactions, block_height)
 
-    bitcoin_block = int.from_bytes(deserialized_block[0][5],'big')
+    bitcoin_block = int.from_bytes(deserialized_block[0].get('bitcoin_height'),'big')
     prior_bitcoin_block_height = getBlock(block_id=block_height-1).get('bitcoin_block_height')
     
     updateContingenciesAndClaims(bitcoin_block, prior_bitcoin_block_height, block_height)
@@ -128,7 +128,7 @@ def addDeserializedBlock(block, block_height):
     miner_bitcoin_address = miner_bitcoin_address.decode('utf-8')
     nonce = str(int.from_bytes(nonce, 'big'))
     
-    query_insert_deserialized_block = ("insert into bitland.block(id, header_hash, version, prev_block, mrkl_root, time, bits, bitcoin_block_height, miner_bitcoin_address, nonce) values "
+    query_insert_deserialized_block = ("insert into bitland.block(id, header_hash, version, prev_block, mrkl_root, time, bits, bitcoin_hash, bitcoin_block_height, miner_bitcoin_address, bitcoin_last_64_mrkl, nonce) values "
                 "(" + block_height + "," +
                 "'" + header_hash + "'," +
                 version + "," +

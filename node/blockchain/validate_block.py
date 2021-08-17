@@ -80,7 +80,7 @@ def validateBlockHeader(block, realtime_validation=True, prior_block=None):
     
     prior_block_header = deserialize_block_header(prior_block)
     prior_block_hash = calculateHeaderHashFromBlock(block_bytes=prior_block)
-    prior_block_bitcoin_height = prior_block_header[5]
+    prior_block_bitcoin_height = prior_block_header.get('bitcoin_height')
     
     valid_header = True
     failure_reason = ''
@@ -114,12 +114,12 @@ def validateBlockHeader(block, realtime_validation=True, prior_block=None):
             print('validating block header: valid timestamp')
     
     if (valid_header == True):
-        valid_header = validateBitcoinHash(bitcoin_hash, bitcoin_block_height)    
+        valid_header = validateBitcoinHash(bitcoin_hash, bitcoin_height)    
         if(valid_header == False):
             failure_reason = 'invalid bitcoin hash'
         else:
             print('validating block header: valid bitcoin hash')
-    
+
     if (valid_header == True):
         valid_header = validateBitcoinBlock(bitcoin_height, prior_block_bitcoin_height, realtime_validation)    
         if(valid_header == False):
@@ -128,7 +128,7 @@ def validateBlockHeader(block, realtime_validation=True, prior_block=None):
             print('validating block header: valid bitcoin block height')
     
     if (valid_header == True):
-        valid_header = validateBitcoinLast64Mrkl()    
+        valid_header = validateBitcoinLast64Mrkl(bitcoin_last_64_mrkl, bitcoin_height)    
         if(valid_header == False):
             failure_reason = 'invalid last 64 bitcoin hashes merkle root'
         else:
@@ -149,7 +149,7 @@ def validateBlockHeader(block, realtime_validation=True, prior_block=None):
             print('validating block header: valid bitcoin address')
       
     if (valid_header == True):
-        valid_header = validateHeaderHash(version ,prev_block, mrkl_root ,time_,bits ,bitcoin_height ,miner_bitcoin_address,nonce )  
+        valid_header = validateHeaderHash(version ,prev_block, mrkl_root ,time_,bits, bitcoin_hash, bitcoin_height,bitcoin_last_64_mrkl,miner_bitcoin_address,nonce )  
         if(valid_header == False):
             failure_reason = 'invalid header hash' 
         else:
