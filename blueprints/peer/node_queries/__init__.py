@@ -9,9 +9,9 @@ from flask_restplus import Namespace, Resource, fields, Api
 from http import HTTPStatus
 from node.networking.peering_functions import authenticate_peer
 from node.networking.node_query_functions import (
-    get_block_height_peer,
-    get_blocks_start_end,
-    get_block_by_height
+    getBlockHeightPeer,
+    getBlocksStartEnd,
+    getBlockByHeight
     )
 import json
 
@@ -60,8 +60,8 @@ class get_block_height(Resource):
         if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(401, 'Not authenticated as peer')
         
-        block_height = get_block_height_peer().get('id')
-        block_hash = get_block_height_peer().get('header_hash')
+        block_height = getBlockHeightPeer().get('id')
+        block_hash = getBlockHeightPeer().get('header_hash')
 
         return {
             'block_height': block_height,
@@ -81,7 +81,7 @@ class get_blocks(Resource):
         if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated as peer')
         
-        blocks = get_blocks_start_end(start_block, end_block)
+        blocks = getBlocksStartEnd(start_block, end_block)
         print(blocks[1])
         
         return {
@@ -102,7 +102,7 @@ class get_block(Resource):
         if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated as peer')
         
-        block = get_block_by_height(block_height)
+        block = getBlockByHeight(block_height)
 
         return {
             'blocks': block

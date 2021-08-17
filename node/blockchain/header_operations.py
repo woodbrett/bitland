@@ -3,7 +3,7 @@ Created on Dec 23, 2020
 
 @author: brett_wood
 '''
-from utilities.sqlUtils import executeSql
+from utilities.sql_utils import executeSql
 import struct, codecs
 from binascii import unhexlify, hexlify
 from hashlib import sha256
@@ -19,9 +19,9 @@ from utilities.hashing import *
 from datetime import datetime
 import time
 from utilities.difficulty import get_target_from_bits
-from utilities.bitcoin_requests import *
+from utilities.bitcoin.bitcoin_requests import *
 from node.blockchain.global_variables import *
-from node.blockchain.header_serialization import serialize_block_header_utf8
+from node.blockchain.header_serialization import serializeBlockHeaderUtf8
 from node.information.blocks import (
     getBlockCount,
     getPrevBlock,
@@ -204,7 +204,7 @@ def getHeaders(start_hash,end_hash):
     
     for i in range(start_block, end_block):
         b = getBlock(block_id = i)
-        serialized_header = serialize_block_header_utf8(
+        serialized_header = serializeBlockHeaderUtf8(
             b.get('version'),
             b.get('prev_block'),     
             b.get('mrkl_root'),
@@ -232,8 +232,3 @@ def calculateMerkleRoot64BitcoinBlocks(block_height=None):
     merkle_root_64_hashes = calculateMerkleRoot(last_64_hashes_bytes)
     
     return merkle_root_64_hashes
-
-
-if __name__ == '__main__':
-    
-    print(calculateMerkleRoot64BitcoinBlocks())

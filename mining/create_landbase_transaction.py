@@ -3,8 +3,8 @@ Created on Feb 24, 2021
 
 @author: brett_wood
 '''
-from utilities.sqlUtils import executeSql
-from node.blockchain.transaction_serialization import serialize_transaction
+from utilities.sql_utils import executeSql
+from node.blockchain.transaction_serialization import serializeTransaction
 from wallet.key_generation import *
 from system_variables import mining_path
 
@@ -76,7 +76,7 @@ def populateLandbaseTransaction(landbase):
                      transfer_fee_address.encode('utf-8')
                      ]
     
-    serialized_transaction = serialize_transaction(
+    serialized_transaction = serializeTransaction(
         version_bytes, #version
         inputs_bytes, #inputs
         outputs_bytes, #outputs
@@ -85,43 +85,3 @@ def populateLandbaseTransaction(landbase):
     
     return serialized_transaction
 
-
-if __name__ == '__main__':
-
-    print(desiredLandbase())
-    
-    '''
-    landbase = 'POLYGON((-22.5 89.74674,-22.5 89.51868,-45 89.51868,-45 89.74674,-22.5 89.74674))'
-    public_key = '027c5ef9bc2b7b169cde0327fc08883e0d4e2a603f2c6a47c08b75fe79df0e88742e461b2a3956d15467d253455dae6737ea2f22de440fc2923f3d1c592cc1d1'
-    
-    version = 1
-    inputs = []
-    output_1_planet = 1
-    output_1_shape = landbase
-    output_1_script = public_key
-    contingencies = []
-    claims = []
-    
-    version_bytes = version.to_bytes(2, byteorder = 'big')
-    inputs_bytes = inputs
-    output_1_planet_bytes = output_1_planet.to_bytes(1, byteorder = 'big')
-    output_1_shape_bytes = output_1_shape.encode('utf-8')
-    output_1_script_bytes = output_1_script.encode('utf-8')
-    output_1_bytes = [output_1_planet_bytes,output_1_shape_bytes,output_1_script_bytes]
-    outputs_bytes = [output_1_bytes]
-    contingencies_bytes = contingencies
-    claims_bytes = claims
-    
-    serialized_transaction = serialize_transaction(
-        version_bytes, #version
-        inputs_bytes, #inputs
-        outputs_bytes, #outputs
-        contingencies_bytes, #contingencies
-        claims_bytes #claims
-        )
-    
-    print(serialized_transaction)
-    print(hexlify(serialized_transaction).decode('utf-8'))
-    
-    print(hexlify(getLandbaseTransaction()).decode('utf-8'))
-    '''

@@ -5,7 +5,7 @@ Created on Aug 5, 2021
 '''
 from binascii import unhexlify, hexlify
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
-from utilities.sqlUtils import *
+from utilities.sql_utils import *
 from system_variables import (
     rpc_user,
     rpc_password,

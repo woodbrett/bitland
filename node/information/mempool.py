@@ -3,7 +3,7 @@ Created on Jul 13, 2021
 
 @author: brett_wood
 '''
-from utilities.sqlUtils import *
+from utilities.sql_utils import *
 from collections import namedtuple
 import json
 

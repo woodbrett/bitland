@@ -6,7 +6,7 @@ Created on Feb 14, 2021
 import struct, codecs
 from binascii import unhexlify, hexlify
 from hashlib import sha256
-from utilities import sqlUtils
+from utilities import sql_utils
 import struct
 from codecs import decode, encode
 from utilities.serialization import deserialize_text, serialize_text
@@ -26,7 +26,7 @@ miner_bitcoin_address_len_bytes_len = 2
 nonce_bytes_len = 4
 
 #UPDATE need to think how to handle bitcoin miner addresses since they can be 34 or 42 characters hex, maybe just make it 21 bytes and end with 0s for ones that don't fill it up
-def serialize_block_header_utf8(
+def serializeBlockHeaderUtf8(
         version,
         prev_block,     
         mrkl_root ,
@@ -50,7 +50,7 @@ def serialize_block_header_utf8(
     miner_bitcoin_address_bytes = unhexlify(miner_bitcoin_address) 
     nonce_bytes = nonce.to_bytes(nonce_bytes_len, byteorder = 'big')
     
-    header = serialize_block_header(
+    header = serializeBlockHeader(
         version_bytes,
         prev_block_bytes,     
         mrkl_root_bytes,
@@ -66,7 +66,7 @@ def serialize_block_header_utf8(
     return header
 
 
-def serialize_block_header(
+def serializeBlockHeader(
         version_bytes,
         prev_block_bytes,     
         mrkl_root_bytes,
@@ -100,7 +100,7 @@ def serializeMinerAddress(miner_bitcoin_address_bytes):
     return miner_bitcoin_address_combined_bytes
 
 
-def deserialize_block_header(header, start_pos=0):
+def deserializeBlockHeader(header, start_pos=0):
     
     counter = start_pos
     

@@ -3,7 +3,7 @@ Created on Jul 11, 2021
 
 @author: brett_wood
 '''
-from utilities.sqlUtils import *
+from utilities.sql_utils import *
 from system_variables import (
     max_peer_count,
     peering_port,

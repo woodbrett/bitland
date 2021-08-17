@@ -7,7 +7,7 @@ import ecdsa
 import hashlib
 from binascii import unhexlify, hexlify
 from codecs import encode, decode
-from utilities.sqlUtils import executeSql
+from utilities.sql_utils import executeSql
 
 #KEYS
 def generateRandomKeys():

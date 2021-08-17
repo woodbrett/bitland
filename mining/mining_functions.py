@@ -23,21 +23,22 @@ from mining.create_landbase_transaction import getLandbaseTransaction
 from system_variables import block_height_url
 from node.blockchain.header_operations import getPrevBlockGuarded,\
     calculateMerkleRoot64BitcoinBlocks
-from node.blockchain.block_serialization import serialize_block
+from node.blockchain.block_serialization import serializeBlock
 from node.blockchain.global_variables import bitland_version
-from utilities.sqlUtils import (
+from utilities.sql_utils import (
     executeSql,
     executeSqlMultipleRows
     )
 from node.blockchain.validate_block import validateTransactions
-from node.blockchain.transaction_serialization import deserialize_transaction
+from node.blockchain.transaction_serialization import deserializeTransaction
 import threading
 from node.blockchain.block_adding_queueing import validateAddBlock
 from node.blockchain.header_serialization import serializeMinerAddress
-from utilities.bitcoin_requests import getCurrentBitcoinBlockHeight,\
-    getBestBlockHash, getBlockHeightFromHash
-
-#UPDATE - give ability to pull these from a node rather than inside the code
+from utilities.bitcoin.bitcoin_requests import (
+    getCurrentBitcoinBlockHeight,
+    getBestBlockHash, 
+    getBlockHeightFromHash
+    )
 
 def findValidHeader(
         version_byte,
@@ -140,7 +141,7 @@ def validateMempoolTransactions():
         print(len(mempool_transactions))
         for i in range(0,len(mempool_transactions)):
             transaction_byte_list.append(unhexlify(mempool_transactions[i][0]))
-            transaction_serialized_list.append(deserialize_transaction(unhexlify(mempool_transactions[i][0])))
+            transaction_serialized_list.append(deserializeTransaction(unhexlify(mempool_transactions[i][0])))
         
         print(transaction_serialized_list)
         valid_transactions = validateTransactions(transactions=transaction_serialized_list)
@@ -154,7 +155,7 @@ def validateMempoolTransactions():
 
 
 #UPDATE figure out if node is synching before starting to try to mine
-def mining_process():
+def miningProcess():
     
     mempool_transactions = validateMempoolTransactions()
     print(mempool_transactions)
@@ -210,7 +211,7 @@ def mining_process():
     
     #UPDATE do we need to wait at all to allow block to propagate?
     if status == 'found valid block':
-        serialized_block = serialize_block(header, transactions)
+        serialized_block = serializeBlock(header, transactions)
         block_hex = hexlify(serialized_block).decode('utf-8')
         print(block_hex)
         
@@ -218,15 +219,7 @@ def mining_process():
         t1.start()
         t1.join()
     
-    return mining_process()
-            
-        
-if __name__ == '__main__':
-    
-    x = mining_process();
-
-    
-    
+    return miningProcess()
     
     
     

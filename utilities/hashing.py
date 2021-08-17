@@ -7,16 +7,18 @@ import codecs
 from binascii import unhexlify, hexlify
 from utilities.serialization import deserialize_text, serialize_text
 from hashlib import sha256
-from node.blockchain.block_serialization import deserialize_block
-from node.blockchain.header_serialization import deserialize_block_header,\
-    serialize_block_header
+from node.blockchain.block_serialization import deserializeBlock
+from node.blockchain.header_serialization import (
+    deserializeBlockHeader,
+    serializeBlockHeader
+    )
 
 def calculateHeaderHashFromBlock(block_hex=None,block_bytes=None):
     
     if block_bytes == None:
         block_bytes = unhexlify(block_hex)
 
-    header_bytes = deserialize_block(block_bytes)[0]
+    header_bytes = deserializeBlock(block_bytes)[0]
     headerhash_bytes = calculateHeaderHash(
         header_bytes.get('version'),
         header_bytes.get('prev_block'),
@@ -48,7 +50,7 @@ def calculateHeaderHash(
         nonce
         ):
 
-    header_byte = serialize_block_header(version, prev_block, mrkl_root, time_, bits, bitcoin_hash, bitcoin_height, bitcoin_last_64_hash_mrkl, miner_bitcoin_address, nonce)
+    header_byte = serializeBlockHeader(version, prev_block, mrkl_root, time_, bits, bitcoin_hash, bitcoin_height, bitcoin_last_64_hash_mrkl, miner_bitcoin_address, nonce)
 
     #header_byte = ( version + prev_block + mrkl_root + time_ + bits + bitcoin_height + miner_bitcoin_address + nonce) 
     headerhash_byte = sha256(sha256(header_byte).digest()).digest()

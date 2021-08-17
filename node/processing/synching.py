@@ -6,16 +6,16 @@ Created on Jul 14, 2021
 from node.information.blocks import (
     getMaxBlockHeight
     )
-from node.blockchain.block_serialization import deserialize_block
+from node.blockchain.block_serialization import deserializeBlock
 from binascii import unhexlify,hexlify
-from node.networking.node_query_functions import get_blocks_start_end
+from node.networking.node_query_functions import getBlocksStartEnd
 import json
 from node.networking.peering_functions import (
     message_all_connected_peers,
     message_peer, update_peer, connect_to_peer, query_peer,
     attempt_to_connect_to_new_peer, delete_peer
     )
-from node.blockchain.block_serialization import deserialize_block
+from node.blockchain.block_serialization import deserializeBlock
 from node.blockchain.validate_block import (
     validateBlock,
     validateBlockHeader

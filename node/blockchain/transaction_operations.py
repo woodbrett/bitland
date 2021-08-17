@@ -4,10 +4,12 @@ Created on Dec 23, 2020
 @author: brett_wood
 '''
 
-from node.blockchain.transaction_serialization import deserialize_transaction,\
-    serialize_transaction
+from node.blockchain.transaction_serialization import (
+    deserializeTransaction,
+    serializeTransaction
+    )
 from utilities.serialization import deserialize_text
-from utilities.sqlUtils import executeSql
+from utilities.sql_utils import executeSql
 from utilities.config import config
 from binascii import unhexlify, hexlify
 import ecdsa
@@ -18,8 +20,8 @@ from system_variables import address_search_url
 import requests
 from node.blockchain.contingency_operations import *
 from utilities.hashing import calculateTransactionHash
-from utilities.bitcoin_requests import getCurrentBitcoinBlockHeight
-from node.blockchain.header_serialization import deserialize_block_header
+from utilities.bitcoin.bitcoin_requests import getCurrentBitcoinBlockHeight
+from node.blockchain.header_serialization import deserializeBlockHeader
 from node.information.blocks import getMaxBlockHeight
 from node.information.mempool import getMempoolInformation
 from utilities.gis_functions import (
@@ -60,7 +62,7 @@ def validateMempoolTransaction(transaction):
 
 def validateTransaction(transaction, block_height=None, block_header=None):
     
-    transaction = deserialize_transaction(transaction)
+    transaction = deserializeTransaction(transaction)
     transaction_state = []
     
     transaction_type = transaction[0]
@@ -471,16 +473,6 @@ def validateTransactionInput(input, block_height, block_header, miner_fee_sats):
             if(valid_input == False):
                 failure_reason = 'invalid input utxo type for the spend type'  
     
-    #check if its valid to make a claim
-    #removed this because any claim i think can attempt to be made, it may just fail
-    '''
-    if (valid_input == True and input_version == 3):
-        utxo_current_claim_sats = input_utxo.get('claim_fee_sats')
-        valid_input = validateClaimAttempt(miner_fee_sats, utxo_current_claim_sats)
-        if(valid_input == False):
-            failure_reason = 'insufficient bid for claim'          
-    '''
-    
     #validate signature, but not for making a claim
     if (valid_input == True and input_version != 3):
         resolved_pub_key = getPublicKeySpendTypes(input_version, input_utxo_pub_key, input_utxo_failed_transfer_pub_key, input_utxo_collateral_pub_key)    
@@ -610,14 +602,14 @@ def validateSignature(message, public_key, signature):
 
 def addTransactionToMempool(transaction):
 
-    deserialized_transaction = deserialize_transaction(transaction)
+    deserialized_transaction = deserializeTransaction(transaction)
 
-    version = int.from_bytes(deserialize_transaction(transaction)[0],'big')
-    miner_fee_sats = int.from_bytes(deserialize_transaction(transaction)[3][0] ,'big')
-    miner_fee_blocks = int.from_bytes(deserialize_transaction(transaction)[3][1] ,'big')
-    transfer_fee_sats = int.from_bytes(deserialize_transaction(transaction)[3][2] ,'big')
-    transfer_fee_blocks = int.from_bytes(deserialize_transaction(transaction)[3][3] ,'big')
-    transfer_fee_address = deserialize_transaction(transaction)[3][4].decode('utf-8')
+    version = int.from_bytes(deserializeTransaction(transaction)[0],'big')
+    miner_fee_sats = int.from_bytes(deserializeTransaction(transaction)[3][0] ,'big')
+    miner_fee_blocks = int.from_bytes(deserializeTransaction(transaction)[3][1] ,'big')
+    transfer_fee_sats = int.from_bytes(deserializeTransaction(transaction)[3][2] ,'big')
+    transfer_fee_blocks = int.from_bytes(deserializeTransaction(transaction)[3][3] ,'big')
+    transfer_fee_address = deserializeTransaction(transaction)[3][4].decode('utf-8')
     
     #UPDATE as new transactions are added
     is_landbase = version == 1
@@ -652,18 +644,3 @@ def addTransactionToMempool(transaction):
     
     return transaction_mempool_id
 
-
-if __name__ == '__main__':
-
-    transaction = '000201013c75b4c2a69b3a86e13ac62705a6cf2d8a56d7d8b8d18bf846c621d62478fe060040ebff9ba202e4e182ed5d5fd685e4220279547ce2368f93a9453174def02b454d9c93667c18e65ed24968b181be63a38af117a3c0c5b59e7e94baf8c5b602f7d70101010054504f4c59474f4e28282d33392e3337352038372e373637312c2d33392e3337352038372e36323530382c2d34352038372e36323530382c2d34352038372e373637312c2d33392e3337352038372e37363731292940e3f2ecdefaa8e3f6652e8960dcca0d09d713fe255cbb5920c79e5dfe46f9447971cb2c76c7e6870ec9641924fa7a4ce7955bf911caf8be624cb21e4cfbcbfaf30000000000000000000000000000000000'
-    transaction_bytes = unhexlify(transaction)
-    deserialized_transaction = deserialize_transaction(transaction_bytes)
-    print(deserialized_transaction[3][0])
-    input = deserialize_transaction(transaction_bytes)[1][0]
-    print(input)
-    
-    print(validateTransaction(transaction_bytes))
-    
-    #print(getUtxoTransferFeeStatus(6, 700000))
-    #print(validateTransactionInput(input, 700000))
-    
