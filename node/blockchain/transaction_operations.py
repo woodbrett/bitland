@@ -533,8 +533,8 @@ def validContingencyStatusSpendTypes(spend_type, output_type):
         input_utxo_type = [0,1]
     
     elif spend_type == 1 and output_type == 2:
-        transfer_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
-        miner_fee_status = []
+        transfer_fee_status = []
+        miner_fee_status = ['NO_CONTINGENCY', 'VALIDATED_CONFIRMED']
         claim_status = []
         #outstanding_claim = ['NO_CLAIM', 'INVALIDATED_CLAIM', 'OUTSTANDING_CLAIM']
         outstanding_claim = ['UNCLAIMED']
