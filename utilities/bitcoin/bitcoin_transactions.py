@@ -61,16 +61,16 @@ def processBitcoinBlocks(start_block_height, end_block_height):
     
     for i in range(0, end_block_height - start_block_height + 1):
         processBitcoinBlock(start_block_height + i)
-        print(start_block_height + i)
+        print('adding bitcoin block ' + str(start_block_height + i))
 
 
-#UPDATE
-def deleteBitcoinBlock(block_height):
+def deleteBitcoinBlock(block_height=0,block_hash=''):
     
-    return None
-
-
-def addMissingBitcoinTransactionBlocks(start_block_height, end_block_height):
+    block_height = str(block_height)
+    
+    delete_sql = "select bitcoin.delete_bitcoin_block (" + block_height + ",'" + block_hash + "');"
+    
+    delete = executeSqlDeleteUpdate(delete_sql)
     
     return None
 
@@ -78,9 +78,12 @@ def addMissingBitcoinTransactionBlocks(start_block_height, end_block_height):
 def getBlockInformationNodeDb(block_height=0):
 
     rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
+    node_max_height = rpc_connection.getblockcount()
     
     if block_height == 0:
-        node_block_height = rpc_connection.getblockcount()
+        node_block_height = node_max_height
+    elif block_height > node_max_height:
+        node_block_height = node_max_height
     else:
         node_block_height = block_height
 
@@ -106,57 +109,73 @@ def getBlockInformationNodeDb(block_height=0):
         }
 
 
-def synchWithBitcoin(start_bitcoin_height=0,end_bitcoin_height=0,synch_last_10=True):
+def rollbackBitcoinBlocksDb():
 
+    max_bitcoin_block_db = getMaxBitcoinBlock()
+    equal_heads = getBlockInformationNodeDb(max_bitcoin_block_db).get('equal_hashes')
+    
+    while equal_heads == False:
+        print('rolling back bitcoin block ' + str(max_bitcoin_block_db))
+        deleteBitcoinBlock(block_height=max_bitcoin_block_db)
+        max_bitcoin_block_db = getMaxBitcoinBlock()
+        equal_heads = getBlockInformationNodeDb(max_bitcoin_block_db).get('equal_hashes')
+        
+    return max_bitcoin_block_db
+
+
+def realtimeSynchWithBitcoin():
+    
     synched = False
 
-    if synch_last_10 == True:
-    
-        #UPDATE to do rollbacks in case bitcoin has a chain rollback
+    #UPDATE to do rollbacks in bitland blocks in case bitcoin has a chain rollback
+    while synched == False:
         
-        while synched == False:
+        block_info = getBlockInformationNodeDb()
+        
+        if block_info.get('equal_heights') == True and block_info.get('equal_hashes') == True:
+            synched = True
+        
+        #UPDATE to ensure they start at same hash
+        elif block_info.get('node_block_height') > block_info.get('db_block_height'):
             
-            block_info = getBlockInformationNodeDb()
+            block_info_last_block = getBlockInformationNodeDb(getMaxBitcoinBlock())
             
-            if block_info.get('equal_heights') == True and block_info.get('equal_hashes') == True:
-                synched = True
-            
-            elif block_info.get('db_block_height') == None:
-                processBitcoinBlocks(block_info.get('node_block_height') - 10, block_info.get('node_block_height'))
-            
-            #UPDATE to ensure they start at same hash
-            elif block_info.get('node_block_height') > block_info.get('db_block_height'):
+            if block_info_last_block.get('equal_heights') == True and block_info_last_block.get('equal_hashes') == True:
                 processBitcoinBlocks(block_info.get('db_block_height') + 1, block_info.get('node_block_height'))
+                #add the new blocks since they are starting from same point
                 
-            else:
-                break
+            elif block_info_last_block.get('equal_heights') == True and block_info_last_block.get('equal_hashes') == False:
+                rollbackBitcoinBlocksDb()
+                
+        elif block_info.get('equal_heights') == True and block_info.get('equal_hashes') == False:
+            rollbackBitcoinBlocksDb()
             
+        elif block_info.get('node_block_height') < block_info.get('db_block_height'):
+            rollbackBitcoinBlocksDb()
+                        
+        else:
+            break
     
-    if start_bitcoin_height != 0 and end_bitcoin_height != 0:
-        
-        blocks = getBitcoinTransactionBlocks(start_bitcoin_height, end_bitcoin_height)
-        print(blocks)
-        block_heights = []
-        for i in range(0,len(blocks)):
-            block_heights.append(blocks[i][0])
-        
-        print(block_heights)    
-        
-        for i in range(start_bitcoin_height,end_bitcoin_height+1):
-            if i not in block_heights:
-                processBitcoinBlock(i)
-        
-        synched = True
+    return synched
 
-    if synched == False:
-        return 'error'
-    
-    elif synched == True:
-        return 'synched'
-    
-    else:
-        return 'error'        
 
+def synchWithBitcoin(start_bitcoin_height=0,end_bitcoin_height=0):
+
+    blocks = getBitcoinTransactionBlocks(start_bitcoin_height, end_bitcoin_height)
+    print(blocks)
+    block_heights = []
+    for i in range(0,len(blocks)):
+        block_heights.append(blocks[i][0])
+    
+    print(block_heights)    
+    
+    for i in range(start_bitcoin_height,end_bitcoin_height+1):
+        if i not in block_heights:
+            processBitcoinBlock(i)
+        
+    return True
+     
+     
 #QUERIES
 def insertRelevantTransactions(prior_bitcoin_block_height, bitcoin_block_height, bitland_block_height):
     
@@ -280,4 +299,4 @@ if __name__ == '__main__':
     x = synchWithBitcoin(start_bitcoin_height=695216,end_bitcoin_height=695225,synch_last_10=False)
     '''
     
-    print(processBitcoinBlock(695600))
+    print(realtimeSynchWithBitcoin())

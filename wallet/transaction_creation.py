@@ -216,7 +216,7 @@ if __name__ == '__main__':
     order by block_id desc
     '''
     
-    transaction_info = ["69ba3b88770d3941a7ca85412df6c33bd3f73e0b9e0e1cad18bff336ce2c3549ce40d2b10f0ccb28cc2b42e786770e16ad4e3b81c86a86a45ed6c95f0beee7a1","43adaf31324eab1251df93692b78a46b10b2b7eadbc409ded9f68c77657ea2a0","POLYGON((-56.793906 85.03956,-56.25 85.03956,-56.25 84.90942,-56.792279 84.90942,-56.793906 85.03956))",1,2,"86a376a1e641a30099a01abdf6f1f18dacd74e08b32c6e95df3c46373a8c07fa"]
+    transaction_info = ["f9a37435327bde8b05907a67e853cef76c40700634523c4940cf557a138c196669d53d5acd304a8914d143ebc8c9df1be5793e92716b6b4156835e663bdf5408","96cf23d95bec91a39246751eb77faaa47d9e81cf282f5dc8ee747e4313fe3426","POLYGON((-40.943756 87.49116,-45 87.49116,-45 87.62508,-45 87.7671,-40.943756 87.7671,-40.943756 87.49116))",1,1,"a38a76b12a20630f83e5c02e6764954637f4b1892319b3230e33ea08382eed2e"]
     
     input_public_key = transaction_info[0]
     input_private_key = transaction_info[1]
@@ -224,11 +224,11 @@ if __name__ == '__main__':
     planet_id = transaction_info[3]
     vout = transaction_info[4]
     input_transaction_hash = transaction_info[5]
-    input_spend_type = 1
+    input_spend_type = 4
     
-    #simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
-    #print(hexlify(simple_transaction).decode('utf-8'))
-    #print(deserializeTransaction(simple_transaction))
+    simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
+    print(hexlify(simple_transaction).decode('utf-8'))
+    print(deserializeTransaction(simple_transaction))
     
     
     ############ MORE COMPLEX TRANSACTION ################

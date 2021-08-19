@@ -18,6 +18,8 @@ from node.information.blocks import (
     getBlock,
     getBlockSerialized
     )
+from utilities.bitcoin.bitcoin_transactions import synchWithBitcoin,\
+    realtimeSynchWithBitcoin
 
 
 def validateBlock(block, realtime_validation=True, prev_block_input=None):
@@ -26,6 +28,18 @@ def validateBlock(block, realtime_validation=True, prev_block_input=None):
 #prev_block_input allows you to submit the previous block as an input rather than fetching from the database
 
     valid_block = True
+
+    header = deserializeBlockHeader(block)
+    bitcoin_height = int.from_bytes(header.get('bitcoin_height'),'big')
+    prior_bitcoin_height = getBlock(block_id=getMaxBlock()).get('bitcoin_block_height')
+
+    print('updating bitcoin info')    
+    if realtime_validation == False:
+        if prior_bitcoin_height != None:
+            synchWithBitcoin(start_bitcoin_height=prior_bitcoin_height, end_bitcoin_height=bitcoin_height)
+            
+    else:
+        realtimeSynchWithBitcoin()
     
     print('validating block header')
     validate_block = validateBlockHeader(block, realtime_validation, prev_block_input)
@@ -44,8 +58,6 @@ def validateBlock(block, realtime_validation=True, prev_block_input=None):
 
 def validateBlockHeader(block, realtime_validation=True, prior_block=None):
  
-    header = deserializeBlockHeader(block)
-
     header = deserializeBlockHeader(block)
         
     version = header.get('version')

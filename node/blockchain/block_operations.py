@@ -131,7 +131,7 @@ def addDeserializedBlock(block, block_height):
     miner_bitcoin_address = miner_bitcoin_address.decode('utf-8')
     nonce = str(int.from_bytes(nonce, 'big'))
     
-    query_insert_deserialized_block = ("insert into bitland.block(id, header_hash, version, prev_block, mrkl_root, time, bits, bitcoin_hash, bitcoin_block_height, miner_bitcoin_address, bitcoin_last_64_mrkl, nonce) values "
+    query_insert_deserialized_block = ("insert into bitland.block(id, header_hash, version, prev_block, mrkl_root, time, bits, bitcoin_hash, bitcoin_block_height, bitcoin_last_64_mrkl, miner_bitcoin_address,  nonce) values "
                 "(" + block_height + "," +
                 "'" + header_hash + "'," +
                 version + "," +
@@ -430,20 +430,14 @@ def updateContingenciesAndClaims(bitcoin_block_height, prior_bitcoin_block_heigh
     if bitland_block_height == 1:
         return None
 
-    synch = synchWithBitcoin(start_bitcoin_height=prior_bitcoin_block_height, end_bitcoin_height=bitcoin_block_height, synch_last_10=False)
+    inserted_transactions = insertRelevantTransactions(prior_bitcoin_block_height, bitcoin_block_height, bitland_block_height)
     
-    if synch == 'synched':    
-        inserted_transactions = insertRelevantTransactions(prior_bitcoin_block_height, bitcoin_block_height, bitland_block_height)
-        
-        #update contingencies
-        updated_contingencies = updateContingencies(bitland_block_height, contingency_validation_blocks, bitcoin_block_height)
-        
-        #update claims
-        updated_claims = updateClaims(bitcoin_block_height, contingency_validation_blocks, bitland_block_height, claim_blocks, claim_required_percentage_increase)
-        
-    else:
-        return 'error'
+    #update contingencies
+    updated_contingencies = updateContingencies(bitland_block_height, contingency_validation_blocks, bitcoin_block_height)
     
+    #update claims
+    updated_claims = updateClaims(bitcoin_block_height, contingency_validation_blocks, bitland_block_height, claim_blocks, claim_required_percentage_increase)
+        
     return inserted_transactions
 
 
