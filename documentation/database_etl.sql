@@ -137,7 +137,17 @@ create table bitland.contingency (
   CONSTRAINT contingency_output_parcel_id_fkey FOREIGN KEY (output_parcel_id) REFERENCES bitland.output_parcel(id)
 );
 
+drop table if exists bitland.block_serialized ;
+create table bitland.block_serialized (id int, block varchar);
 
+insert into bitland.block_serialized(id, block) values
+(0, '0000000000000000000000000000000000000000000000000000000000000000');
+
+create schema wallet;
+
+drop table if exists bitland.address;
+create table wallet.addresses (private_key varchar, public_key varchar);
+	
 --
 --BITCOIN SCHEMA
 --
@@ -553,19 +563,9 @@ set valid_claim = true
 from minmax mm 
 where le.y_id in (min_id, max_id);
 
-create schema wallet;
-create table wallet.addresses (private_key varchar, public_key varchar);
-
-drop table if exists bitland.block_serialized ;
-create table bitland.block_serialized (id int, block varchar);
-
-insert into bitland.block_serialized(id, block) values
-(0, '0000000000000000000000000000000000000000000000000000000000000000');
-
 
 drop table bitland.int_join;
 drop table bitland.geography_definition;
-drop table if exists bitland.address;
 
 
 --
@@ -696,17 +696,6 @@ left join bitland.active_claim c on c.claim_action_output_parcel_id = op.id
 left join bitland.active_claim c2 on c2.claimed_output_parcel_id = op.id and c2.status = 'SUCCESSFUL'
 left join bitland.active_contingency ac on op.id = ac.output_parcel_id
 where ip.id is null; 
-
-drop view if exists bitland.transaction_contingency;
-create view bitland.transaction_contingency as 
-select t.*, b.bitcoin_block_height, mft.status as miner_fee_status, tft.status as transfer_fee_status, 
-mft.bitcoin_block_height as miner_fee_status_block_height, 
-tft.bitcoin_block_height as transfer_fee_status_block_height,
-b.miner_bitcoin_address 
-from bitland.transaction t
-left join bitland.miner_fee_transaction mft on t.id = mft.transaction_id 
-left join bitland.transfer_fee_transaction tft on t.id = tft.transaction_id
-join bitland.block b on t.block_id = b.id;
 
 drop view if exists bitland.vw_contingency_status;
 create view bitland.vw_contingency_status as (
