@@ -100,13 +100,15 @@ def checkPeerBlocks(use_threading=True):
     
     for i in range(0,len(peer_heights)):
         
+        peer_response = peer_heights[i].get('response')
+        
         #UPDATE handle the errors from peers more elegantly
-        if peer_heights[i][1] == 'error calling peer':
+        if peer_response == 'error calling peer':
             None
         
-        elif peer_heights[i][1].get('block_height') > max_height:
-            max_height= peer_heights[i][1].get('block_height')
-            max_height_peer = peer_heights[i][0]
+        elif peer_response.get('block_height') > max_height:
+            max_height= peer_response.get('block_height')
+            max_height_peer = peer_heights[i].get('peer_ip_address')
     
     if max_height_peer != 'self':
         #UPDATE to only ask for max of X blocks, 50?
