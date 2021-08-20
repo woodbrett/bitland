@@ -11,7 +11,7 @@ from binascii import unhexlify,hexlify
 from node.networking.node_query_functions import getBlocksStartEnd
 import json
 from node.networking.peering_functions import (
-    messageAllConnectedPeers,
+    messageAllKnownPeers,
     messagePeer, updatePeer, connectToPeer, queryPeer,
     attemptToConnectToNewPeer, deletePeer
     )
@@ -34,13 +34,6 @@ def start_node():
     
     pingPeers()
     #findPeers()
-
-    synchBitcoin()
-    print('synched bitcoin')
-    
-    checkPeerBlocks()
-    print('checked peers')
-    garbageCollectMempool()
     
     return True
 
@@ -55,20 +48,21 @@ def run_node():
         
         print('synching bitcoin')
         synchBitcoin()
-
+        
 
 def pingPeers():
 
-    ping = messageAllConnectedPeers('/peer/peering/ping', rest_type='get',peer_types=['connected','unpeered','offline'])
+    ping = messageAllKnownPeers('/peer/peering/ping', rest_type='get',peer_types=['connected','unpeered','offline',None])
     
     for i in range(0,len(ping)):
         
-        ip_address= ping[i][0]
+        ip_address= ping[i].get('peer_ip_address')
+        peer_response = ping[i].get('response')
         
-        if ping[i][1] == 'error calling peer':
+        if peer_response == 'error calling peer':
             updatePeer(ip_address=ip_address,status='offline')
         
-        elif ping[i][1].get('message') == 'Not authenticated as peer':
+        elif peer_response == 'Not authenticated as peer':
             
             peer_port = queryPeer(ip_address=ip_address).get('port')
             deletePeer(ip_address)
@@ -130,7 +124,7 @@ def checkPeerBlocks(use_threading=True):
 
 def askPeersForHeight():
     
-    heights = messageAllConnectedPeers('/peer/node_queries/getBlockHeight', rest_type='get')
+    heights = messageAllKnownPeers('/peer/node_queries/getBlockHeight', rest_type='get')
     
     return heights
 

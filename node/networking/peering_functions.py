@@ -191,8 +191,21 @@ def queryPeers(ip_address = '', self_auth_key = '', peer_auth_key = ''):
     
     peer_sql = executeSqlMultipleRows(query)
     
-    return peer_sql 
-
+    dict_array = []
+    for i in range(0,len(peer_sql)):
+        dicti = {
+            'ip_address': peer_sql[i][0],
+            'port': peer_sql[i][1],
+            'status': peer_sql[i][2],
+            'cpmmected_time': peer_sql[i][3],
+            'last_ping': peer_sql[i][4],
+            'self_auth_key': peer_sql[i][5],
+            'peer_auth_key': peer_sql[i][6]
+            }
+        dict_array.append(dicti)
+    
+    return dict_array
+        
 
 def peerCount():
     
@@ -273,7 +286,7 @@ def attemptToConnectToNewPeer(version, port, timestamp, peer_ip_address, peer_po
 #currently hardcoded to the structure of the peers query
 #very inelegant with the post/get/etc rest type
 #hardcoded auth
-def messageAllConnectedPeers(endpoint, payload='', rest_type='get', peers_to_exclude=[], peer_types=['connected']):
+def messageAllKnownPeers(endpoint, payload='', rest_type='get', peers_to_exclude=[], peer_types=['connected']):
 
     peers = queryPeers()
     
@@ -284,10 +297,10 @@ def messageAllConnectedPeers(endpoint, payload='', rest_type='get', peers_to_exc
     
     for i in range(0 ,len(peers)):
         exclude_peer = False
-        peer_ip_address = peers[i][0]
-        peer_port = peers[i][1]
-        peer_status = peers[i][2]
-        token = peers[i][5]
+        peer_ip_address = peers[i].get('ip_address')
+        peer_port = peers[i].get('port')
+        peer_status = peers[i].get('status')
+        token = peers[i].get('self_auth_key')
 
         for j in range(0,len(peers_to_exclude)):
             if peer_ip_address == peers_to_exclude[j]:
@@ -324,7 +337,9 @@ def messageAllConnectedPeers(endpoint, payload='', rest_type='get', peers_to_exc
             
             updatePeer(ip_address=peer_ip_address, last_ping="x")
             
-            responses.append([peer_ip_address,r])
+            responses.append(
+                {'peer_ip_address':peer_ip_address,
+                 'response':r.get('message')})
 
     return responses
 

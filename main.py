@@ -30,6 +30,7 @@ app.register_blueprint(local)
 
 if initial_synch_var == True:
     
+    start_node()
     initialSynch()
 
 else:    

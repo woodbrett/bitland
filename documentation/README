@@ -5,6 +5,7 @@
 3. install the python modules in the pip file
 4. store the database.ini file on your computer and reference the path in the "system_variables.py" file
 5. configure other system variables in the "system_variables.py" file
+6. load peer(s) into networking.peer table
 
 ***EXAMPLE system_variables
 
