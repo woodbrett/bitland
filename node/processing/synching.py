@@ -57,12 +57,12 @@ def pingPeers():
     for i in range(0,len(ping)):
         
         ip_address= ping[i].get('peer_ip_address')
-        peer_response = ping[i].get('response').get('message')
+        peer_response = ping[i].get('response')
         
         if peer_response == 'error calling peer':
             updatePeer(ip_address=ip_address,status='offline')
         
-        elif peer_response == 'Not authenticated as peer':
+        elif peer_response.get('message') == 'Not authenticated as peer':
             
             peer_port = queryPeer(ip_address=ip_address).get('port')
             deletePeer(ip_address)
