@@ -32,13 +32,18 @@ from system_variables import peering_port
 
 def start_node():
     
-    pingPeers()
+    
     #findPeers()
     
     return True
 
 
-def run_node():
+def run_node(initial_synch=False):
+    
+    pingPeers()
+    
+    if initial_synch == True:
+        initialSynch()
     
     while True:
         time.sleep(120)
@@ -76,6 +81,7 @@ def pingPeers():
 
 def initialSynch():
     
+    print('perfroming initial synch')
     synched = False
     
     while synched == False:

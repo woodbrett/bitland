@@ -30,16 +30,15 @@ app.register_blueprint(local)
 
 if initial_synch_var == True:
     
-    start_node()
-    initialSynch()
+    t3 = threading.Thread(target=run_node,args=(True,),daemon=True)
+    t3.start()
+    print('starting node', flush=True)
 
 else:    
-    #start app
-    #t3 = threading.Thread(target=app.run,args=(peering_port,peering_host,),daemon=True)
-    
+   
     #start node ongoing functions (managing peers, pinging, garbage collecting transactions)
     if run_node_var == True:
-        start_node()
+        #start_node()
         t1 = threading.Thread(target=run_node,daemon=True)
         t1.start()
         print('starting node', flush=True)
