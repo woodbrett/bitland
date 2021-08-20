@@ -339,7 +339,7 @@ def messageAllKnownPeers(endpoint, payload='', rest_type='get', peers_to_exclude
             
             responses.append(
                 {'peer_ip_address':peer_ip_address,
-                 'response':r.get('message')})
+                 'response':r})
 
     return responses
 
