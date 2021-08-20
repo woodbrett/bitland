@@ -21,8 +21,12 @@ global transaction_validation_url
 global rpc_user
 global rpc_password 
 global node_url
+global run_node_var
+global run_mining_var
+global initial_synch_var
 
-#bitcoin information
+
+#external bitcoin information
 block_height_url = 'https://blockstream.info/api/blocks/tip/height'
 address_search_url = 'https://blockstream.info/api/address/:address/txs'
 transaction_validation_url = 'https://blockstream.info/api/address/:address'
@@ -41,3 +45,8 @@ peer_list = []
 rpc_user = 'admin'
 rpc_password = 'password'
 node_url = '192.168.86.34:8332'
+
+#running node
+run_node_var = True
+run_mining_var = True
+initial_synch_var = False
