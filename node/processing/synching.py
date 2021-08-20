@@ -124,7 +124,7 @@ def checkPeerBlocks(use_threading=True):
 
     return {
         'peer_height': max_height_peer,
-        'self_height' getMaxBlockHeight()
+        'self_height': getMaxBlockHeight()
         }
 
 

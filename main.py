@@ -18,7 +18,7 @@ from system_variables import (
     )
 from node.processing.synching import (
     start_node,
-    run_node
+    run_node, initialSynch
     )
 import time
 
@@ -30,7 +30,7 @@ app.register_blueprint(local)
 
 if initial_synch_var == True:
     
-    1
+    initialSynch()
 
 else:    
     #start app
