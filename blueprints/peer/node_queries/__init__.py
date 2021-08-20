@@ -7,7 +7,7 @@ Created on Mar 28, 2021
 from flask import request
 from flask_restplus import Namespace, Resource, fields, Api
 from http import HTTPStatus
-from node.networking.peering_functions import authenticate_peer
+from node.networking.peering_functions import authenticatePeer
 from node.networking.node_query_functions import (
     getBlockHeightPeer,
     getBlocksStartEnd,
@@ -57,7 +57,7 @@ class get_block_height(Resource):
     @namespace.doc(security='Bearer')   
     def get(self):
         
-        if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
+        if authenticatePeer(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(401, 'Not authenticated as peer')
         
         block_height = getBlockHeightPeer().get('id')
@@ -78,7 +78,7 @@ class get_blocks(Resource):
     @namespace.doc(security='Bearer')   
     def get(self, start_block, end_block):
         
-        if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
+        if authenticatePeer(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated as peer')
         
         blocks = getBlocksStartEnd(start_block, end_block)
@@ -99,7 +99,7 @@ class get_block(Resource):
     @namespace.doc(security='Bearer')   
     def get(self, block_height):
         
-        if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
+        if authenticatePeer(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated as peer')
         
         block = getBlockByHeight(block_height)

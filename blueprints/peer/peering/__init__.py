@@ -7,8 +7,8 @@ Created on Mar 28, 2021
 from flask import request
 from flask_restplus import Namespace, Resource, fields
 from http import HTTPStatus
-from node.networking.peering_functions import evaluate_connection_request,\
-    authenticate_peer
+from node.networking.peering_functions import evaluateConnectionRequest,\
+    authenticatePeer
 
 namespace = Namespace('peering', 'Peering')
 
@@ -65,7 +65,7 @@ class connect(Resource):
         port = request.json['port']
         timestamp = request.json['timestamp']
                 
-        connection_request = evaluate_connection_request(ip_address, version, port, timestamp)
+        connection_request = evaluateConnectionRequest(ip_address, version, port, timestamp)
         
         connection_status = connection_request.status
         connection_reason = connection_request.reason
@@ -86,7 +86,7 @@ class ping(Resource):
     @namespace.doc(security='Bearer')   
     def get(self):
         
-        if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
+        if authenticatePeer(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(401, 'Not authenticated as peer')
         
         return {

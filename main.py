@@ -11,7 +11,10 @@ import threading
 from mining.mining_functions import miningProcess
 from system_variables import (
     peering_port,
-    peering_host
+    peering_host,
+    run_node_var,
+    run_mining_var,
+    initial_synch_var 
     )
 from node.processing.synching import (
     start_node,
@@ -24,30 +27,32 @@ app.config['RESTPLUS_MASK_SWAGGER'] = False
 
 app.register_blueprint(peer)
 app.register_blueprint(local)
-    
-#start node ongoing functions (managing peers, pinging, garbage collecting transactions)
-node = True
-if node == True:
-    start_node()
-    t1 = threading.Thread(target=run_node,daemon=True)
-    t1.start()
-    print('starting node', flush=True)
-    
-#start mining if true
-run_mining = True
-if run_mining == True:
-    
-    t2 = threading.Thread(target=miningProcess,daemon=True)
-    t2.start()
-    print('started mining', flush=True)
 
+if initial_synch_var == True:
+    
+    1
+
+else:    
+    #start app
+    #t3 = threading.Thread(target=app.run,args=(peering_port,peering_host,),daemon=True)
+    
+    #start node ongoing functions (managing peers, pinging, garbage collecting transactions)
+    if run_node_var == True:
+        start_node()
+        t1 = threading.Thread(target=run_node,daemon=True)
+        t1.start()
+        print('starting node', flush=True)
+        
+    #start mining if true
+    if run_mining_var == True:
+        t2 = threading.Thread(target=miningProcess,daemon=True)
+        t2.start()
+        print('started mining', flush=True)
+    
 
 if __name__ == "__main__":
-    
+
     app.run(port=peering_port,host=peering_host)
-    
-    #local_app.run(port=peering_port)
-    #t1 = threading.Thread(target=local_app.run,args=(peering_port,),daemon=True)
-    #t1.start()
-    
+
+
         

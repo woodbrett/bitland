@@ -7,9 +7,9 @@ import threading
 import time
 import queue
 from binascii import unhexlify
-from node.networking.peering_functions import message_all_connected_peers
+from node.networking.peering_functions import messageAllConnectedPeers
 from node.information.blocks import getMaxBlockHeight
-from node.processing.synching import check_peer_blocks
+from node.processing.synching import checkPeerBlocks
 from node.blockchain.transaction_operations import (
     validateTransaction, 
     addTransactionToMempool,
@@ -51,7 +51,7 @@ def sendBlockToPeers(block_height,block,peers_to_exclude=[]):
         }
     rest_type = 'put'
     
-    send_block = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
+    send_block = messageAllConnectedPeers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
     
     return send_block
 
@@ -90,7 +90,7 @@ def sendTransactionToPeers(transaction,peers_to_exclude=[]):
         }
     rest_type = 'put'
     
-    send_transaction = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
+    send_transaction = messageAllConnectedPeers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
     
     return send_transaction 
 
