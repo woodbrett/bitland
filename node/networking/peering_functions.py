@@ -219,7 +219,7 @@ def queryPeers(ip_address = '', self_auth_key = '', peer_auth_key = ''):
 
 def peerCount():
     
-    query = ('select count(*) from networking.peer')
+    query = ("select count(*) from networking.peer where status = 'connected'")
 
     try:
         peer_count = executeSql(query)[0]
@@ -362,11 +362,11 @@ def messagePeer(endpoint, peer_ip_address, payload='', rest_type='get'):
 
     peer = queryPeer(peer_ip_address)
 
-    url = "http://" + peer_ip_address + ":" + str(peer.port) + endpoint
+    url = "http://" + peer_ip_address + ":" + str(peer.get('port')) + endpoint
     headers = {
         'Content-type': 'application/json', 
         'Accept': 'application/json', 
-        'Authorization': peer.get('self_auth_key ')
+        'Authorization': peer.get('self_auth_key')
     }
 
     if rest_type == 'get':
