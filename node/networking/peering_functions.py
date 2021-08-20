@@ -42,6 +42,16 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
             reason = ''
             updatePeer(ip_address=ip_address, port=port, status='connected')
             token = queryPeer(ip_address=ip_address).get('peer_auth_key')
+            
+        elif peer.get('status') == 'offline':
+            deletePeer(ip_address)
+            status = 'successful peer'
+            reason = ''
+            token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
+            #UPDATE version
+            t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, int(time.time()), ip_address, port,),daemon=True)
+            t1.start()
+            
         else:
             status = 'unsuccessful peer'
             reason = 'already exist as peer'

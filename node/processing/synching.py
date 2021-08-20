@@ -57,7 +57,7 @@ def pingPeers():
     for i in range(0,len(ping)):
         
         ip_address= ping[i].get('peer_ip_address')
-        peer_response = ping[i].get('response')
+        peer_response = ping[i].get('response').get('message')
         
         if peer_response == 'error calling peer':
             updatePeer(ip_address=ip_address,status='offline')
