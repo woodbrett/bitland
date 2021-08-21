@@ -46,13 +46,14 @@ def run_node(initial_synch=False):
         initialSynch()
     
     while True:
-        time.sleep(120)
         
         print('checking peer blocks')
         checkPeerBlocks()
         
         print('synching bitcoin')
         synchBitcoin()
+        
+        time.sleep(120)
         
 
 def pingPeers():

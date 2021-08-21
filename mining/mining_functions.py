@@ -18,7 +18,8 @@ from utilities.difficulty import (
     )
 from utilities.serialization import deserialize_text, serialize_text
 from node.information.blocks import getMaxBlockHeight
-from node.networking.node_update_functions import queueNewBlockFromPeer
+from node.networking.node_update_functions import queueNewBlockFromPeer,\
+    queueNewTransactionFromPeer
 from mining.create_landbase_transaction import getLandbaseTransaction
 from system_variables import block_height_url
 from node.blockchain.header_operations import getPrevBlockGuarded,\
@@ -215,9 +216,11 @@ def miningProcess():
         block_hex = hexlify(serialized_block).decode('utf-8')
         print(block_hex)
         
-        t1 = threading.Thread(target=validateAddBlock,args=(serialized_block,),daemon=True)
-        t1.start()
-        t1.join()
+        #t1 = threading.Thread(target=validateAddBlock,args=(serialized_block,),daemon=True)
+        #t1.start()
+        #t1.join()
+        
+        queueNewBlockFromPeer(current_block_height+1, block=block_hex)
     
     return miningProcess()
     

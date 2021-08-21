@@ -20,7 +20,7 @@ from node.blockchain.transaction_adding_queueing import validateAddTransactionMe
 
 action_queue = []
 
-def queueNewBlockFromPeer(block_height,block,peer=''):
+def queueNewBlockFromPeer(block_height=0,block,peer=''):
     
     t3 = threading.Thread(target=analyzeNewBlockFromPeer,args=(block_height,block,b'',peer,),daemon=True)
     t3.start()
