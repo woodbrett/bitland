@@ -74,7 +74,7 @@ def pingPeers():
             attemptToConnectToNewPeer(bitland_version, peering_port, int(time.time()), ip_address, peer_port)
         
         else:
-            updatePeer(ip_address=ping[i][0],status='connected')
+            updatePeer(ip_address=ping[i].get('peer_ip_address'),status='connected')
     
     return True
 

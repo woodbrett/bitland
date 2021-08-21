@@ -45,7 +45,7 @@ def waitInBlockQueue():
     
 
 #QUEUED PROCESS
-def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_validation=True):
+def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_validation=True, send_to_peers=False):
     
     if use_threading == True:
         thread_id = waitInBlockQueue()
@@ -75,7 +75,7 @@ def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_v
         #right now it just sends it to synch node to handle, but this should be integrated more directly
         else:
             add_block = False
-    
+        
     if use_threading == True:
         block_queue.remove(threading.get_ident())
     
