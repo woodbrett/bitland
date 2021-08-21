@@ -22,14 +22,16 @@ action_queue = []
 
 def queueNewBlockFromPeer(block_height,block,peer=''):
     
-    t3 = threading.Thread(target=analyzeNewBlockFromPeer,args=(block_height,block,peer,),daemon=True)
+    t3 = threading.Thread(target=analyzeNewBlockFromPeer,args=(block_height,block,b'',peer,),daemon=True)
     t3.start()
+
+    #analyzeNewBlockFromPeer(block_height,block,b'',peer)
 
     print('thread started, exiting function')
 
     return True
     
-
+    
 #UPDATE
 def analyzeNewBlockFromPeer(block_height,block_hex='',block_bytes=b'',peer=''):
     
@@ -39,7 +41,7 @@ def analyzeNewBlockFromPeer(block_height,block_hex='',block_bytes=b'',peer=''):
     if block_hex == '':
         block_hex = hexlify(block_bytes).decode('utf-8')
     
-    add_block = validateAddBlock(block_bytes, block_height, realtime_validation=False)
+    add_block = validateAddBlock(block_bytes, block_height)
     
     if add_block == True:
         sendBlockToPeers(block_height,block_hex,peers_to_exclude=[peer])
@@ -110,6 +112,8 @@ if __name__ == '__main__':
     block_hex = '0001000000053da2d5864104aba5adba744024e319b9a83fd5328522fe72e561cd991e711654dd173773c735ae568f61ffab270e8520a8dc7301188d18421d1672140061203da01d0ffff000000000000000000004952c2042810823b45ce37c617f20222f01cf1b922103000aa19f012bfa333fc8940af142896ef9c940dee61bd9af7b0d707a3998a18a5f7079ff002a6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b77730000000000000b0654220001000100010066504f4c59474f4e28282d38332e3637313837352037382e34343534342c2d38332e3637313837352037382e323139392c2d38342e3337352037382e323139392c2d38342e3337352037382e34343534342c2d38332e3637313837352037382e3434353434292940d0134626df0ad197078050a7b016eac3d6b2fa27fa3c3d7aa0dbf37472ffccd9edb8ea100f34bff4906e6e10e4970db06799d3d40815acb7640040af37d1ca7f0000000000000000000000000000000000'    
     block_bytes = unhexlify(block_hex)
     
-    x = analyzeNewBlockFromPeer(88, block_bytes=block_bytes)
-    
+    #x = analyzeNewBlockFromPeer(88, block_bytes=block_bytes)
+    #x = analyzeNewBlockFromPeer(88, block_hex=block_hex)
+    x = queueNewBlockFromPeer(88, block=block_hex)
+
     
