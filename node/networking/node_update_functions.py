@@ -80,7 +80,6 @@ def analyzeNewTransactionFromPeer(transaction_hex,peer='',use_threading=True):
     
     transaction_bytes = unhexlify(transaction_hex)
     
-    
     validate_transaction = validateAddTransactionMempool(transaction_bytes, use_threading)
     
     if validate_transaction == True:
@@ -115,5 +114,3 @@ if __name__ == '__main__':
     #x = analyzeNewBlockFromPeer(88, block_bytes=block_bytes)
     #x = analyzeNewBlockFromPeer(88, block_hex=block_hex)
     x = queueNewBlockFromPeer(88, block=block_hex)
-
-    
