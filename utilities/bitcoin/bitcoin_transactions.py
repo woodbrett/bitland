@@ -46,21 +46,42 @@ def processBitcoinBlock(block_height):
     
     rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
     block_hash = rpc_connection.getblockhash(block_height)
-    block = rpc_connection.getblock(block_hash,2)  
     
-    #add the indexed transactions for the block
-    spendByAddressBitcoinBlock(block, block_height, insert_into_db=True)
+    #have had some problems with fetching the block, so have it try maximum of 5 times
     
-    #update the block table keeping track of which blocks have been added
-    insertBitcoinBlockDb(block_height, block_hash)
+    added_block = False
+    i = 0
     
-    return block_height
+    while added_block == False and i < 5:
+    
+        try: 
+            block = rpc_connection.getblock(block_hash,2)  
+        
+            #add the indexed transactions for the block
+            spendByAddressBitcoinBlock(block, block_height, insert_into_db=True)
+            
+            #update the block table keeping track of which blocks have been added
+            insertBitcoinBlockDb(block_height, block_hash)
+        
+            added_block = True
+        
+        except:
+            
+            i = i + 1
+    
+    if added_block == True:
+        return block_height
+    
+    else:
+        return 'failed to add block'
 
 
 def processBitcoinBlocks(start_block_height, end_block_height):
     
     for i in range(0, end_block_height - start_block_height + 1):
+        
         processBitcoinBlock(start_block_height + i)
+        
         print('adding bitcoin block ' + str(start_block_height + i))
 
 
