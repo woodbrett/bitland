@@ -13,7 +13,7 @@ import json
 from node.networking.peering_functions import (
     messageAllKnownPeers,
     messagePeer, updatePeer, connectToPeer, queryPeer,
-    attemptToConnectToNewPeer, deletePeer
+    attemptToConnectToNewPeer, deletePeer, peerCount
     )
 from node.blockchain.block_serialization import deserializeBlock
 from node.blockchain.validate_block import (
@@ -82,8 +82,14 @@ def pingPeers():
 def initialSynch():
     
     print('perfroming initial synch')
-    synched = False
     
+    peer_count = peerCount()
+    while peer_count == 0:
+        print('peer count 0, waiting')
+        time.sleep(10)
+        peer_count = peerCount()
+    
+    synched = False
     while synched == False:
         synch_peer = checkPeerBlocks(use_threading=False)
         synched = synch_peer.get('peer_height') == synch_peer.get('self_height')
@@ -139,10 +145,10 @@ def askPeersForHeight():
 
 #UPDATE
 def askPeerForBlocks(peer, start_block, end_block):
-    
+
     url = '/peer/node_queries/getBlocks/' + str(start_block) + '/' + str(end_block)
     
-    blocks = message_peer(url, peer, rest_type='get')
+    blocks = messagePeer(url, peer, rest_type='get')
     
     print(blocks)
     
@@ -152,4 +158,6 @@ def askPeerForBlocks(peer, start_block, end_block):
 if __name__ == '__main__':
     
     #x = start_node()
+    #x = askPeerForBlocks('76.179.199.85', 0, 50)
+    
     x = checkPeerBlocks(use_threading=False)

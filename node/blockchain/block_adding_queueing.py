@@ -99,7 +99,7 @@ def processPeerBlocks(new_blocks_hex, use_threading=True):
     peer_next_block = peer_blocks[peer_next_block_index]
     
     next_block_header = deserializeBlock(unhexlify(peer_next_block))[0]
-    next_block_prev_block = next_block_header[1]
+    next_block_prev_block = next_block_header.get('prev_block')
     
     self_height_hash = unhexlify(getBlock(block_id=self_height).get('header_hash'))
             
