@@ -16,7 +16,7 @@ from utilities.difficulty import get_bits_current_block
 import base58
 from utilities.serialization import deserialize_text, serialize_text
 from utilities.hashing import * 
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 from utilities.difficulty import get_target_from_bits
 from utilities.bitcoin.bitcoin_requests import *
@@ -78,7 +78,7 @@ def validateTime(time_,realtime_validation=True):
         average_time_last_11 = getMedianBlockTime11()
     
         #UPDATE to connect to nodes
-        network_adjusted_time = datetime.utcnow().timestamp()
+        network_adjusted_time = int(round(datetime.now(timezone.utc).timestamp(),0))
         time_int = int.from_bytes(time_, byteorder='big')
         
         if realtime_validation==True:

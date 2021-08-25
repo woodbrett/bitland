@@ -169,7 +169,7 @@ def miningProcess():
     print(transactions)
     
     version = bitland_version
-    time_ = int(round(datetime.utcnow().timestamp(),0))
+    time_ = int(round(datetime.now(timezone.utc).timestamp(),0))
     start_nonce = 0
     bitcoin_hash = getBestBlockHash()
     bitcoin_height = getBlockHeightFromHash(bitcoin_hash)
