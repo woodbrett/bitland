@@ -7,7 +7,7 @@ import requests
 import codecs
 from hashlib import sha256
 from binascii import unhexlify, hexlify
-from datetime import datetime
+from datetime import datetime, timezone
 from utilities.hashing import (
     calculateHeaderHash,
     calculateMerkleRoot
@@ -227,6 +227,6 @@ def miningProcess():
 
 if __name__ == "__main__":
 
-    print(int(round(datetime.utcnow().timestamp(),0)))
+    print(int(round(datetime.now(timezone.utc).timestamp(),0)))
     
     
