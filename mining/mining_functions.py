@@ -224,6 +224,9 @@ def miningProcess():
     
     return miningProcess()
     
-    
+
+if __name__ == "__main__":
+
+    print(int(round(datetime.utcnow().timestamp(),0)))
     
     

@@ -159,7 +159,7 @@ def realtimeSynchWithBitcoin():
         #UPDATE to ensure they start at same hash
         elif block_info.get('node_block_height') > block_info.get('db_block_height'):
             
-            block_info_last_block = getBlockInformationNodeDb(getMaxBitcoinBlock())
+            block_info_last_block = getBlockInformationNodeDb(getMaxBitcoinBlock()) #or 0
             
             if block_info_last_block.get('equal_heights') == True and block_info_last_block.get('equal_hashes') == True:
                 processBitcoinBlocks(block_info.get('db_block_height') + 1, block_info.get('node_block_height'))
@@ -318,6 +318,7 @@ if __name__ == '__main__':
     print(getBitcoinTransactionBlocks(5,15))
     print(getBitcoinTransactionBlocks(695216,695225))
     x = synchWithBitcoin(start_bitcoin_height=695216,end_bitcoin_height=695225,synch_last_10=False)
+
     '''
-    
     print(realtimeSynchWithBitcoin())
+    
