@@ -31,6 +31,8 @@ from node.blockchain.global_variables import bitland_version
 from system_variables import peering_port
 
 def start_node():
+
+    pingPeers()
     
     print('checking peer blocks')
     checkPeerBlocks()

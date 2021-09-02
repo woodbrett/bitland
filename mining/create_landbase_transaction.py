@@ -25,16 +25,17 @@ def desiredLandbase():
           + "and valid_claim = true "
         + "limit 1 " )    
 
-    query_pick_random_landbase = ("select st_astext(geom) as landbase from landbase_enum le where valid_claim = true limit 1 ")
-    
-    print(query_pick_random_landbase)
+    query_pick_random_landbase = ("select st_astext(geom) as landbase from bitland.landbase_enum le where valid_claim = true limit 1 ")
     
     try:
         landbase = executeSql(query_find_desired_landbase)[0]
     
-    except Exception as error:
-        print("couldn't find landbase from path ")
-        landbase = 'unable to find desired landabse'
+    except:
+        try: 
+            landbase = executeSql(query_pick_random_landbase)[0]
+        except:
+            print("couldn't find landbase from path ")
+            landbase = 'unable to find desired landabse'
         
     return landbase
     
