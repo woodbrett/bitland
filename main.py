@@ -38,7 +38,7 @@ else:
    
     #start node ongoing functions (managing peers, pinging, garbage collecting transactions)
     if run_node_var == True:
-        #start_node()
+        start_node()
         t1 = threading.Thread(target=run_node,daemon=True)
         t1.start()
         print('starting node', flush=True)

@@ -32,8 +32,11 @@ from system_variables import peering_port
 
 def start_node():
     
-    
-    #findPeers()
+    print('checking peer blocks')
+    checkPeerBlocks()
+        
+    print('synching bitcoin')
+    synchBitcoin()
     
     return True
 
@@ -82,7 +85,7 @@ def pingPeers():
 
 def initialSynch():
     
-    print('perfroming initial synch')
+    print('performing initial synch')
     
     peer_count = peerCount()
     while peer_count == 0:
@@ -161,4 +164,7 @@ if __name__ == '__main__':
     #x = start_node()
     #x = askPeerForBlocks('76.179.199.85', 0, 50)
     
-    x = checkPeerBlocks(use_threading=False)
+    x = pingPeers()
+    
+    #x = checkPeerBlocks(use_threading=False)
+    
