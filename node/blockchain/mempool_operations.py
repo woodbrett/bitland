@@ -3,7 +3,7 @@ Created on Jul 20, 2021
 
 @author: brett_wood
 '''
-from utilities.sqlUtils import executeSqlDeleteUpdate
+from utilities.sql_utils import executeSqlDeleteUpdate
 
 def garbageCollectMempool():
     
@@ -41,9 +41,3 @@ def removeTransactionsFromMempool(block_id):
         delete = 'none deleted'
     
     return delete
-
-
-if __name__ == '__main__':
-
-    print(garbageCollectMempool())
-

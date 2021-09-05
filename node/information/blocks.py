@@ -3,7 +3,7 @@ Created on Jul 12, 2021
 
 @author: brett_wood
 '''
-from utilities.sqlUtils import *
+from utilities.sql_utils import *
 from collections import namedtuple
 import json
 
@@ -60,7 +60,7 @@ def getPriorBlock():
 
 
 def getBlock(block_id = -1, header_hash = ''):
-    select = ("select id, header_hash , version, prev_block , mrkl_root , time, bits, bitcoin_block_height , miner_bitcoin_address, nonce from bitland.block b "
+    select = ("select id, header_hash , version, prev_block , mrkl_root , time, bits, bitcoin_block_height , miner_bitcoin_address, nonce, bitcoin_hash, bitcoin_last_64_mrkl from bitland.block b "
               +" where id = " + str(block_id) + " or header_hash = '" + str(header_hash) + "' ;")
     
     try:
@@ -76,7 +76,9 @@ def getBlock(block_id = -1, header_hash = ''):
             'bits': db_block[6], 
             'bitcoin_block_height': db_block[7], 
             'miner_bitcoin_address': db_block[8], 
-            'nonce': db_block[9]
+            'nonce': db_block[9],
+            'bitcoin_hash': db_block[10], 
+            'bitcoin_last_64_mrkl': db_block[11]
         }
 
     except Exception as error:

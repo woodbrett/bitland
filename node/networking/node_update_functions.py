@@ -6,10 +6,10 @@ Created on Jul 12, 2021
 import threading
 import time
 import queue
-from binascii import unhexlify
-from node.networking.peering_functions import message_all_connected_peers
+from binascii import unhexlify, hexlify
+from node.networking.peering_functions import messageAllKnownPeers
 from node.information.blocks import getMaxBlockHeight
-from node.processing.synching import check_peer_blocks
+from node.processing.synching import checkPeerBlocks
 from node.blockchain.transaction_operations import (
     validateTransaction, 
     addTransactionToMempool,
@@ -22,22 +22,29 @@ action_queue = []
 
 def queueNewBlockFromPeer(block_height,block,peer=''):
     
-    t3 = threading.Thread(target=analyzeNewBlockFromPeer,args=(block_height,block,peer,),daemon=True)
+    t3 = threading.Thread(target=analyzeNewBlockFromPeer,args=(block_height,block,b'',peer,),daemon=True)
     t3.start()
+
+    #analyzeNewBlockFromPeer(block_height,block,b'',peer)
 
     print('thread started, exiting function')
 
     return True
     
-
-#UPDATE
-def analyzeNewBlockFromPeer(block_height,block,peer=''):
     
-    block_bytes = unhexlify(block)
+#UPDATE
+def analyzeNewBlockFromPeer(block_height,block_hex='',block_bytes=b'',peer=''):
+    
+    if block_bytes == b'':
+        block_bytes = unhexlify(block_hex)
+    
+    if block_hex == '':
+        block_hex = hexlify(block_bytes).decode('utf-8')
+    
     add_block = validateAddBlock(block_bytes, block_height)
     
     if add_block == True:
-        sendBlockToPeers(block_height,block,peers_to_exclude=[peer])
+        sendBlockToPeers(block_height,block_hex,peers_to_exclude=[peer])
     
     return add_block
 
@@ -51,7 +58,7 @@ def sendBlockToPeers(block_height,block,peers_to_exclude=[]):
         }
     rest_type = 'put'
     
-    send_block = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
+    send_block = messageAllKnownPeers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
     
     return send_block
 
@@ -73,7 +80,6 @@ def analyzeNewTransactionFromPeer(transaction_hex,peer='',use_threading=True):
     
     transaction_bytes = unhexlify(transaction_hex)
     
-    
     validate_transaction = validateAddTransactionMempool(transaction_bytes, use_threading)
     
     if validate_transaction == True:
@@ -90,7 +96,7 @@ def sendTransactionToPeers(transaction,peers_to_exclude=[]):
         }
     rest_type = 'put'
     
-    send_transaction = message_all_connected_peers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
+    send_transaction = messageAllKnownPeers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
     
     return send_transaction 
 
@@ -102,8 +108,9 @@ if __name__ == '__main__':
     print(sendBlockToPeers(block))
     '''
     
-    transaction_hex = '0002010103aca220f7ec55e458acd9aafadc9af571da0676846fb6d5e2505c82a8849782004078708125ab06305a739e7ac4dbc7f0a3a571aad4976369069cf27469262b6f8650d0b508b73e36953f3b59934abc2ddad4ef5442114bae127d9efc49ba8810080101010051504f4c59474f4e28282d32322e352038392e37343637342c2d32322e352038392e35313836382c2d34352038392e35313836382c2d34352038392e37343637342c2d32322e352038392e373436373429294069022ccf1a0644a5e07eb2f89b3e9ab217fcc158f3525655a2a30f66c0c61a916858846f55db7172d5e71e3399d18fc191f0efc9b1fa12efcaeab17e0bbe27db0000000000000000000000000000000000'    
+    block_hex = '0001000000053da2d5864104aba5adba744024e319b9a83fd5328522fe72e561cd991e711654dd173773c735ae568f61ffab270e8520a8dc7301188d18421d1672140061203da01d0ffff000000000000000000004952c2042810823b45ce37c617f20222f01cf1b922103000aa19f012bfa333fc8940af142896ef9c940dee61bd9af7b0d707a3998a18a5f7079ff002a6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b77730000000000000b0654220001000100010066504f4c59474f4e28282d38332e3637313837352037382e34343534342c2d38332e3637313837352037382e323139392c2d38342e3337352037382e323139392c2d38342e3337352037382e34343534342c2d38332e3637313837352037382e3434353434292940d0134626df0ad197078050a7b016eac3d6b2fa27fa3c3d7aa0dbf37472ffccd9edb8ea100f34bff4906e6e10e4970db06799d3d40815acb7640040af37d1ca7f0000000000000000000000000000000000'    
+    block_bytes = unhexlify(block_hex)
     
-    x = queueNewTransactionFromPeer(transaction_hex, use_threading=False)
-    
-    
+    #x = analyzeNewBlockFromPeer(88, block_bytes=block_bytes)
+    #x = analyzeNewBlockFromPeer(88, block_hex=block_hex)
+    x = queueNewBlockFromPeer(88, block=block_hex)

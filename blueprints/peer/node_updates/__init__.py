@@ -7,7 +7,7 @@ Created on Mar 28, 2021
 from flask import request
 from flask_restplus import Namespace, Resource, fields, Api
 from http import HTTPStatus
-from node.networking.peering_functions import authenticate_peer
+from node.networking.peering_functions import authenticatePeer
 from node.networking.node_update_functions import (
     queueNewBlockFromPeer,
     queueNewTransactionFromPeer
@@ -43,7 +43,7 @@ class send_new_block(Resource):
     @namespace.doc(security='Bearer')   
     def put(self):
         
-        if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
+        if authenticatePeer(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated as peer')
         
         print(request.json['block'])
@@ -70,7 +70,7 @@ class send_new_transaction(Resource):
     @namespace.doc(security='Bearer')   
     def put(self):
         
-        if authenticate_peer(request.remote_addr, request.headers.get("Authorization")) == False:
+        if authenticatePeer(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated as peer')
         
         transaction = request.json['transaction']

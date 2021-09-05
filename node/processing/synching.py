@@ -6,16 +6,16 @@ Created on Jul 14, 2021
 from node.information.blocks import (
     getMaxBlockHeight
     )
-from node.blockchain.block_serialization import deserialize_block
+from node.blockchain.block_serialization import deserializeBlock
 from binascii import unhexlify,hexlify
-from node.networking.node_query_functions import get_blocks_start_end
+from node.networking.node_query_functions import getBlocksStartEnd
 import json
 from node.networking.peering_functions import (
-    message_all_connected_peers,
-    message_peer, update_peer, connect_to_peer, query_peer,
-    attempt_to_connect_to_new_peer, delete_peer
+    messageAllKnownPeers,
+    messagePeer, updatePeer, connectToPeer, queryPeer,
+    attemptToConnectToNewPeer, deletePeer, peerCount
     )
-from node.blockchain.block_serialization import deserialize_block
+from node.blockchain.block_serialization import deserializeBlock
 from node.blockchain.validate_block import (
     validateBlock,
     validateBlockHeader
@@ -31,58 +31,79 @@ from node.blockchain.global_variables import bitland_version
 from system_variables import peering_port
 
 def start_node():
-    
-    pingPeers()
-    #findPeers()
 
-    synchBitcoin()
-    print('synched bitcoin')
+    pingPeers()
     
-    check_peer_blocks()
-    print('checked peers')
-    garbageCollectMempool()
+    print('checking peer blocks')
+    checkPeerBlocks()
+        
+    print('synching bitcoin')
+    synchBitcoin()
     
     return True
 
 
-def run_node():
+def run_node(initial_synch=False):
+    
+    pingPeers()
+    
+    if initial_synch == True:
+        initialSynch()
     
     while True:
-        time.sleep(120)
         
         print('checking peer blocks')
-        check_peer_blocks()
+        checkPeerBlocks()
         
         print('synching bitcoin')
         synchBitcoin()
-
+        
+        time.sleep(120)
+        
 
 def pingPeers():
 
-    ping = message_all_connected_peers('/peer/peering/ping', rest_type='get',peer_types=['connected','unpeered','offline'])
+    ping = messageAllKnownPeers('/peer/peering/ping', rest_type='get',peer_types=['connected','unpeered','offline',None])
     
     for i in range(0,len(ping)):
         
-        ip_address= ping[i][0]
+        ip_address= ping[i].get('peer_ip_address')
+        peer_response = ping[i].get('response')
         
-        if ping[i][1] == 'error calling peer':
-            update_peer(ip_address=ip_address,status='offline')
+        if peer_response == 'error calling peer':
+            updatePeer(ip_address=ip_address,status='offline')
         
-        elif ping[i][1].get('message') == 'Not authenticated as peer':
+        elif peer_response.get('message') == 'Not authenticated as peer':
             
-            peer_port = query_peer(ip_address=ip_address).port
-            delete_peer(ip_address)
-            attempt_to_connect_to_new_peer(bitland_version, peering_port, int(time.time()), ip_address, peer_port)
+            peer_port = queryPeer(ip_address=ip_address).get('port')
+            deletePeer(ip_address)
+            attemptToConnectToNewPeer(bitland_version, peering_port, int(time.time()), ip_address, peer_port)
         
         else:
-            update_peer(ip_address=ping[i][0],status='connected')
+            updatePeer(ip_address=ping[i].get('peer_ip_address'),status='connected')
     
     return True
+
+
+def initialSynch():
+    
+    print('performing initial synch')
+    
+    peer_count = peerCount()
+    while peer_count == 0:
+        print('peer count 0, waiting')
+        time.sleep(10)
+        peer_count = peerCount()
+    
+    synched = False
+    while synched == False:
+        synch_peer = checkPeerBlocks(use_threading=False)
+        synched = synch_peer.get('peer_height') == synch_peer.get('self_height')
     
 
-def check_peer_blocks(use_threading=True):
+def checkPeerBlocks(use_threading=True):
     
-    peer_heights = ask_peers_for_height()
+    peer_heights = askPeersForHeight()
     self_height = getMaxBlockHeight()
     max_height = self_height
     max_height_peer = 'self'
@@ -91,20 +112,22 @@ def check_peer_blocks(use_threading=True):
     
     for i in range(0,len(peer_heights)):
         
+        peer_response = peer_heights[i].get('response')
+        
         #UPDATE handle the errors from peers more elegantly
-        if peer_heights[i][1] == 'error calling peer':
+        if peer_response == 'error calling peer':
             None
         
-        elif peer_heights[i][1].get('block_height') > max_height:
-            max_height= peer_heights[i][1].get('block_height')
-            max_height_peer = peer_heights[i][0]
+        elif peer_response.get('block_height') > max_height:
+            max_height= peer_response.get('block_height')
+            max_height_peer = peer_heights[i].get('peer_ip_address')
     
     if max_height_peer != 'self':
         #UPDATE to only ask for max of X blocks, 50?
         
         synched_with_peers = 'out of synch'
         
-        new_blocks = ask_peer_for_blocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
+        new_blocks = askPeerForBlocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
         
         if use_threading==True:
             t1 = threading.Thread(target=processPeerBlocks,args=(new_blocks,use_threading,),daemon=True)
@@ -113,22 +136,25 @@ def check_peer_blocks(use_threading=True):
         else:
             processPeerBlocks(new_blocks,use_threading=use_threading)
 
-    return True
+    return {
+        'peer_height': max_height_peer,
+        'self_height': getMaxBlockHeight()
+        }
 
 
-def ask_peers_for_height():
+def askPeersForHeight():
     
-    heights = message_all_connected_peers('/peer/node_queries/getBlockHeight', rest_type='get')
+    heights = messageAllKnownPeers('/peer/node_queries/getBlockHeight', rest_type='get')
     
     return heights
 
 
 #UPDATE
-def ask_peer_for_blocks(peer, start_block, end_block):
-    
+def askPeerForBlocks(peer, start_block, end_block):
+
     url = '/peer/node_queries/getBlocks/' + str(start_block) + '/' + str(end_block)
     
-    blocks = message_peer(url, peer, rest_type='get')
+    blocks = messagePeer(url, peer, rest_type='get')
     
     print(blocks)
     
@@ -138,4 +164,9 @@ def ask_peer_for_blocks(peer, start_block, end_block):
 if __name__ == '__main__':
     
     #x = start_node()
-    x = check_peer_blocks(use_threading=False)
+    #x = askPeerForBlocks('76.179.199.85', 0, 50)
+    
+    x = pingPeers()
+    
+    #x = checkPeerBlocks(use_threading=False)
+    

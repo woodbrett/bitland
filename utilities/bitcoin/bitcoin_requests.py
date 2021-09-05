@@ -36,6 +36,26 @@ def getBlockHeightFromHash(bitcoin_hash):
     return block_height
 
 
+def getBestBlockHash():
+    
+    rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
+    best_block_hash = rpc_connection.getbestblockhash()
+    return best_block_hash
+
+
+def getLastXBitcoinHashes(x, block_height=None):
+
+    rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
+
+    if block_height == None:
+        block_height = rpc_connection.getblockcount()
+
+    commands = [ [ "getblockhash", height] for height in range(block_height - x + 1,block_height + 1) ]
+    block_hashes = rpc_connection.batch_(commands)    
+    
+    return block_hashes
+
+
 def validateBitcoinAddressFromBitcoinNode(address_utf8):
 
     rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
@@ -97,11 +117,20 @@ if __name__ == '__main__':
     block_hashes = rpc_connection.batch_(commands)
     blocks = rpc_connection.batch_([ [ "getblock", h ] for h in block_hashes ])
     block_times = [ block["time"] for block in blocks ]
-    print(block_times)    
+    print(block_times)   
+    
+    commands = [ [ "getblockhash", height] for height in range(30,20) ]
+    block_hashes = rpc_connection.batch_(commands)
+    print(block_hashes)
+    blocks = rpc_connection.batch_([ [ "getblock", h ] for h in block_hashes ])
+    block_heights = [ block["height"] for block in blocks ]
+    print(block_heights)     
     '''
     
     print(getBlockHeightFromHash('0000000000000000000fd641f66a7da2e7efd7c6a93b959ca59fa5d7809f6e71'))
     
+    hashes = getLastXBitcoinHashes(64)
+    print(len(hashes))
+    print(hashes)
+
     
-
-

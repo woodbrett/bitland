@@ -13,11 +13,14 @@ from node.blockchain.validate_block import validateBlock, validateBlockHeader
 from node.blockchain.block_operations import addBlock, removeBlocks
 from utilities.hashing import calculateHeaderHashFromBlock
 import json
-from node.blockchain.block_serialization import deserialize_block
+from node.blockchain.block_serialization import deserializeBlock
 from binascii import (unhexlify,hexlify)
-from node.blockchain.header_serialization import deserialize_block_header,\
-    serialize_block_header
-from utilities.bitcoin.bitcoin_transactions import synchWithBitcoin
+from node.blockchain.header_serialization import (
+    deserializeBlockHeader,
+    serializeBlockHeader
+    )
+from utilities.bitcoin.bitcoin_transactions import synchWithBitcoin,\
+    realtimeSynchWithBitcoin
 
 block_queue = []
 
@@ -42,7 +45,7 @@ def waitInBlockQueue():
     
 
 #QUEUED PROCESS
-def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_validation=True):
+def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_validation=True, send_to_peers=False):
     
     if use_threading == True:
         thread_id = waitInBlockQueue()
@@ -72,7 +75,7 @@ def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_v
         #right now it just sends it to synch node to handle, but this should be integrated more directly
         else:
             add_block = False
-    
+        
     if use_threading == True:
         block_queue.remove(threading.get_ident())
     
@@ -95,8 +98,8 @@ def processPeerBlocks(new_blocks_hex, use_threading=True):
     peer_next_block_index = self_height - start_block_height + 1
     peer_next_block = peer_blocks[peer_next_block_index]
     
-    next_block_header = deserialize_block(unhexlify(peer_next_block))[0]
-    next_block_prev_block = next_block_header[1]
+    next_block_header = deserializeBlock(unhexlify(peer_next_block))[0]
+    next_block_prev_block = next_block_header.get('prev_block')
     
     self_height_hash = unhexlify(getBlock(block_id=self_height).get('header_hash'))
             
@@ -189,7 +192,7 @@ def synchBitcoin(use_threading=True):
     if use_threading == True:
         thread_id = waitInBlockQueue()
     
-    synchWithBitcoin()
+    realtimeSynchWithBitcoin()
     
     if use_threading == True:
         block_queue.remove(threading.get_ident())  
@@ -199,17 +202,16 @@ def synchBitcoin(use_threading=True):
     
 if __name__ == '__main__':
 
-
-    blocks = ['000100000002a29456e9d9a62bddce2ac5130d0cd5ca79b80d6647374b86db2bcaa7436f094d6fc135face04f01d485a20c31d41c18090fb0eb9b4ccafae3179dde200611b10821d0ffff0000a9f3a002a6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b777300000000000007e057490001000100010064504f4c59474f4e28282d35392e303632352038342e39303934322c2d35392e303632352038342e363538352c2d36302e34363837352038342e363538352c2d36302e34363837352038342e39303934322c2d35392e303632352038342e3930393432292940646331c56024e9da49c3a5054713352593ca0832569c45bb201b8b5363bb1e88406668e13c1b24e1bf04e05b50e0deb087ef50d39bf214c3c961a8dd8c7a936c0000000000000000000000000000000000']
+    blocks = ['000100000007190c62c1d38bd8b0d5ff9645cf891f08358dae4cb2a916035fdacdce70a23828fd9602e08a5045d067cd6e400ec3e83fc7bc979ba882a16b1c3557eb00612665801d0ffff00000000000000000000a1776006a2b7698a01aa5553e48d6e8d1234db76db993000aa4c777abaddf456e19ae5fd6cb51071f38860da93dba71553d6df05f6795221940b5002a6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b77730000000000000a9cdee50001000100010061504f4c59474f4e28282d37352e393337352038312e343531382c2d37352e393337352038312e323939372c2d37372e33343337352038312e323939372c2d37372e33343337352038312e343531382c2d37352e393337352038312e34353138292940bfbc253ef0c7c1abb2d312f070f24298e2e841a4e63899ea3229505df140308f2ba6ef02287aba609cfd0f549363de3964705a008974c5b21ad976ff0447ede40000000000000000000000000000000000']
 
     for i in range(0, len(blocks)):
         block = blocks[i]
         #'0001000000093efc6f8a17178ee0fd9811f77d8b67a67f4a201f1efcdef814428a5da4b7b6464e99f63844fa217f87f4920f3e017d96964eef1df3419df68bbedf5700611699121d0ffff0000a9d0e002a6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b77730000000000001a8d93a5000100010001005e504f4c59474f4e28282d35302e3632352038362e303639372c2d35302e3632352038352e39303636322c2d35332e343337352038352e39303636322c2d35332e343337352038362e303639372c2d35302e3632352038362e3036393729294060b52eb39b4331122a96562734d86c9d798953717e40dbd3706c8b9ca557b7df6da14d284d2d6ce93140f134b747fe6ecc07701c5bb270078b70527f6354bcb30000000000000000000000000000000000'
         block_bytes = unhexlify(block)
         
-        #print(deserialize_block(block_bytes))
-        #desrialized_header = deserialize_block_header(block_bytes)
-        #print(hexlify(serialize_block_header(desrialized_header[0],desrialized_header[1],desrialized_header[2],desrialized_header[3],desrialized_header[4],desrialized_header[5],desrialized_header[6],desrialized_header[7])))
+        #print(deserializeBlock(block_bytes))
+        #desrialized_header = deserializeBlockHeader(block_bytes)
+        #print(hexlify(serializeBlockHeader(desrialized_header[0],desrialized_header[1],desrialized_header[2],desrialized_header[3],desrialized_header[4],desrialized_header[5],desrialized_header[6],desrialized_header[7])))
         #prior_block_hash = calculateHeaderHashFromBlock(block_bytes=prior_block)
         #prior_block_bitcoin_height = prior_block_header[5]    
         

@@ -3,7 +3,7 @@ Created on Aug 3, 2021
 
 @author: brett_wood
 '''
-from utilities.sqlUtils import *
+from utilities.sql_utils import *
 from collections import namedtuple
         
 def getClaim(claimed_output_parcel_id = 0, claim_action_output_parcel_id = 0):

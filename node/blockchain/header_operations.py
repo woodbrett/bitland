@@ -3,7 +3,7 @@ Created on Dec 23, 2020
 
 @author: brett_wood
 '''
-from utilities.sqlUtils import executeSql
+from utilities.sql_utils import executeSql
 import struct, codecs
 from binascii import unhexlify, hexlify
 from hashlib import sha256
@@ -16,12 +16,12 @@ from utilities.difficulty import get_bits_current_block
 import base58
 from utilities.serialization import deserialize_text, serialize_text
 from utilities.hashing import * 
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 from utilities.difficulty import get_target_from_bits
-from utilities.bitcoin_requests import *
+from utilities.bitcoin.bitcoin_requests import *
 from node.blockchain.global_variables import *
-from node.blockchain.header_serialization import serialize_block_header_utf8
+from node.blockchain.header_serialization import serializeBlockHeaderUtf8
 from node.information.blocks import (
     getBlockCount,
     getPrevBlock,
@@ -78,7 +78,7 @@ def validateTime(time_,realtime_validation=True):
         average_time_last_11 = getMedianBlockTime11()
     
         #UPDATE to connect to nodes
-        network_adjusted_time = datetime.utcnow().timestamp()
+        network_adjusted_time = int(round(datetime.now(timezone.utc).timestamp(),0))
         time_int = int.from_bytes(time_, byteorder='big')
         
         if realtime_validation==True:
@@ -93,9 +93,10 @@ def validateTime(time_,realtime_validation=True):
 #UPDATE
 def validateBitcoinHash(bitcoin_hash, bitcoin_block_height):  
     
-    node_height = getBlockHeightFromHash(bitcoin_hash)
+    node_height_int = getBlockHeightFromHash(hexlify(bitcoin_hash).decode('utf-8'))
+    bitcoin_height_int = int.from_bytes(bitcoin_block_height,'big')
     
-    if node_height != bitcoin_block_height:
+    if node_height_int != bitcoin_height_int:
         return False
 
     else:
@@ -124,9 +125,11 @@ def validateBitcoinBlock(block_height, prior_block_bitcoin_height, realtime_vali
 
 
 #UPDATE
-def validateBitcoinLast64Mrkl():
+def validateBitcoinLast64Mrkl(bitcoin_hash_mrkl,bitcoin_height):
     
-    return True
+    bitcoin_height_int = int.from_bytes(bitcoin_height, 'big')
+    calculated_mrkl = calculateMerkleRoot64BitcoinBlocks(block_height=bitcoin_height_int)
+    return calculated_mrkl == bitcoin_hash_mrkl
     
     
 def validateBits(bits):
@@ -151,7 +154,9 @@ def validateHeaderHash(
         mrkl_root ,
         time_ ,
         bits ,
+        bitcoin_hash,
         bitcoin_height,
+        bitcoin_last_64_mrkl,
         miner_bitcoin_address,
         nonce
         ):
@@ -162,7 +167,9 @@ def validateHeaderHash(
         mrkl_root ,
         time_ ,
         bits ,
+        bitcoin_hash,
         bitcoin_height,
+        bitcoin_last_64_mrkl,
         miner_bitcoin_address,
         nonce)
     
@@ -197,7 +204,7 @@ def getHeaders(start_hash,end_hash):
     
     for i in range(start_block, end_block):
         b = getBlock(block_id = i)
-        serialized_header = serialize_block_header_utf8(
+        serialized_header = serializeBlockHeaderUtf8(
             b.get('version'),
             b.get('prev_block'),     
             b.get('mrkl_root'),
@@ -213,9 +220,15 @@ def getHeaders(start_hash,end_hash):
     return data
 
 
-if __name__ == '__main__':
+def calculateMerkleRoot64BitcoinBlocks(block_height=None):
     
-    miner_address_bytes = b'bc1qccs269z2s4mftnu9r99chn537qwng235f28x99'
+    last_64_hashes = getLastXBitcoinHashes(64, block_height)
+    print(last_64_hashes)
     
-    x = validateBitcoinAddress(miner_address_bytes)
-    print(x)
+    last_64_hashes_bytes = []
+    for i in range(0,len(last_64_hashes)):
+        last_64_hashes_bytes.append(unhexlify(last_64_hashes[i]))
+     
+    merkle_root_64_hashes = calculateMerkleRoot(last_64_hashes_bytes)
+    
+    return merkle_root_64_hashes

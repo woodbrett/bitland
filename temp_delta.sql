@@ -24,6 +24,10 @@ RERUN VIEWS
 --fake transactions
 insert into bitcoin.recent_transactions values (695556, 'bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws', 11000, 'd6da80afac7d0a736784eb8cf38db8a2681f7a420ef41b83ff22cb3ffab5097c');
 insert into bitcoin.recent_transactions values (695571, 'bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws', 17500, 'd6da80afac7d0a736784eb8cf38db8a2681f7a420ef41b83ff22cb3ffab5097c');
+insert into bitcoin.recent_transactions values (696107, 'bc1qh2kwf0yfrlt3pqs97j5na82t8kdqzq74ycftgn',13052,'asdfas');
+insert into bitcoin.recent_transactions values (696150, 'bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws',41010,'asdfas');
+insert into bitcoin.recent_transactions values (696324, 'bc1qh2kwf0yfrlt3pqs97j5na82t8kdqzq74ycftgn',3600,'asdfas');
+insert into bitcoin.recent_transactions values (696324, 'bc1q2vla02kvsslyfdg3tpdwt6whmfrsdkc7d0kkws',2500,'asdfas');
 
 
 

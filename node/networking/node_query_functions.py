@@ -13,19 +13,19 @@ from node.information.blocks import (
     )
 
 
-def get_block_height_peer(): 
+def getBlockHeightPeer(): 
     
     return getMaxBlockInformation()
 
 
-def get_block_by_height(block_height):
+def getBlockByHeight(block_height):
     
     block = getBlock(block_height)
     
     return block
 
 
-def get_blocks_start_end(start_block, end_block):
+def getBlocksStartEnd(start_block, end_block):
     
     blocks = getBlocksSerialized(start_block, end_block)
     start_block = blocks[0][0]
@@ -43,6 +43,6 @@ def get_blocks_start_end(start_block, end_block):
 
 if __name__ == '__main__':
     
-    print(get_blocks_start_end(1, 5))
+    print(getBlocksStartEnd(1, 5))
     
-    print(get_block_height_peer().id)
+    print(getBlockHeightPeer().id)
