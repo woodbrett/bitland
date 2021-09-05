@@ -139,3 +139,4 @@ cython_debug/
 
 # Other
 system_variables.py
+.metadata/
