@@ -17,7 +17,7 @@ from node.information.blocks import (
     getBlock
     )
 
-def get_bits_from_target(target):
+def getBitsFromTarget(target):
     bitlength = target.bit_length() + 1 #look on bitcoin cpp for info
     size = (bitlength + 7) / 8
     size = int(size)
@@ -32,7 +32,7 @@ def get_bits_from_target(target):
     return value
 
 
-def get_target_from_bits(bits):
+def getTargetFromBits(bits):
     
     bits_int = int.from_bytes(bits, byteorder='big')
     
@@ -44,7 +44,7 @@ def get_target_from_bits(bits):
     return target_bytes
 
 
-def get_bits_current_block():
+def getBitsCurrentBlock():
     
     previous_block = getMaxBlock()
     
@@ -57,8 +57,8 @@ def get_bits_current_block():
         bits = getPriorBlock()[1]
         
     else:
-        previous_target = get_target_from_bits(bits)
-        adjustment = get_difficulty_adjustment( previous_block - 2016, previous_block)
+        previous_target = getTargetFromBits(bits)
+        adjustment = getDifficultyAdjustment( previous_block - 2016, previous_block)
         bits = previous_target * adjustment
     
     bits_bytes = bits.to_bytes(4, byteorder = 'big')
@@ -66,7 +66,7 @@ def get_bits_current_block():
     return bits_bytes
 
 
-def get_difficulty_adjustment(start_block, end_block):
+def getDifficultyAdjustment(start_block, end_block):
 #difficulty is tied to trying to make the blocks line up with bitcoin blocks
     
     block_timespan = getBlock(end_block).get('bitcoin_block_height') - getBlock(start_block).get('bitcoin_block_height')
@@ -81,14 +81,14 @@ if __name__ == '__main__':
     dif_int = unhexlify(difficulty)
     print(dif_int)
     
-    print(get_bits_from_target(431352564656180951890503621515583861376174379817186625378204369551360))
+    print(getBitsFromTarget(431352564656180951890503621515583861376174379817186625378204369551360))
     
     bits = 0x1d00ffff
     bits_bytes = bits.to_bytes(4, byteorder = 'big')
     
-    print(get_target_from_bits(bits_bytes))
+    print(getTargetFromBits(bits_bytes))
         
-    print(get_bits_current_block())
+    print(getBitsCurrentBlock())
     
     print(0 % 2016 != 0)
     

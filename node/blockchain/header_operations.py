@@ -12,13 +12,13 @@ from system_variables import block_height_url
 from node.blockchain.global_variables import (
     bitcoin_block_range
     )
-from utilities.difficulty import get_bits_current_block
+from utilities.difficulty import getBitsCurrentBlock
 import base58
 from utilities.serialization import deserialize_text, serialize_text
 from utilities.hashing import * 
 from datetime import datetime, timezone
 import time
-from utilities.difficulty import get_target_from_bits
+from utilities.difficulty import getTargetFromBits
 from utilities.bitcoin.bitcoin_requests import *
 from node.blockchain.global_variables import *
 from node.blockchain.header_serialization import serializeBlockHeaderUtf8
@@ -134,7 +134,7 @@ def validateBitcoinLast64Mrkl(bitcoin_hash_mrkl,bitcoin_height):
     
 def validateBits(bits):
     
-    calculated_bits_bytes = get_bits_current_block()
+    calculated_bits_bytes = getBitsCurrentBlock()
     is_valid = calculated_bits_bytes == bits
         
     return is_valid
@@ -173,7 +173,7 @@ def validateHeaderHash(
         miner_bitcoin_address,
         nonce)
     
-    block_target = get_target_from_bits(bits)
+    block_target = getTargetFromBits(bits)
 
     is_valid = header_hash < block_target
     
