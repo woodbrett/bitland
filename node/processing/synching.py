@@ -13,7 +13,7 @@ import json
 from node.networking.peering_functions import (
     messageAllKnownPeers,
     messagePeer, updatePeer, connectToPeer, queryPeer,
-    attemptToConnectToNewPeer, deletePeer, peerCount
+    attemptToConnectToNewPeer, deletePeer, peerCount, resetPeers
     )
 from node.blockchain.block_serialization import deserializeBlock
 from node.blockchain.validate_block import (
@@ -32,6 +32,10 @@ from system_variables import peering_port
 
 def start_node():
 
+    print('resetting peers')
+    resetPeers()
+    
+    print('pinging peers')
     pingPeers()
     
     print('checking peer blocks')
@@ -59,7 +63,7 @@ def run_node(initial_synch=False):
         synchBitcoin()
         
         time.sleep(120)
-        
+
 
 def pingPeers():
 

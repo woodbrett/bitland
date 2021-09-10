@@ -13,7 +13,7 @@ create table bitland.planet (
  );
 
 insert into bitland.planet (id, name) values 
-(1, 'earth'), (2, 'mars');
+(1, 'earth');
 
 drop table if exists bitland.block cascade;
 create table bitland.block (
@@ -174,8 +174,8 @@ create table networking.peer (
   ip_address varchar,
   port int,
   status varchar,
-  connected_time time default now(),
-  last_ping time default now(),
+  connected_time bigint,
+  last_ping  bigint,
   self_auth_key uuid,
   peer_auth_key uuid default uuid_generate_v1() 
 );
@@ -563,10 +563,17 @@ set valid_claim = true
 from minmax mm 
 where le.y_id in (min_id, max_id);
 
-
 drop table bitland.int_join;
 drop table bitland.geography_definition;
 
+alter table bitland.landbase_enum drop column x1;
+alter table bitland.landbase_enum drop column x2;
+alter table bitland.landbase_enum drop column x3;
+alter table bitland.landbase_enum drop column x4;
+alter table bitland.landbase_enum drop column y1;
+alter table bitland.landbase_enum drop column y2;
+alter table bitland.landbase_enum drop column y3;
+alter table bitland.landbase_enum drop column y4;
 
 --
 --VIEWS AND FUNCTIONS

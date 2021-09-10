@@ -40,6 +40,7 @@ from utilities.bitcoin.bitcoin_requests import (
     getBestBlockHash, 
     getBlockHeightFromHash
     )
+from utilities.time_utils import getTimeNowSeconds
 
 def findValidHeader(
         version_byte,
@@ -169,7 +170,7 @@ def miningProcess():
     print(transactions)
     
     version = bitland_version
-    time_ = int(round(datetime.now(timezone.utc).timestamp(),0))
+    time_ = getTimeNowSeconds()
     start_nonce = 0
     bitcoin_hash = getBestBlockHash()
     bitcoin_height = getBlockHeightFromHash(bitcoin_hash)

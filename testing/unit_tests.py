@@ -14,6 +14,7 @@ from utilities.bitcoin.bitcoin_requests import validateBitcoinAddressFromBitcoin
 from utilities.gis_functions import (
     queryPolygonRules
     )
+from node.networking.peering_functions import updatePeer
 
 
 ######### TRANSACTION TESTS #########
@@ -100,6 +101,17 @@ def validate_bitcoin_addresses():
 
     return True
 
+
+######### PEER TESTS #########
+
+def validate_peer_functions():
+    
+    if updatePeer('1.2.3.4', port=8111, status='connected',derive_peer_auth_key=True) != 0:
+        return False
+    
+    return True
+
+
 if __name__ == '__main__':
     
     ######### TRANSACTION TESTS #########
@@ -112,7 +124,8 @@ if __name__ == '__main__':
     ######### VALIDATION TESTS #########
     print(validate_bitcoin_addresses())
     
-    
+    ######### PEER TESTS #########
+    print(validate_peer_functions())
     
     
     
