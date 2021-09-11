@@ -29,6 +29,7 @@ from node.blockchain.mempool_operations import garbageCollectMempool
 from ipaddress import ip_address
 from node.blockchain.global_variables import bitland_version
 from system_variables import peering_port
+from utilities.time_utils import getTimeNowSeconds
 
 def start_node():
 
@@ -81,7 +82,7 @@ def pingPeers():
             
             peer_port = queryPeer(ip_address=ip_address).get('port')
             deletePeer(ip_address)
-            attemptToConnectToNewPeer(bitland_version, peering_port, int(time.time()), ip_address, peer_port)
+            attemptToConnectToNewPeer(bitland_version, peering_port, getTimeNowSeconds(), ip_address, peer_port)
         
         else:
             updatePeer(ip_address=ping[i].get('peer_ip_address'),status='connected')
@@ -167,10 +168,10 @@ def askPeerForBlocks(peer, start_block, end_block):
 
 if __name__ == '__main__':
     
-    #x = start_node()
+    x = start_node()
     #x = askPeerForBlocks('76.179.199.85', 0, 50)
     
-    x = pingPeers()
+    #x = pingPeers()
     
     #x = checkPeerBlocks(use_threading=False)
     

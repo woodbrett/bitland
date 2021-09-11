@@ -50,7 +50,7 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
             reason = ''
             token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
             #UPDATE version
-            t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, int(time.time()), ip_address, port,),daemon=True)
+            t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), ip_address, port,),daemon=True)
             t1.start()
             
         else:
@@ -60,9 +60,12 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
     else:
         status = 'successful peer'
         reason = ''
+        print('no peer found')
+        print(ip_address)
+        print(port)
         token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
         #UPDATE version
-        t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, int(time.time()), ip_address, port,),daemon=True)
+        t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), ip_address, port,),daemon=True)
         t1.start()
     
     vars = namedtuple('vars', ['status','reason','token'])
@@ -105,6 +108,8 @@ def addPeer(ip_address,port,status,connected_time=0,last_ping=0):
         "values ('" + ip_address +"'," + str(port) + ",'" + status + "'," + str(connected_time) + "," + str(last_ping) + "') " +
         "returning peer_auth_key;"
         )
+    
+    print(query)
     
     try:
         add_peer = executeSql(query)[0]
@@ -260,12 +265,11 @@ def connectToPeer(version, port, timestamp, peer_ip_address, peer_port):
 
     r = requests.post(url, data=json.dumps(payload), headers=headers).json()
     
-    vars = namedtuple('vars', ['status','reason','token'])
-    return vars(
-        r.get('status'),
-        r.get('reason'),
-        r.get('token')
-    )
+    return {
+        'status': r.get('status'),
+        'reason': r.get('reason'),
+        'token': r.get('token')
+    }
     
 
 def responsivePeerRequest(version, port, timestamp, peer_ip_address, peer_port, wait_time=30):
@@ -274,8 +278,8 @@ def responsivePeerRequest(version, port, timestamp, peer_ip_address, peer_port, 
     
     peer_request = connectToPeer(version, port, timestamp, peer_ip_address, peer_port)
     
-    if peer_request.status == 'successful peer':
-        updatePeer(ip_address=peer_ip_address, self_auth_key=peer_request.token, status='connected')
+    if peer_request.get('status') == 'successful peer':
+        updatePeer(ip_address=peer_ip_address, self_auth_key=peer_request.get('token'), status='connected')
         return 'Success'
     
     else:
@@ -286,9 +290,9 @@ def attemptToConnectToNewPeer(version, port, timestamp, peer_ip_address, peer_po
     
     peer_request = connectToPeer(version, port, timestamp, peer_ip_address, peer_port)
     
-    if peer_request.status == 'successful peer':
+    if peer_request.get('status') == 'successful peer':
         addPeer(peer_ip_address,peer_port,'local_contact_external_accepted')
-        updatePeer(ip_address=peer_ip_address, self_auth_key=peer_request.token)
+        updatePeer(ip_address=peer_ip_address, self_auth_key=peer_request.get('token'))
         return 'Success'
     
     else:
@@ -396,5 +400,5 @@ def messagePeer(endpoint, peer_ip_address, payload='', rest_type='get'):
     
 if __name__ == '__main__':
     
-    print(resetPeers())
+    attemptToConnectToNewPeer(1, 8334, getTimeNowSeconds(), '76.179.199.85', 8336)
     
