@@ -104,8 +104,8 @@ def authenticateLocalUser(ip_address, password):
 def addPeer(ip_address,port,status,connected_time=0,last_ping=0):
     
     query = (
-        "insert into networking.peer (ip_address, port, status) " +
-        "values ('" + ip_address +"'," + str(port) + ",'" + status + "'," + str(connected_time) + "," + str(last_ping) + "') " +
+        "insert into networking.peer (ip_address, port, status, connected_time, last_ping) " +
+        "values ('" + ip_address +"'," + str(port) + ",'" + status + "'," + str(connected_time) + "," + str(last_ping) + ") " +
         "returning peer_auth_key;"
         )
     
