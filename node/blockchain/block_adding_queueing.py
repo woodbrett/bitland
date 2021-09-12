@@ -24,7 +24,7 @@ from utilities.bitcoin.bitcoin_transactions import synchWithBitcoin,\
 
 block_queue = []
 
-def waitInBlockQueue(transaction_type=None):
+def waitInBlockQueue(type=None):
 #all processes validating and adding blocks should come through this to avoid conflicting adds
 
     block_queue.append(threading.get_ident())
@@ -37,7 +37,7 @@ def waitInBlockQueue(transaction_type=None):
     while block_queue[0] != threading.get_ident():
         time.sleep(1)   
         sleep_time = sleep_time + 1
-        print('thread: ' + str(threading.get_ident()) + '; type: ' + str(transaction_type) + '; sleep: ' + str(sleep_time))
+        print('thread: ' + str(threading.get_ident()) + '; type: ' + str(type) + '; sleep: ' + str(sleep_time))
         if sleep_time > 100:
             return False    
     
