@@ -21,6 +21,8 @@ from node.blockchain.header_serialization import (
     )
 from utilities.bitcoin.bitcoin_transactions import synchWithBitcoin,\
     realtimeSynchWithBitcoin
+from node.networking.peering_functions import askPeersForHeight,\
+    askPeerForBlocks
 
 block_queue = []
 
@@ -83,7 +85,7 @@ def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_v
 
 
 #QUEUED PROCESS
-def processPeerBlocks(new_blocks_hex, use_threading=True):
+def processPeerBlocks(new_blocks_hex, use_threading=False):
     
     blocks_added = 0
     blocks_removed = 0
@@ -198,7 +200,49 @@ def synchBitcoin(use_threading=True):
         block_queue.remove(threading.get_ident())  
         
     return True  
+
+
+def checkPeerBlocks(use_threading=True):
+
+    if use_threading == True:
+        thread_id = waitInBlockQueue(type='checking peer blocks')    
     
+    peer_heights = askPeersForHeight()
+    self_height = getMaxBlockHeight()
+    max_height = self_height
+    max_height_peer = 'self'
+    blocks_added = 0
+    blocks_removed = 0
+    
+    for i in range(0,len(peer_heights)):
+        
+        peer_response = peer_heights[i].get('response')
+        
+        #UPDATE handle the errors from peers more elegantly
+        if peer_response == 'error calling peer':
+            None
+        
+        elif peer_response.get('block_height') > max_height:
+            max_height= peer_response.get('block_height')
+            max_height_peer = peer_heights[i].get('peer_ip_address')
+    
+    if max_height_peer != 'self':
+        #UPDATE to only ask for max of X blocks, 50?
+        
+        synched_with_peers = 'out of synch'
+        
+        new_blocks = askPeerForBlocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
+        
+        processPeerBlocks(new_blocks,use_threading=False)
+
+    if use_threading == True:
+        block_queue.remove(threading.get_ident())  
+
+    return {
+        'peer_height': max_height_peer,
+        'self_height': getMaxBlockHeight()
+        }
+
     
 if __name__ == '__main__':
 

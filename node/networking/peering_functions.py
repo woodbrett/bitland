@@ -224,7 +224,26 @@ def queryPeers(ip_address = '', self_auth_key = '', peer_auth_key = ''):
         dict_array.append(dicti)
     
     return dict_array
-        
+
+
+def askPeersForHeight():
+    
+    heights = messageAllKnownPeers('/peer/node_queries/getBlockHeight', rest_type='get')
+    
+    return heights
+
+
+#UPDATE
+def askPeerForBlocks(peer, start_block, end_block):
+
+    url = '/peer/node_queries/getBlocks/' + str(start_block) + '/' + str(end_block)
+    
+    blocks = messagePeer(url, peer, rest_type='get')
+    
+    print(blocks)
+    
+    return blocks
+
 
 def peerCount():
     
