@@ -20,20 +20,21 @@ from node.blockchain.transaction_adding_queueing import validateAddTransactionMe
 
 action_queue = []
 
-def queueNewBlockFromPeer(block_height,block,peer=''):
-    
-    t3 = threading.Thread(target=analyzeNewBlockFromPeer,args=(block_height,block,b'',peer,),daemon=True)
-    t3.start()
+def queueNewBlockFromPeer(block_height,block,peer='', use_threading=True):
 
-    #analyzeNewBlockFromPeer(block_height,block,b'',peer)
-
-    print('thread started, exiting function')
+    if use_threading == True:    
+        t5 = threading.Thread(target=analyzeNewBlockFromPeer,args=(block_height,block,b'',peer,use_threading),daemon=True)
+        t5.start()
+        print('thread started, exiting function')
+        
+    else:
+        analyzeNewBlockFromPeer(block_height,block,b'',peer,use_threading)
 
     return True
     
     
 #UPDATE
-def analyzeNewBlockFromPeer(block_height,block_hex='',block_bytes=b'',peer=''):
+def analyzeNewBlockFromPeer(block_height,block_hex='',block_bytes=b'',peer='',use_threading=False):
     
     if block_bytes == b'':
         block_bytes = unhexlify(block_hex)
@@ -41,9 +42,13 @@ def analyzeNewBlockFromPeer(block_height,block_hex='',block_bytes=b'',peer=''):
     if block_hex == '':
         block_hex = hexlify(block_bytes).decode('utf-8')
     
-    add_block = validateAddBlock(block_bytes, block_height)
+    print('validating adding block')
+    
+    add_block = validateAddBlock(block_bytes, block_height, use_threading=use_threading)
+    print('successfully added block')
     
     if add_block == True:
+        print('sending block to peers')
         sendBlockToPeers(block_height,block_hex,peers_to_exclude=[peer])
     
     return add_block
@@ -108,9 +113,14 @@ if __name__ == '__main__':
     print(sendBlockToPeers(block))
     '''
     
-    block_hex = '0001000000053da2d5864104aba5adba744024e319b9a83fd5328522fe72e561cd991e711654dd173773c735ae568f61ffab270e8520a8dc7301188d18421d1672140061203da01d0ffff000000000000000000004952c2042810823b45ce37c617f20222f01cf1b922103000aa19f012bfa333fc8940af142896ef9c940dee61bd9af7b0d707a3998a18a5f7079ff002a6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b77730000000000000b0654220001000100010066504f4c59474f4e28282d38332e3637313837352037382e34343534342c2d38332e3637313837352037382e323139392c2d38342e3337352037382e323139392c2d38342e3337352037382e34343534342c2d38332e3637313837352037382e3434353434292940d0134626df0ad197078050a7b016eac3d6b2fa27fa3c3d7aa0dbf37472ffccd9edb8ea100f34bff4906e6e10e4970db06799d3d40815acb7640040af37d1ca7f0000000000000000000000000000000000'    
+    block_hex = '000100000006ade0c1c20bb1eca7dc15dac93d293bc1c4588634ce4ffb13f141feb5f5b5e4064c625dfba04e5d610eeb04a71fbeea69cf5f2c8bf574b45d1940901800613f78901d0ffff000000000000000000008c622f848e7534ae6b5688b1273d1d12892fd2130efbd000aafcba8ad6daa4579b41cc8745e2173f44b727e58d1bdd092426c6b9e500f48b3a111002a6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b7773000000000000053e6112000100010001004e504f4c59474f4e282833332e37352038392e333638322c33332e37352038392e313436382c32322e352038392e313436382c32322e352038392e333638322c33332e37352038392e333638322929401e5e045cd802e80d33bacb258c44a67dcc377bf8fcc1136d7fe88502f0db603dd4dee80d867fa7736dc248ac353648ca18bb94449e0bc0dc65c350024fbc35750000000000000000000000000000000000'    
     block_bytes = unhexlify(block_hex)
     
     #x = analyzeNewBlockFromPeer(88, block_bytes=block_bytes)
     #x = analyzeNewBlockFromPeer(88, block_hex=block_hex)
-    x = queueNewBlockFromPeer(88, block=block_hex)
+    #x = queueNewBlockFromPeer(781, block=block_hex, use_threading=False)
+
+    x = validateAddBlock(block_bytes, block_height=781, use_threading=True, realtime_validation=False)
+
+
+

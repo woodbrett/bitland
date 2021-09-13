@@ -28,6 +28,8 @@ block_queue = []
 
 def waitInBlockQueue(type=None):
 #all processes validating and adding blocks should come through this to avoid conflicting adds
+    
+    print('inside queue')
 
     block_queue.append(threading.get_ident())
     print(block_queue)
@@ -49,11 +51,15 @@ def waitInBlockQueue(type=None):
 #QUEUED PROCESS
 def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_validation=True, send_to_peers=False):
     
+    print('validating and adding block, pre-thread')
+    
     if use_threading == True:
         thread_id = waitInBlockQueue(type='validate and add block')
     
     else:
         thread_id = True
+    
+    print('made it through queue')
     
     add_block = True
         

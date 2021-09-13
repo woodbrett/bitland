@@ -40,7 +40,8 @@ def start_node():
     pingPeers()
     
     print('checking peer blocks')
-    checkPeerBlocks()
+    t3 = threading.Thread(target=checkPeerBlocks,args=(True,),daemon=True)
+    t3.start()
         
     print('synching bitcoin')
     synchBitcoin()
@@ -58,7 +59,8 @@ def run_node(initial_synch=False):
     while True:
         
         print('checking peer blocks')
-        checkPeerBlocks()
+        t3 = threading.Thread(target=checkPeerBlocks,args=(True,),daemon=True)
+        t3.start()
         
         print('synching bitcoin')
         synchBitcoin()

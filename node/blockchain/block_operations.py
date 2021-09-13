@@ -69,7 +69,8 @@ def addBlock(block):
 
     bitcoin_block = int.from_bytes(deserialized_block[0].get('bitcoin_height'),'big')
     prior_bitcoin_block_height = getBlock(block_id=block_height-1).get('bitcoin_block_height')
-    
+
+    #this step is very slow on some machines    
     updateContingenciesAndClaims(bitcoin_block, prior_bitcoin_block_height, block_height)
     print('updated contingencies')
     
