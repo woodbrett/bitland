@@ -186,6 +186,7 @@ def synchWithBitcoin(start_bitcoin_height=0,end_bitcoin_height=0):
     print(blocks)
     block_heights = []
     for i in range(0,len(blocks)):
+        print('adding bitcoin block ' + str(i + start_bitcoin_height))
         block_heights.append(blocks[i][0])
     
     print(block_heights)    

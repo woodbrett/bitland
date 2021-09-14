@@ -16,6 +16,7 @@ import requests
 import json
 from ipaddress import ip_address
 from _datetime import datetime
+from utilities.time_utils import getTimeNowSeconds
 
 #external_contact_local_accepted
 #local_contact_external_accepted
@@ -49,7 +50,7 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
             reason = ''
             token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
             #UPDATE version
-            t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, int(time.time()), ip_address, port,),daemon=True)
+            t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), ip_address, port,),daemon=True)
             t1.start()
             
         else:
@@ -59,9 +60,12 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
     else:
         status = 'successful peer'
         reason = ''
+        print('no peer found')
+        print(ip_address)
+        print(port)
         token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
         #UPDATE version
-        t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, int(time.time()), ip_address, port,),daemon=True)
+        t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), ip_address, port,),daemon=True)
         t1.start()
     
     vars = namedtuple('vars', ['status','reason','token'])
@@ -97,13 +101,15 @@ def authenticateLocalUser(ip_address, password):
         return False
 
 
-def addPeer(ip_address,port,status):
+def addPeer(ip_address,port,status,connected_time=0,last_ping=0):
     
     query = (
-        "insert into networking.peer (ip_address, port, status) " +
-        "values ('" + ip_address +"'," + str(port) + ",'" + status + "') " +
+        "insert into networking.peer (ip_address, port, status, connected_time, last_ping) " +
+        "values ('" + ip_address +"'," + str(port) + ",'" + status + "'," + str(connected_time) + "," + str(last_ping) + ") " +
         "returning peer_auth_key;"
         )
+    
+    print(query)
     
     try:
         add_peer = executeSql(query)[0]
@@ -115,40 +121,43 @@ def addPeer(ip_address,port,status):
 
 
 #UPDATE
-def updatePeer(ip_address,port="null",status="null",connected_time="null",self_auth_key="null",peer_auth_key="null",derive_peer_auth_key=False,last_ping="null"):
+def updatePeer(ip_address,port=0,status=0,connected_time=0,self_auth_key=0,peer_auth_key=0,derive_peer_auth_key=False,last_ping=0):
     
     x = ''
     
-    if port != "null":
-        x = x + ",port = " + str(port) + " "
-    if status != "null":
-        x = x + ",status = '" + status + "' "
-    if connected_time != "null":
-        x = x + ",connected_time = '" + connected_time + "' "
-    if self_auth_key != "null":
-        x = x + ",self_auth_key = '" + self_auth_key + "' "
-    if peer_auth_key != "null":
-        x = x + ",peer_auth_key = '" + peer_auth_key + "' "
+    if port != 0:
+        x = x + "update networking.peer set port = " + str(port) + " where ip_address = '" + ip_address + "';"
+    if status != 0:
+        x = x + "update networking.peer set status = '" + status + "' where ip_address = '" + ip_address + "';"
+    if connected_time != 0:
+        x = x + "update networking.peer set connected_time = " + str(connected_time) + " where ip_address = '" + ip_address + "';"
+    if self_auth_key != 0:
+        x = x + "update networking.peer set self_auth_key = '" + self_auth_key + "' where ip_address = '" + ip_address + "';"
+    if peer_auth_key != 0:
+        x = x + "update networking.peer set peer_auth_key = '" + peer_auth_key + "' where ip_address = '" + ip_address + "';"
     if derive_peer_auth_key == True:
-        x = x + ",peer_auth_key = " + peer_auth_key + "uuid_generate_v1() "
-    if last_ping != "null":
-        x = x + ",last_ping = now() "
-    
-    query = (
-        "update networking.peer " +
-        "set " +
-        "  ip_address = '" + ip_address + "'" +
-        x + 
-        " where ip_address = '" + ip_address + "';"
-        )
+        x = x + "update networking.peer set peer_auth_key = uuid_generate_v1() where ip_address = '" + ip_address + "';"
+    if last_ping != 0:
+        x = x + "update networking.peer set last_ping = " + str(last_ping) + " where ip_address = '" + ip_address + "';"
     
     try:
-        update = executeSqlDeleteUpdate(query)
+        update = executeSqlDeleteUpdate(x)
         
     except Exception as error:
         update = 'error with update'
     
     return update
+
+
+def resetPeers():
+    
+    peers = queryPeers()
+    
+    for i in range(0,len(peers)):
+        
+        updatePeer(ip_address=peers[i].get('ip_address'),status='unpeered')
+    
+    return len(peers)
 
 
 def queryPeer(ip_address = '', self_auth_key = '', peer_auth_key = ''):
@@ -215,7 +224,26 @@ def queryPeers(ip_address = '', self_auth_key = '', peer_auth_key = ''):
         dict_array.append(dicti)
     
     return dict_array
-        
+
+
+def askPeersForHeight():
+    
+    heights = messageAllKnownPeers('/peer/node_queries/getBlockHeight', rest_type='get')
+    
+    return heights
+
+
+#UPDATE
+def askPeerForBlocks(peer, start_block, end_block):
+
+    url = '/peer/node_queries/getBlocks/' + str(start_block) + '/' + str(end_block)
+    
+    blocks = messagePeer(url, peer, rest_type='get')
+    
+    print(blocks)
+    
+    return blocks
+
 
 def peerCount():
     
@@ -256,12 +284,11 @@ def connectToPeer(version, port, timestamp, peer_ip_address, peer_port):
 
     r = requests.post(url, data=json.dumps(payload), headers=headers).json()
     
-    vars = namedtuple('vars', ['status','reason','token'])
-    return vars(
-        r.get('status'),
-        r.get('reason'),
-        r.get('token')
-    )
+    return {
+        'status': r.get('status'),
+        'reason': r.get('reason'),
+        'token': r.get('token')
+    }
     
 
 def responsivePeerRequest(version, port, timestamp, peer_ip_address, peer_port, wait_time=30):
@@ -270,8 +297,8 @@ def responsivePeerRequest(version, port, timestamp, peer_ip_address, peer_port, 
     
     peer_request = connectToPeer(version, port, timestamp, peer_ip_address, peer_port)
     
-    if peer_request.status == 'successful peer':
-        updatePeer(ip_address=peer_ip_address, self_auth_key=peer_request.token, status='connected')
+    if peer_request.get('status') == 'successful peer':
+        updatePeer(ip_address=peer_ip_address, self_auth_key=peer_request.get('token'), status='connected')
         return 'Success'
     
     else:
@@ -282,9 +309,9 @@ def attemptToConnectToNewPeer(version, port, timestamp, peer_ip_address, peer_po
     
     peer_request = connectToPeer(version, port, timestamp, peer_ip_address, peer_port)
     
-    if peer_request.status == 'successful peer':
+    if peer_request.get('status') == 'successful peer':
         addPeer(peer_ip_address,peer_port,'local_contact_external_accepted')
-        updatePeer(ip_address=peer_ip_address, self_auth_key=peer_request.token)
+        updatePeer(ip_address=peer_ip_address, self_auth_key=peer_request.get('token'))
         return 'Success'
     
     else:
@@ -301,9 +328,6 @@ def messageAllKnownPeers(endpoint, payload='', rest_type='get', peers_to_exclude
     peers = queryPeers()
     
     responses = []
-    
-    print(peers)
-    print(peer_types)
     
     for i in range(0 ,len(peers)):
         exclude_peer = False
@@ -345,7 +369,7 @@ def messageAllKnownPeers(endpoint, payload='', rest_type='get', peers_to_exclude
                     print('error calling peer ' + peer_ip_address)
                     r = 'error calling peer'
             
-            updatePeer(ip_address=peer_ip_address, last_ping="x")
+            updatePeer(ip_address=peer_ip_address, last_ping=getTimeNowSeconds())
             
             responses.append(
                 {'peer_ip_address':peer_ip_address,
@@ -395,6 +419,5 @@ def messagePeer(endpoint, peer_ip_address, payload='', rest_type='get'):
     
 if __name__ == '__main__':
     
-    authenticatePeer('76.179.199.85', 'abc')
-    
+    attemptToConnectToNewPeer(1, 8334, getTimeNowSeconds(), '76.179.199.85', 8336)
     

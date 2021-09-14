@@ -13,8 +13,8 @@ from utilities.hashing import (
     calculateMerkleRoot
     )
 from utilities.difficulty import (
-    get_target_from_bits,
-    get_bits_current_block
+    getTargetFromBits,
+    getBitsCurrentBlock
     )
 from utilities.serialization import deserialize_text, serialize_text
 from node.information.blocks import getMaxBlockHeight
@@ -40,6 +40,7 @@ from utilities.bitcoin.bitcoin_requests import (
     getBestBlockHash, 
     getBlockHeightFromHash
     )
+from utilities.time_utils import getTimeNowSeconds
 
 def findValidHeader(
         version_byte,
@@ -55,7 +56,7 @@ def findValidHeader(
         current_block_height
     ):
 
-    difficulty_byte = get_target_from_bits(bits_byte)
+    difficulty_byte = getTargetFromBits(bits_byte)
     miner_bitcoin_address_full_byte = serializeMinerAddress(miner_bitcoin_address_byte)
    
     nonce_byte = start_nonce_byte
@@ -169,7 +170,7 @@ def miningProcess():
     print(transactions)
     
     version = bitland_version
-    time_ = int(round(datetime.now(timezone.utc).timestamp(),0))
+    time_ = getTimeNowSeconds()
     start_nonce = 0
     bitcoin_hash = getBestBlockHash()
     bitcoin_height = getBlockHeightFromHash(bitcoin_hash)
@@ -179,7 +180,7 @@ def miningProcess():
     prev_block_bytes = getPrevBlockGuarded()
     mrkl_root_bytes = calculateMerkleRoot(transactions)
     time_bytes = time_.to_bytes(5, byteorder = 'big')
-    bits_bytes = get_bits_current_block() 
+    bits_bytes = getBitsCurrentBlock() 
     bitcoin_hash_bytes = unhexlify(bitcoin_hash)
     bitcoin_height_bytes = bitcoin_height.to_bytes(4, byteorder = 'big')
     bitcoin_last_64_mrkl_bytes = calculateMerkleRoot64BitcoinBlocks(block_height=bitcoin_height)

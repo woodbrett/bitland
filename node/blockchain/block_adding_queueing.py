@@ -21,11 +21,15 @@ from node.blockchain.header_serialization import (
     )
 from utilities.bitcoin.bitcoin_transactions import synchWithBitcoin,\
     realtimeSynchWithBitcoin
+from node.networking.peering_functions import askPeersForHeight,\
+    askPeerForBlocks
 
 block_queue = []
 
-def waitInBlockQueue():
+def waitInBlockQueue(type=None):
 #all processes validating and adding blocks should come through this to avoid conflicting adds
+    
+    print('inside queue')
 
     block_queue.append(threading.get_ident())
     print(block_queue)
@@ -37,7 +41,7 @@ def waitInBlockQueue():
     while block_queue[0] != threading.get_ident():
         time.sleep(1)   
         sleep_time = sleep_time + 1
-        print('thread: ' + str(threading.get_ident()) + '; sleep: ' + str(sleep_time))
+        print('thread: ' + str(threading.get_ident()) + '; type: ' + str(type) + '; sleep: ' + str(sleep_time))
         if sleep_time > 100:
             return False    
     
@@ -47,11 +51,15 @@ def waitInBlockQueue():
 #QUEUED PROCESS
 def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_validation=True, send_to_peers=False):
     
+    print('validating and adding block, pre-thread')
+    
     if use_threading == True:
-        thread_id = waitInBlockQueue()
+        thread_id = waitInBlockQueue(type='validate and add block')
     
     else:
         thread_id = True
+    
+    print('made it through queue')
     
     add_block = True
         
@@ -83,13 +91,13 @@ def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_v
 
 
 #QUEUED PROCESS
-def processPeerBlocks(new_blocks_hex, use_threading=True):
+def processPeerBlocks(new_blocks_hex, use_threading=False):
     
     blocks_added = 0
     blocks_removed = 0
     
     if use_threading==True:
-        thread_id = waitInBlockQueue()
+        thread_id = waitInBlockQueue(type='processing peer blocks')
     
     self_height = getMaxBlockHeight()
     
@@ -190,7 +198,7 @@ def validateAddBlocksAlreadyQueue(blocks):
 def synchBitcoin(use_threading=True):
     
     if use_threading == True:
-        thread_id = waitInBlockQueue()
+        thread_id = waitInBlockQueue(type='synching bitcoin')
     
     realtimeSynchWithBitcoin()
     
@@ -198,7 +206,49 @@ def synchBitcoin(use_threading=True):
         block_queue.remove(threading.get_ident())  
         
     return True  
+
+
+def checkPeerBlocks(use_threading=True):
+
+    if use_threading == True:
+        thread_id = waitInBlockQueue(type='checking peer blocks')    
     
+    peer_heights = askPeersForHeight()
+    self_height = getMaxBlockHeight()
+    max_height = self_height
+    max_height_peer = 'self'
+    blocks_added = 0
+    blocks_removed = 0
+    
+    for i in range(0,len(peer_heights)):
+        
+        peer_response = peer_heights[i].get('response')
+        
+        #UPDATE handle the errors from peers more elegantly
+        if peer_response == 'error calling peer':
+            None
+        
+        elif peer_response.get('block_height') > max_height:
+            max_height= peer_response.get('block_height')
+            max_height_peer = peer_heights[i].get('peer_ip_address')
+    
+    if max_height_peer != 'self':
+        #UPDATE to only ask for max of X blocks, 50?
+        
+        synched_with_peers = 'out of synch'
+        
+        new_blocks = askPeerForBlocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
+        
+        processPeerBlocks(new_blocks,use_threading=False)
+
+    if use_threading == True:
+        block_queue.remove(threading.get_ident())  
+
+    return {
+        'peer_height': max_height_peer,
+        'self_height': getMaxBlockHeight()
+        }
+
     
 if __name__ == '__main__':
 
