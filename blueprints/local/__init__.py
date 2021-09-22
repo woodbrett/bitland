@@ -8,6 +8,7 @@ Created on Mar 28, 2021
 from flask import Blueprint
 from flask_restplus import Api
 from blueprints.local.wallet import namespace as wallet_ns
+from blueprints.local.data import namespace as data_ns
 
 blueprint = Blueprint('local', __name__, url_prefix='/local')
 
@@ -21,11 +22,12 @@ authorizations = {
 
 api_extension = Api(
     blueprint,
-    title='Peer Endpoints',
+    title='Local Endpoints',
     version='1.0',
-    description='Endpoints available to network peer',
+    description='Endpoints available to local network',
     doc='/doc',
     authorizations=authorizations
 )
 
 api_extension.add_namespace(wallet_ns)
+api_extension.add_namespace(data_ns)

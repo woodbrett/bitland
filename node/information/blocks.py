@@ -124,4 +124,18 @@ def getMedianBlockTime11():
     return median_time_11
 
 
+def getKmlLandbaseByBlock(block_id):
+    
+    select = ("select " +
+              "'<kml xmlns=\"http://www.opengis.net/kml/2.2\"><Document><Style id=\"polygon_1\"><LineStyle><color>ff0000ff</color><width>5.5</width></LineStyle><PolyStyle><fill>0</fill></PolyStyle></Style><Placemark><styleUrl>#polygon_1</styleUrl>'" + 
+              " || st_askml(geom) " +
+              " || '</Placemark></Document></kml>' " +
+              " from bitland.utxo where block_id = " +
+              str(block_id) + " and output_version = 0;")
+    
+    print(select)
+    
+    kml = executeSql(select)[0]
+
+    return kml
 
