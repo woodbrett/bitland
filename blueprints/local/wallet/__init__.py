@@ -9,44 +9,45 @@ from flask_restplus import Namespace, Resource, fields, Api
 from http import HTTPStatus
 from wallet.broadcast_transaction import broadcastTransaction
 from node.networking.peering_functions import authenticateLocalUser
+from wallet.key_generation import generateRandomKeys, savePublicPrivateKeysDb
+from wallet.information import getWalletUtxos
 
 namespace = Namespace('wallet', 'Wallet')
 
-transaction_model = namespace.model('Blocks', {
-    'transaction': fields.String(
-        required=True,
-        description='Serialized transaction'
-    )
-})
-
-#only available to local user
-@namespace.route('/broadcastTransaction')
-class broadcast_transaction(Resource):
+@namespace.route('/generatePublicPrivateKey/<string:save_keys_to_db>')
+@namespace.doc(params={'save_keys_to_db': 'this should be a value of "True" or "False"'})
+class generate_public_private_key(Resource):
 
     @namespace.response(500, 'Internal Server error')
-    @namespace.expect(transaction_model)
     @namespace.doc(security='Bearer')   
-    def put(self):
-        
-        print(request.remote_addr)
-        print(request.headers.get("Authorization"))
-        
+    def get(self, save_keys_to_db):
+
         if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated')
         
-        print("validated")
+        key_pair = generateRandomKeys()
+        key_pair.update({'saved_to_db':False})
         
-        transaction = request.json['transaction']
+        if save_keys_to_db.lower() == "true":
+            savePublicPrivateKeysDb(key_pair.get('private_key'),key_pair.get('public_key'))
+            key_pair.update({'saved_to_db':True})
         
-        x = broadcastTransaction(transaction)
-        print(x)
-        
-        status = 'received'
+        return key_pair
 
-        return {
-            'status': status
-        }
 
+@namespace.route('/utxos')
+class utxos(Resource):
+
+    @namespace.response(500, 'Internal Server error')
+    @namespace.doc(security='Bearer')   
+    def get(self):
+
+        if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
+            namespace.abort(400, 'Not authenticated')
+        
+        utxos = getWalletUtxos()
+        
+        return utxos
 
 
 

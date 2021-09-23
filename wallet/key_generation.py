@@ -16,7 +16,10 @@ def generateRandomKeys():
     public_key = private_key.verifying_key
     public_key_hex = hexlify(public_key.to_string()).decode("utf-8")
     
-    return(private_key_hex, public_key_hex)
+    return {
+        "private_key": private_key_hex, 
+        "public_key": public_key_hex
+        }
 
 
 #SAVE private and public key to DB

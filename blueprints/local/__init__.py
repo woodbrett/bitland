@@ -8,7 +8,8 @@ Created on Mar 28, 2021
 from flask import Blueprint
 from flask_restplus import Api
 from blueprints.local.wallet import namespace as wallet_ns
-from blueprints.local.data import namespace as data_ns
+from blueprints.local.blockchain_data import namespace as blockchain_data_ns
+from blueprints.local.transaction import namespace as transaction_ns
 
 blueprint = Blueprint('local', __name__, url_prefix='/local')
 
@@ -30,4 +31,5 @@ api_extension = Api(
 )
 
 api_extension.add_namespace(wallet_ns)
-api_extension.add_namespace(data_ns)
+api_extension.add_namespace(blockchain_data_ns)
+api_extension.add_namespace(transaction_ns)
