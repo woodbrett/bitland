@@ -7,7 +7,6 @@ Created on Mar 28, 2021
 from flask import request
 from flask_restplus import Namespace, Resource, fields, Api
 from http import HTTPStatus
-from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.wrappers import Response
 from node.networking.peering_functions import authenticateLocalUser
