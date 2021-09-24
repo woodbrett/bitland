@@ -245,7 +245,7 @@ def checkPeerBlocks(use_threading=True):
         block_queue.remove(threading.get_ident())  
 
     return {
-        'peer_height': max_height_peer,
+        'peer_height': max_height,
         'self_height': getMaxBlockHeight()
         }
 
@@ -266,8 +266,6 @@ if __name__ == '__main__':
         #prior_block_bitcoin_height = prior_block_header[5]    
         
         x = validateAddBlock(block_bytes, use_threading=False,realtime_validation=False)
-    
-    
     
     
     

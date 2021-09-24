@@ -40,8 +40,15 @@ def start_node():
     pingPeers()
     
     print('checking peer blocks')
-    t3 = threading.Thread(target=checkPeerBlocks,args=(True,),daemon=True)
-    t3.start()
+    peer_height = 1
+    self_height = 0
+    while self_height < peer_height:
+        block_comparison = checkPeerBlocks(use_threading=True)
+        peer_height = block_comparison.get('peer_height')
+        self_height = block_comparison.get('self_height')
+        
+    #t3 = threading.Thread(target=checkPeerBlocks,args=(True,),daemon=True)
+    #t3.start()
         
     print('synching bitcoin')
     synchBitcoin()

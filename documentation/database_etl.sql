@@ -155,6 +155,7 @@ create schema bitcoin;
 
 drop table if exists bitcoin.recent_transactions;
 create table bitcoin.recent_transactions(bitcoin_block_height int, address varchar, value float8, txid varchar);
+create index on bitcoin.recent_transactions (bitcoin_block_height);
 
 drop table if exists bitcoin.relevant_contingency_transaction;
 create table bitcoin.relevant_contingency_transaction (bitcoin_block_height int, address varchar, value float8, txid varchar, recorded_bitland_block_height int);
