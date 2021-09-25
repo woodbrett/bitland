@@ -57,44 +57,41 @@ def getBitsCurrentBlock():
         bits_bytes = prior_bits_bytes
         
     else:
-        previous_target = hexlify(getTargetFromBits(prior_bits_bytes)).decode('utf-8')
-        adjustment = getDifficultyAdjustment( previous_block - 2015, previous_block)
-        new_target = previous_target * adjustment
-        bits_bytes = getBitsFromTarget(new_target)
+        #previous_target = int.from_bytes(getTargetFromBits(prior_bits_bytes), 'big')
+        start_bitcoin_height = getBlock(previous_block - 2015).get('bitcoin_block_height')
+        end_bitcoin_height = getBlock(previous_block).get('bitcoin_block_height')
+        new_target = getRetarget( start_bitcoin_height, end_bitcoin_height, target_timespan_bitcoin_blocks, prior_bits_bytes)
+        bits_bytes = int(getBitsFromTarget(new_target),0).to_bytes(4,'big')
     
     #bits_bytes = bits.to_bytes(4, byteorder = 'big')
     
     return bits_bytes
 
 
-def getDifficultyAdjustment(start_block, end_block):
+def getRetarget(start_bitcoin_height, end_bitcoin_height, target_bitcoin_blocks, prior_bits):
 #difficulty is tied to trying to make the blocks line up with bitcoin blocks
     
-    #UPDATE cap up and down by factors of 4    
-    block_timespan = getBlock(end_block).get('bitcoin_block_height') - getBlock(start_block).get('bitcoin_block_height')
-    adjustment = target_timespan_bitcoin_blocks / block_timespan
+    block_timespan = end_bitcoin_height - start_bitcoin_height
+    adjustment = block_timespan / target_bitcoin_blocks 
     
-    return adjustment
+    #like bitcoin, max difficulty change is factor of 4
+    adjustment = max(min(adjustment,4),0.25)
+    
+    previous_target = int.from_bytes(getTargetFromBits(prior_bits), 'big')
+    
+    new_target = round(previous_target*adjustment)
+    max_target = int.from_bytes(getTargetFromBits(starting_bits), 'big')
+    
+    #like bitcoin, target is not allowed to exceed the initial one
+    new_target = min(new_target,max_target)
+    
+    return new_target
 
 
 if __name__ == '__main__':
     
-    print(0x0000000ffff00000000000000000000000000000000000000000000000000000)
-    print(0x0000000ffff00000000000000000000000000000000000000000000000000000 * 0.33)
-    print(0x0000000000000006770c3806960539ca83a24facbd99ea212f37f2a0e6a5629a)
-    
-    print(0x0000000ffff00000000000000000000000000000000000000000000000000000 / 0x00000000000404CB000000000000000000000000000000000000000000000000 )
-    
-    x = 0x0000000ffff00000000000000000000000000000000000000000000000000000 
-    x = x * 4
-    x = x / 3
-    print(x)
-    print(hex(x))
-    
-    bits = 424970034
-    
-     
     print(getBitsCurrentBlock())
     
-    
-    
+    print(getRetarget(1000, 2000, 1000, 0x1d00ffff.to_bytes(4,byteorder='big')))
+
+
