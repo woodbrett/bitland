@@ -151,18 +151,12 @@ def createTransaction1(transaction_version, inputs, outputs, contingencies):
     return serialized_transaction
     
 
-def createTransactionClaim(input_transaction_hash, input_vout, miner_fee_sats, miner_fee_blocks):
+def createTransactionClaim(input_transaction_hash, input_vout, miner_fee_sats, miner_fee_blocks, output_public_key):
     
     utxo = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout)
     polygon = utxo.get('shape')
     polygon_bytes = polygon.encode('utf-8')
     planet_id = utxo.get('planet_id')
-    
-    output_keys = generateRandomKeys()
-    output_private_key = output_keys[0]
-    output_public_key = output_keys[1]
-
-    savePublicPrivateKeysDb(output_private_key, output_public_key)
     
     transaction_version = 2
     transaction_version = transaction_version.to_bytes(2, byteorder = 'big')
@@ -207,6 +201,7 @@ if __name__ == '__main__':
 
     ############## SIMPLE TRANSACTION #################
     
+    '''
     input_transaction_hash = ''
     input_vout = 0
     input_private_key = ''
@@ -220,7 +215,7 @@ if __name__ == '__main__':
     simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_private_key, input_spend_type,output_public_key)
     print(hexlify(simple_transaction).decode('utf-8'))
     print(deserializeTransaction(simple_transaction))
-    
+    '''
     
     ############ MORE COMPLEX TRANSACTION ################
     #INPUTS
@@ -287,8 +282,8 @@ if __name__ == '__main__':
     
     ############ CLAIM TRANSACTION ################
     
-    #claim_transaction = createTransactionClaim('4f651474a9f41af5b7d480afdd8ec65730eaaf1872009be993b829a7d69e6bd4', 0, 17500, 350)
-    #print(hexlify(claim_transaction).decode('utf-8'))
+    claim_transaction = createTransactionClaim('4f651474a9f41af5b7d480afdd8ec65730eaaf1872009be993b829a7d69e6bd4', 0, 17500, 350, 'd9797338aa0909241ecbfb442c25af9873939fc20d2b24a389c7b593acc06a407b875412dde35daa23aea0d5b86404424acb402761b96ca5ddb64deaf20ccc8d')
+    print(hexlify(claim_transaction).decode('utf-8'))
     
     
     

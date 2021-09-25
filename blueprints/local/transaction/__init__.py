@@ -10,7 +10,8 @@ from http import HTTPStatus
 from wallet.broadcast_transaction import broadcastTransaction
 from node.networking.peering_functions import authenticateLocalUser
 from wallet.key_generation import generateRandomKeys, savePublicPrivateKeysDb
-from wallet.transaction_creation import createSimpleTransactionTransfer
+from wallet.transaction_creation import createSimpleTransactionTransfer,\
+    createTransactionClaim
 from binascii import hexlify
 
 namespace = Namespace('transaction', 'Transaction')
@@ -45,6 +46,31 @@ transaction_simple_model = namespace.model('Transaction Simple', {
     )
 })
 
+transaction_simple_model = namespace.model('Transaction Claim', {
+    'input_transaction_hash': fields.String(
+        required=True,
+        description='Input Transaction Hash'
+    ),
+    'input_vout': fields.Integer(
+        required=True,
+        description='Input Vout'
+    ),
+    'miner_fee_sats': fields.Integer(
+        required=True,
+        description='Miner Fee Sats'
+    ),
+    'miner_fee_blocks': fields.Integer(
+        required=True,
+        description='Miner Fee Blocks'
+    ),
+    'output_public_key': fields.String(
+        required=True,
+        description='Output Public Key'
+    )
+})
+
+
+
 @namespace.route('/broadcastSerializedTransaction')
 class broadcast_serialized_transaction(Resource):
 
@@ -61,8 +87,7 @@ class broadcast_serialized_transaction(Resource):
         x = broadcastTransaction(transaction)
 
         return {
-            'status': 'broadcasted successfully',
-            'transaction_hash': ''
+            'status': 'broadcasted successfully'
         }
 
 
@@ -83,16 +108,36 @@ class create_serialized_transaction_simple(Resource):
         input_spend_type = request.json['input_spend_type']
         output_public_key = request.json['output_public_key']        
         
-        print(input_transaction_hash, input_vout, input_private_key, input_spend_type, output_public_key)
-        
         serialized_transaction = createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_private_key, input_spend_type, output_public_key)
         serialized_transaction_hex = hexlify(serialized_transaction).decode('utf-8')
-        
-        print(serialized_transaction_hex)
         
         return {
             'serialized_transaction': serialized_transaction_hex
         }
 
+
+@namespace.route('/createSerializedTransactionClaim')
+class create_serialized_transaction_claim(Resource):
+
+    @namespace.response(500, 'Internal Server error')
+    @namespace.expect(transaction_simple_model)
+    @namespace.doc(security='Bearer')   
+    def post(self):
+
+        if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
+            namespace.abort(400, 'Not authenticated')
+        
+        input_transaction_hash = request.json['input_transaction_hash']
+        input_vout = request.json['input_vout']
+        miner_fee_sats = request.json['miner_fee_sats']        
+        miner_fee_blocks = request.json['miner_fee_blocks']
+        output_public_key = request.json['output_public_key']        
+        
+        serialized_transaction = createTransactionClaim(input_transaction_hash, input_vout, miner_fee_sats, miner_fee_blocks, output_public_key)
+        serialized_transaction_hex = hexlify(serialized_transaction).decode('utf-8')
+        
+        return {
+            'serialized_transaction': serialized_transaction_hex
+        }
 
 
