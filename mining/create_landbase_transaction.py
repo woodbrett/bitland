@@ -43,17 +43,15 @@ def desiredLandbase():
 def populateLandbaseTransaction(landbase):
 
     keys = generateRandomKeys()
-    private_key = keys[0]
-    public_key = keys[1]
 
-    savePublicPrivateKeysDb(private_key, public_key)
+    savePublicPrivateKeysDb(keys.get('private_key'), keys.get('public_key'))
 
     version = 1
     inputs = []
     output_version = 0
     output_1_planet = 1
     output_1_shape = landbase
-    output_1_script = public_key
+    output_1_script = keys.get('public_key')
     contingencies = []
     
     version_bytes = version.to_bytes(2, byteorder = 'big')

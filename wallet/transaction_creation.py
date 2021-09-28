@@ -13,7 +13,12 @@ import ecdsa
 from node.information.utxo import getUtxo
 import json
 
-def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type):
+def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_private_key, input_spend_type, output_public_key):
+    
+    input_transaction = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout)
+    input_public_key = input_transaction.get('pub_key')
+    polygon = input_transaction.get('shape')
+    planet_id = input_transaction.get('planet_id')
     
     private_key_encoded = ecdsa.SigningKey.from_string(unhexlify(input_private_key),curve=ecdsa.SECP256k1)
     public_key_encoded = ecdsa.VerifyingKey.from_string(unhexlify(input_public_key),curve=ecdsa.SECP256k1)
@@ -26,12 +31,6 @@ def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_pr
     polygon_bytes = polygon.encode('utf-8')
     
     signature = private_key_encoded.sign(polygon_bytes)
-    
-    output_keys = generateRandomKeys()
-    output_private_key = output_keys[0]
-    output_public_key = output_keys[1]
-
-    savePublicPrivateKeysDb(output_private_key, output_public_key)
     
     transaction_version = 2
     transaction_version = transaction_version.to_bytes(2, byteorder = 'big')
@@ -72,7 +71,60 @@ def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_pr
     return serialized_transaction
 
 
-def createTransaction1(transaction_version, inputs, outputs, contingencies):
+def createSimpleTransactionTransferContingencies(input_transaction_hash, input_vout, input_private_key, input_spend_type, output_public_key, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address):
+    
+    input_transaction = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout)
+    input_public_key = input_transaction.get('pub_key')
+    polygon = input_transaction.get('shape')
+    planet_id = input_transaction.get('planet_id')
+    
+    private_key_encoded = ecdsa.SigningKey.from_string(unhexlify(input_private_key),curve=ecdsa.SECP256k1)
+    public_key_encoded = ecdsa.VerifyingKey.from_string(unhexlify(input_public_key),curve=ecdsa.SECP256k1)
+    
+    public_key_check = private_key_encoded.verifying_key
+    
+    #logic to remove spaces that can happen from copying
+    polygon = polygon.replace(", ","," ) # remove all spaces
+    polygon = polygon.replace(" (","(" ) # remove all spaces
+    polygon_bytes = polygon.encode('utf-8')
+    
+    signature = private_key_encoded.sign(polygon_bytes)
+    
+    transaction_version = 2
+    transaction_version = transaction_version.to_bytes(2, byteorder = 'big')
+        
+    #input 1 - standard
+    type = input_spend_type 
+    transaction_hash = input_transaction_hash
+    vout = input_vout
+    signature = signature
+    input_1 = [type.to_bytes(1, byteorder = 'big'), unhexlify(transaction_hash), vout.to_bytes(1, byteorder = 'big'), signature]
+
+    inputs = [input_1]
+    
+    #output 1 - standard
+    type = 1
+    planet_id = planet_id
+    coordinates = polygon
+    public_key = output_public_key
+    output_1 = [type.to_bytes(1, byteorder = 'big'), planet_id.to_bytes(1, byteorder = 'big'), coordinates.encode('utf-8'), unhexlify(public_key)]
+
+    outputs = [output_1]
+
+    #contingencies
+    contingencies = [miner_fee_sats.to_bytes(6, byteorder = 'big'),
+                     miner_fee_blocks.to_bytes(2, byteorder = 'big'),
+                     transfer_fee_sats.to_bytes(6, byteorder = 'big'),
+                     transfer_fee_blocks.to_bytes(2, byteorder = 'big'),
+                     transfer_fee_address.encode('utf-8')
+                     ]
+
+    serialized_transaction = serializeTransaction(transaction_version, inputs, outputs, contingencies)
+    
+    return serialized_transaction
+
+
+def createTransactionComplex(transaction_version, inputs, outputs, contingencies):
     #inputs [input_version, input_transaction_hash, input_vout, input_private_key, input_public_key]
     #outputs [output_version, planet, shape, public_script (address)]
     #contingencies [miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address]
@@ -152,18 +204,12 @@ def createTransaction1(transaction_version, inputs, outputs, contingencies):
     return serialized_transaction
     
 
-def createTransactionClaim(input_transaction_hash, input_vout, miner_fee_sats, miner_fee_blocks):
+def createTransactionClaim(input_transaction_hash, input_vout, miner_fee_sats, miner_fee_blocks, output_public_key):
     
     utxo = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout)
     polygon = utxo.get('shape')
     polygon_bytes = polygon.encode('utf-8')
     planet_id = utxo.get('planet_id')
-    
-    output_keys = generateRandomKeys()
-    output_private_key = output_keys[0]
-    output_public_key = output_keys[1]
-
-    savePublicPrivateKeysDb(output_private_key, output_public_key)
     
     transaction_version = 2
     transaction_version = transaction_version.to_bytes(2, byteorder = 'big')
@@ -207,29 +253,22 @@ def createTransactionClaim(input_transaction_hash, input_vout, miner_fee_sats, m
 if __name__ == '__main__':
 
     ############## SIMPLE TRANSACTION #################
-    '''
-    select 
-    '["' || pub_key || '","' || private_key || '","' || st_astext(geom) || '",' || planet_id::varchar || ',' || vout::varchar || ',"' || transaction_hash::varchar || '"]',
-        block_id
-    from bitland.utxo u
-    join wallet.addresses a on u.pub_key = a.public_key 
-    order by block_id desc
-    '''
     
-    transaction_info = ["f9a37435327bde8b05907a67e853cef76c40700634523c4940cf557a138c196669d53d5acd304a8914d143ebc8c9df1be5793e92716b6b4156835e663bdf5408","96cf23d95bec91a39246751eb77faaa47d9e81cf282f5dc8ee747e4313fe3426","POLYGON((-40.943756 87.49116,-45 87.49116,-45 87.62508,-45 87.7671,-40.943756 87.7671,-40.943756 87.49116))",1,1,"a38a76b12a20630f83e5c02e6764954637f4b1892319b3230e33ea08382eed2e"]
-    
-    input_public_key = transaction_info[0]
-    input_private_key = transaction_info[1]
-    polygon = transaction_info[2]
-    planet_id = transaction_info[3]
-    vout = transaction_info[4]
-    input_transaction_hash = transaction_info[5]
+    '''
+    input_transaction_hash = ''
+    input_vout = 0
+    input_private_key = ''
     input_spend_type = 4
+
+    output_keys = generateRandomKeys()
+    output_private_key = output_keys[0]
+    output_public_key = output_keys[1]
+    savePublicPrivateKeysDb(output_private_key, output_public_key)
     
-    simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, vout, input_private_key, input_public_key, polygon, planet_id, input_spend_type)
+    simple_transaction = createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_private_key, input_spend_type,output_public_key)
     print(hexlify(simple_transaction).decode('utf-8'))
     print(deserializeTransaction(simple_transaction))
-    
+    '''
     
     ############ MORE COMPLEX TRANSACTION ################
     #INPUTS
@@ -296,8 +335,8 @@ if __name__ == '__main__':
     
     ############ CLAIM TRANSACTION ################
     
-    #claim_transaction = createTransactionClaim('4f651474a9f41af5b7d480afdd8ec65730eaaf1872009be993b829a7d69e6bd4', 0, 17500, 350)
-    #print(hexlify(claim_transaction).decode('utf-8'))
+    claim_transaction = createTransactionClaim('4f651474a9f41af5b7d480afdd8ec65730eaaf1872009be993b829a7d69e6bd4', 0, 17500, 350, 'd9797338aa0909241ecbfb442c25af9873939fc20d2b24a389c7b593acc06a407b875412dde35daa23aea0d5b86404424acb402761b96ca5ddb64deaf20ccc8d')
+    print(hexlify(claim_transaction).decode('utf-8'))
     
     
     

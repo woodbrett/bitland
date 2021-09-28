@@ -20,7 +20,8 @@ from system_variables import address_search_url
 import requests
 from node.blockchain.contingency_operations import *
 from utilities.hashing import calculateTransactionHash
-from utilities.bitcoin.bitcoin_requests import getCurrentBitcoinBlockHeight
+from utilities.bitcoin.bitcoin_requests import getCurrentBitcoinBlockHeight,\
+    validateBitcoinAddressFromBitcoinNode
 from node.blockchain.header_serialization import deserializeBlockHeader
 from node.information.blocks import getMaxBlockHeight
 from node.information.mempool import getMempoolInformation
@@ -176,6 +177,10 @@ def validateTransaction2(transaction, block_height, block_header):
     inputs = transaction[1]
     outputs = transaction[2]
     miner_fee_sats = int.from_bytes(transaction[3][0],'big')
+    miner_fee_blocks = int.from_bytes(transaction[3][1],'big')
+    transfer_fee_sats = int.from_bytes(transaction[3][2],'big')
+    transfer_fee_blocks = int.from_bytes(transaction[3][3],'big')
+    transfer_fee_address = hexlify(transaction[3][4])
     valid_transaction = True
     failure_reason = ''    
     
@@ -209,10 +214,11 @@ def validateTransaction2(transaction, block_height, block_header):
             print('validating transaction: valid outputs')
                 
         #UPDATE validate contingency values
-        #miner fee >= 0
-        #miner fee blocks <=12096
-        #transfer fee >= 0
-        #transfer fee blocks <=12096
+        valid_contingencies = validateContingencies(miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address)
+        if valid_contingencies[0] == False:
+            raise Exception(valid_contingencies[0], valid_contingencies[1])
+        else:
+            print('validating transaction: valid contingencies')
             
     except Exception as inst: 
         valid_transaction, failure_reason = inst.args  
@@ -223,6 +229,47 @@ def validateTransaction2(transaction, block_height, block_header):
         print('validating transaction: ' + failure_reason)
     
     return valid_transaction, failure_reason
+
+
+def validateContingencies(miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address):
+
+    valid_contingencies = True
+    failure_reason = ''
+
+    #miner fee >= 0
+    if (valid_contingencies == True):
+        valid_contingencies = miner_fee_sats >= 0
+        if(valid_contingencies == False):
+            failure_reason = 'invalid miner fee sats'    
+
+    #miner fee blocks <=12096
+    if (valid_contingencies == True):
+        #print(max_miner_fee_blocks)
+        #print(miner_fee_blocks <= max_miner_fee_blocks)
+        valid_contingencies = (miner_fee_blocks >= 0 and miner_fee_blocks <= max_miner_fee_blocks)
+        if(valid_contingencies == False):
+            failure_reason = 'invalid miner fee blocks'    
+            
+    #transfer fee >= 0
+    if (valid_contingencies == True):
+        valid_contingencies = transfer_fee_sats >= 0
+        if(valid_contingencies == False):
+            failure_reason = 'transfer miner fee sats'    
+            
+    #transfer fee blocks <=12096
+    if (valid_contingencies == True):
+        valid_contingencies = (miner_fee_blocks >= 0 and miner_fee_blocks <= max_transfer_fee_blocks)
+        if(valid_contingencies == False):
+            failure_reason = 'invalid transfer fee blocks'    
+            
+    #UPDATE validate the transfer fee address to ensure it is a valid bitcoin address
+    if (valid_contingencies == True):
+        transfer_fee_address_utf8 = unhexlify(transfer_fee_address).decode('utf-8')
+        valid_contingencies = validateBitcoinAddressFromBitcoinNode(transfer_fee_address_utf8)
+        if(valid_contingencies == False):
+            failure_reason = 'invalid transfer fee address'    
+    
+    return valid_contingencies, failure_reason
 
 
 def validateTransactionOutputs(outputs):
@@ -644,3 +691,13 @@ def addTransactionToMempool(transaction):
     
     return transaction_mempool_id
 
+
+
+if __name__ == '__main__':
+
+    #00020101e0be7b649897a44097b1e4deea4e4eae470c6d0a3e20c411250aed5949607d420040e6c7bb4580dcdbb1ae71a53048416c4e734d9904bbefbb1e7896bee89504210f4d2ff562943bb955b10444dccd401d36ae4303c2c30eae064f6e24de47abccb60101010073504f4c59474f4e28282d3130312e3630313536332034382e35363838362c2d3130312e3630313536332034382e34333034342c2d3130312e3935333132352034382e34333034342c2d3130312e3935333132352034382e35363838362c2d3130312e3630313536332034382e3536383836292940c6d3ac0be14837a899218020c6d492fded6a9569832094f7b44232d7337fdbc108e7f8a3925fb7fd9ef39f91a95cd8eba9c82237c6e8a165b0b4a3872cfa15cb000000003a9800640000000036b0006522334e3645326e7072486d57436b333969626a336e774d5346354a3334655275704e62
+    #00020101e0be7b649897a44097b1e4deea4e4eae470c6d0a3e20c411250aed5949607d420040937ac7aa01bbac0333d10fa68b5a9323e3832ece5107b57bff37b37e699611b2cf9906c753660eba300ad5027a694b3bb56aa2fdc28b161c9c4aa8e3e35dd46d0101010073504f4c59474f4e28282d3130312e3630313536332034382e35363838362c2d3130312e3630313536332034382e34333034342c2d3130312e3935333132352034382e34333034342c2d3130312e3935333132352034382e35363838362c2d3130312e3630313536332034382e3536383836292940c6d3ac0be14837a899218020c6d492fded6a9569832094f7b44232d7337fdbc108e7f8a3925fb7fd9ef39f91a95cd8eba9c82237c6e8a165b0b4a3872cfa15cb000000003a9800640000000036b000650b6164666173657766616573
+    transaction = '00020101e0be7b649897a44097b1e4deea4e4eae470c6d0a3e20c411250aed5949607d420040937ac7aa01bbac0333d10fa68b5a9323e3832ece5107b57bff37b37e699611b2cf9906c753660eba300ad5027a694b3bb56aa2fdc28b161c9c4aa8e3e35dd46d0101010073504f4c59474f4e28282d3130312e3630313536332034382e35363838362c2d3130312e3630313536332034382e34333034342c2d3130312e3935333132352034382e34333034342c2d3130312e3935333132352034382e35363838362c2d3130312e3630313536332034382e3536383836292940c6d3ac0be14837a899218020c6d492fded6a9569832094f7b44232d7337fdbc108e7f8a3925fb7fd9ef39f91a95cd8eba9c82237c6e8a165b0b4a3872cfa15cb000000003a9800640000000036b000650b6164666173657766616573'
+    transaction_bytes = unhexlify(transaction)
+    print(validateTransaction(transaction_bytes))
+    

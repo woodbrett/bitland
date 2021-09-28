@@ -86,6 +86,9 @@ def authenticatePeer(ip_address, token):
     if queryPeer(ip_address=ip_address).get('peer_status') == 'no peer found':
         return False
     
+    elif queryPeer(ip_address=ip_address).get('status') != 'connected':
+        return False
+    
     elif queryPeer(ip_address=ip_address).get('peer_auth_key') == token:
         return True
     

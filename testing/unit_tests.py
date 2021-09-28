@@ -15,6 +15,7 @@ from utilities.gis_functions import (
     queryPolygonRules
     )
 from node.networking.peering_functions import updatePeer
+from utilities.difficulty import getRetarget, getBitsFromTarget
 
 
 ######### TRANSACTION TESTS #########
@@ -112,6 +113,22 @@ def validate_peer_functions():
     return True
 
 
+######### DIFFICULTY TESTS #########
+
+def validate_difficulty_retarget():
+        
+    if getBitsFromTarget(getRetarget(1000, 2000, 1000, 0x1d0ffff0.to_bytes(4,byteorder='big'))) != "0x1d0ffff0":
+        return False
+    if getBitsFromTarget(getRetarget(1000, 5001, 1000, 0x1d0ffff0.to_bytes(4,byteorder='big'))) != getBitsFromTarget(getRetarget(1000, 10000, 1000, 0x1d0ffff0.to_bytes(4,byteorder='big'))):
+        return False
+    if getBitsFromTarget(getRetarget(1000, 1249, 1000, 0x1d0ffff0.to_bytes(4,byteorder='big'))) != getBitsFromTarget(getRetarget(1000, 1001, 1000, 0x1d0ffff0.to_bytes(4,byteorder='big'))):
+        return False
+    if getBitsFromTarget(getRetarget(1000, 2001, 1000, 0x1d0ffff0.to_bytes(4,byteorder='big'))) != "0x1d0ffff0":
+        return False
+
+    return True
+
+
 if __name__ == '__main__':
     
     ######### TRANSACTION TESTS #########
@@ -127,6 +144,8 @@ if __name__ == '__main__':
     ######### PEER TESTS #########
     print(validate_peer_functions())
     
+    ######### DIFFICULTY TESTS #########    
+    print(validate_difficulty_retarget())
     
     
     

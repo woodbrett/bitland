@@ -21,9 +21,6 @@ def getBitsFromTarget(target):
     bitlength = target.bit_length() + 1 #look on bitcoin cpp for info
     size = (bitlength + 7) / 8
     size = int(size)
-    #print(type(target))
-    #print(type(size))
-    #print(size)
     value = target >> 8 * (size - 3)
     value |= size << 24 #shift size 24 bits to the left, and taks those on the front of compact
     
@@ -52,45 +49,49 @@ def getBitsCurrentBlock():
         bits = starting_bits #0x1d00ffff
         return bits
         #return hex(bits)
-        
+    
+    prior_bits_bytes = getBlock(block_id=previous_block).get('bits').to_bytes(4, byteorder = 'big')
+    
     if (previous_block) % difficulty_adjustment_blocks != 0:
-        bits = getPriorBlock()[1]
+        #bits = getPriorBlock()[1]
+        bits_bytes = prior_bits_bytes
         
     else:
-        previous_target = getTargetFromBits(bits)
-        adjustment = getDifficultyAdjustment( previous_block - 2016, previous_block)
-        bits = previous_target * adjustment
+        #previous_target = int.from_bytes(getTargetFromBits(prior_bits_bytes), 'big')
+        start_bitcoin_height = getBlock(previous_block - 2015).get('bitcoin_block_height')
+        end_bitcoin_height = getBlock(previous_block).get('bitcoin_block_height')
+        new_target = getRetarget( start_bitcoin_height, end_bitcoin_height, target_timespan_bitcoin_blocks, prior_bits_bytes)
+        bits_bytes = int(getBitsFromTarget(new_target),0).to_bytes(4,'big')
     
-    bits_bytes = bits.to_bytes(4, byteorder = 'big')
+    #bits_bytes = bits.to_bytes(4, byteorder = 'big')
     
     return bits_bytes
 
 
-def getDifficultyAdjustment(start_block, end_block):
+def getRetarget(start_bitcoin_height, end_bitcoin_height, target_bitcoin_blocks, prior_bits):
 #difficulty is tied to trying to make the blocks line up with bitcoin blocks
     
-    block_timespan = getBlock(end_block).get('bitcoin_block_height') - getBlock(start_block).get('bitcoin_block_height')
-    adjustment = target_timespan_bitcoin_blocks / block_timespan
+    block_timespan = end_bitcoin_height - start_bitcoin_height
+    adjustment = block_timespan / target_bitcoin_blocks 
     
-    return adjustment
+    #like bitcoin, max difficulty change is factor of 4
+    adjustment = max(min(adjustment,4),0.25)
+    
+    previous_target = int.from_bytes(getTargetFromBits(prior_bits), 'big')
+    
+    new_target = round(previous_target*adjustment)
+    max_target = int.from_bytes(getTargetFromBits(starting_bits), 'big')
+    
+    #like bitcoin, target is not allowed to exceed the initial one
+    new_target = min(new_target,max_target)
+    
+    return new_target
 
 
 if __name__ == '__main__':
     
-    difficulty = '0000000ffff00000000000000000000000000000000000000000000000000000'
-    dif_int = unhexlify(difficulty)
-    print(dif_int)
-    
-    print(getBitsFromTarget(431352564656180951890503621515583861376174379817186625378204369551360))
-    
-    bits = 0x1d00ffff
-    bits_bytes = bits.to_bytes(4, byteorder = 'big')
-    
-    print(getTargetFromBits(bits_bytes))
-        
     print(getBitsCurrentBlock())
     
-    print(0 % 2016 != 0)
-    
-    
-    
+    print(getRetarget(1000, 2000, 1000, 0x1d00ffff.to_bytes(4,byteorder='big')))
+
+

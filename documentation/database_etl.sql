@@ -155,6 +155,7 @@ create schema bitcoin;
 
 drop table if exists bitcoin.recent_transactions;
 create table bitcoin.recent_transactions(bitcoin_block_height int, address varchar, value float8, txid varchar);
+create index on bitcoin.recent_transactions (bitcoin_block_height);
 
 drop table if exists bitcoin.relevant_contingency_transaction;
 create table bitcoin.relevant_contingency_transaction (bitcoin_block_height int, address varchar, value float8, txid varchar, recorded_bitland_block_height int);
@@ -573,10 +574,10 @@ alter table bitland.landbase_enum drop column y2;
 alter table bitland.landbase_enum drop column y3;
 alter table bitland.landbase_enum drop column y4;
 
+
 --
 --VIEWS AND FUNCTIONS
 --
-
 
 drop function if exists bitland.rollback_block (rollback_block_id int);
 create function bitland.rollback_block (rollback_block_id int)
@@ -741,7 +742,7 @@ begin
 
 	with expired as (
 	select c.id
-	from bitland.claim c
+	from bitland.active_claim c
 	join bitland.output_parcel op on c.claim_action_output_parcel_id = op.id
 	  and c.status in ('OPEN')
 	join bitland.vw_contingency_status vcs on op.transaction_id = vcs.id
