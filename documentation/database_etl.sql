@@ -574,10 +574,10 @@ alter table bitland.landbase_enum drop column y2;
 alter table bitland.landbase_enum drop column y3;
 alter table bitland.landbase_enum drop column y4;
 
+
 --
 --VIEWS AND FUNCTIONS
 --
-
 
 drop function if exists bitland.rollback_block (rollback_block_id int);
 create function bitland.rollback_block (rollback_block_id int)
@@ -742,7 +742,7 @@ begin
 
 	with expired as (
 	select c.id
-	from bitland.claim c
+	from bitland.active_claim c
 	join bitland.output_parcel op on c.claim_action_output_parcel_id = op.id
 	  and c.status in ('OPEN')
 	join bitland.vw_contingency_status vcs on op.transaction_id = vcs.id
