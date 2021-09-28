@@ -3,9 +3,10 @@
 1. install postgres and postgis and create a database called "bitland"
 2. run the etl in "database_etl.sql" file
 3. install the python modules in the pip file
-4. store the database.ini file on your computer and reference the path in the "system_variables.py" file
-5. configure other system variables in the "system_variables.py" file
-6. load initial peer(s) into networking.peer table
+4. store the database.ini file on your computer and modify the settings for your database
+5. reference the path in the "system_variables.py" file
+6. configure other system variables in the "system_variables.py" file
+7. load initial peer(s) into networking.peer table
 
 
 ***EXAMPLE system_variables

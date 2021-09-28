@@ -26,6 +26,10 @@ contingency_validation_blocks = 10
 
 claim_required_percentage_increase = 0.5
 claim_blocks = 52500  # number of blocks from when a claim is made until it wins the land, 1 years
+
+max_miner_fee_blocks = 12960
+max_transfer_fee_blocks = 12960
+
 max_headers_send = 2000
 
 bitland_version = 1

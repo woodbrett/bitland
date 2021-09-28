@@ -176,6 +176,10 @@ def validateTransaction2(transaction, block_height, block_header):
     inputs = transaction[1]
     outputs = transaction[2]
     miner_fee_sats = int.from_bytes(transaction[3][0],'big')
+    miner_fee_blocks = int.from_bytes(transaction[3][1],'big')
+    transfer_fee_sats = int.from_bytes(transaction[3][2],'big')
+    transfer_fee_blocks = int.from_bytes(transaction[3][3],'big')
+    transfer_fee_address = hexlify(transaction[3][3])
     valid_transaction = True
     failure_reason = ''    
     
@@ -209,10 +213,11 @@ def validateTransaction2(transaction, block_height, block_header):
             print('validating transaction: valid outputs')
                 
         #UPDATE validate contingency values
-        #miner fee >= 0
-        #miner fee blocks <=12096
-        #transfer fee >= 0
-        #transfer fee blocks <=12096
+        valid_contingencies = validateContingencies(miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address)
+        if valid_contingencies[0] == False:
+            raise Exception(valid_contingencies[0], valid_contingencies[1])
+        else:
+            print('validating transaction: valid contingencies')
             
     except Exception as inst: 
         valid_transaction, failure_reason = inst.args  
@@ -223,6 +228,42 @@ def validateTransaction2(transaction, block_height, block_header):
         print('validating transaction: ' + failure_reason)
     
     return valid_transaction, failure_reason
+
+
+def validateContingencies(miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address):
+
+    valid_contingencies = True
+    failure_reason = ''
+
+    #miner fee >= 0
+    if (valid_contingencies == True):
+        valid_contingencies = miner_fee_sats >= 0
+        if(valid_contingencies == False):
+            failure_reason = 'invalid miner fee sats'    
+
+    #miner fee blocks <=12096
+    if (valid_contingencies == True):
+        #print(max_miner_fee_blocks)
+        #print(miner_fee_blocks <= max_miner_fee_blocks)
+        valid_contingencies = (miner_fee_blocks >= 0 and miner_fee_blocks <= max_miner_fee_blocks)
+        if(valid_contingencies == False):
+            failure_reason = 'invalid miner fee blocks'    
+            
+    #transfer fee >= 0
+    if (valid_contingencies == True):
+        valid_contingencies = transfer_fee_sats >= 0
+        if(valid_contingencies == False):
+            failure_reason = 'transfer miner fee sats'    
+            
+    #transfer fee blocks <=12096
+    if (valid_contingencies == True):
+        valid_contingencies = (miner_fee_blocks >= 0 and miner_fee_blocks <= max_transfer_fee_blocks)
+        if(valid_contingencies == False):
+            failure_reason = 'invalid transfer fee blocks'    
+            
+    #UPDATE validate the transfer fee address to ensure it is a valid bitcoin address
+    
+    return valid_contingencies, failure_reason
 
 
 def validateTransactionOutputs(outputs):
@@ -644,3 +685,11 @@ def addTransactionToMempool(transaction):
     
     return transaction_mempool_id
 
+
+
+if __name__ == '__main__':
+
+    transaction = '00020101e0be7b649897a44097b1e4deea4e4eae470c6d0a3e20c411250aed5949607d420040299760fd0fd2234fee6a341ecfccfe7bd4612d7c36c52b14d9bb3da717bdeb2279ccb715263463ecc47f480faabe830ac106221a96c83994596ba0a3f0b8ad570101010073504f4c59474f4e28282d3130312e3630313536332034382e35363838362c2d3130312e3630313536332034382e34333034342c2d3130312e3935333132352034382e34333034342c2d3130312e3935333132352034382e35363838362c2d3130312e3630313536332034382e3536383836292940c6d3ac0be14837a899218020c6d492fded6a9569832094f7b44232d7337fdbc108e7f8a3925fb7fd9ef39f91a95cd8eba9c82237c6e8a165b0b4a3872cfa15cb000000003a983a980000000036b03a980b6164666173657766616573'
+    transaction_bytes = unhexlify(transaction)
+    print(validateTransaction(transaction_bytes))
+    

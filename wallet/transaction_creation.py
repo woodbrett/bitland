@@ -71,7 +71,60 @@ def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_pr
     return serialized_transaction
 
 
-def createTransaction1(transaction_version, inputs, outputs, contingencies):
+def createSimpleTransactionTransferContingencies(input_transaction_hash, input_vout, input_private_key, input_spend_type, output_public_key, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address):
+    
+    input_transaction = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout)
+    input_public_key = input_transaction.get('pub_key')
+    polygon = input_transaction.get('shape')
+    planet_id = input_transaction.get('planet_id')
+    
+    private_key_encoded = ecdsa.SigningKey.from_string(unhexlify(input_private_key),curve=ecdsa.SECP256k1)
+    public_key_encoded = ecdsa.VerifyingKey.from_string(unhexlify(input_public_key),curve=ecdsa.SECP256k1)
+    
+    public_key_check = private_key_encoded.verifying_key
+    
+    #logic to remove spaces that can happen from copying
+    polygon = polygon.replace(", ","," ) # remove all spaces
+    polygon = polygon.replace(" (","(" ) # remove all spaces
+    polygon_bytes = polygon.encode('utf-8')
+    
+    signature = private_key_encoded.sign(polygon_bytes)
+    
+    transaction_version = 2
+    transaction_version = transaction_version.to_bytes(2, byteorder = 'big')
+        
+    #input 1 - standard
+    type = input_spend_type 
+    transaction_hash = input_transaction_hash
+    vout = input_vout
+    signature = signature
+    input_1 = [type.to_bytes(1, byteorder = 'big'), unhexlify(transaction_hash), vout.to_bytes(1, byteorder = 'big'), signature]
+
+    inputs = [input_1]
+    
+    #output 1 - standard
+    type = 1
+    planet_id = planet_id
+    coordinates = polygon
+    public_key = output_public_key
+    output_1 = [type.to_bytes(1, byteorder = 'big'), planet_id.to_bytes(1, byteorder = 'big'), coordinates.encode('utf-8'), unhexlify(public_key)]
+
+    outputs = [output_1]
+
+    #contingencies
+    contingencies = [miner_fee_sats.to_bytes(6, byteorder = 'big'),
+                     miner_fee_blocks.to_bytes(2, byteorder = 'big'),
+                     transfer_fee_sats.to_bytes(6, byteorder = 'big'),
+                     transfer_fee_blocks.to_bytes(2, byteorder = 'big'),
+                     transfer_fee_address.encode('utf-8')
+                     ]
+
+    serialized_transaction = serializeTransaction(transaction_version, inputs, outputs, contingencies)
+    
+    return serialized_transaction
+
+
+def createTransactionComplex(transaction_version, inputs, outputs, contingencies):
     #inputs [input_version, input_transaction_hash, input_vout, input_private_key, input_public_key]
     #outputs [output_version, planet, shape, public_script (address)]
     #contingencies [miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address]
