@@ -174,7 +174,7 @@ def miningProcess():
     start_nonce = 0
     bitcoin_hash = getBestBlockHash()
     bitcoin_height = getBlockHeightFromHash(bitcoin_hash)
-    miner_bitcoin_address = '6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b7773'
+    miner_bitcoin_address = '3N6E2nprHmWCk39ibj3nwMSF5J34eRupNb'
     
     version_bytes = version.to_bytes(2, byteorder = 'big')
     prev_block_bytes = getPrevBlockGuarded()
@@ -184,7 +184,7 @@ def miningProcess():
     bitcoin_hash_bytes = unhexlify(bitcoin_hash)
     bitcoin_height_bytes = bitcoin_height.to_bytes(4, byteorder = 'big')
     bitcoin_last_64_mrkl_bytes = calculateMerkleRoot64BitcoinBlocks(block_height=bitcoin_height)
-    miner_bitcoin_address_bytes = unhexlify(miner_bitcoin_address)
+    miner_bitcoin_address_bytes = miner_bitcoin_address.encode('utf-8')
     start_nonce_bytes = start_nonce.to_bytes(4, byteorder = 'big')    
     
     current_block_height = getMaxBlockHeight()

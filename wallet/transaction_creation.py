@@ -71,7 +71,7 @@ def createSimpleTransactionTransfer(input_transaction_hash, input_vout, input_pr
     return serialized_transaction
 
 
-def createSimpleTransactionTransferContingencies(input_transaction_hash, input_vout, input_private_key, input_spend_type, output_public_key, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address):
+def createSimpleTransactionTransferContingencies(input_transaction_hash, input_vout, input_private_key, input_spend_type, output_public_key, miner_fee_sats, miner_fee_blocks, transfer_fee_sats, transfer_fee_blocks, transfer_fee_address_utf8):
     
     input_transaction = getUtxo(transaction_hash=input_transaction_hash, vout=input_vout)
     input_public_key = input_transaction.get('pub_key')
@@ -111,12 +111,14 @@ def createSimpleTransactionTransferContingencies(input_transaction_hash, input_v
 
     outputs = [output_1]
 
+    transfer_fee_bytes = transfer_fee_address_utf8.encode('utf-8')
+
     #contingencies
     contingencies = [miner_fee_sats.to_bytes(6, byteorder = 'big'),
                      miner_fee_blocks.to_bytes(2, byteorder = 'big'),
                      transfer_fee_sats.to_bytes(6, byteorder = 'big'),
                      transfer_fee_blocks.to_bytes(2, byteorder = 'big'),
-                     transfer_fee_address.encode('utf-8')
+                     transfer_fee_bytes
                      ]
 
     serialized_transaction = serializeTransaction(transaction_version, inputs, outputs, contingencies)
