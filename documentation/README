@@ -57,8 +57,21 @@ initial_synch_var = False
 
 ***MORE DETAILED INSTRUCTIONS FOR NON TECHNICAL WINDOWS USERS
 1. download postgres 13.4 from https://www.enterprisedb.com/downloads/postgres-postgresql-downloads
+    1.1 For Linux - $sudo apt install postgresql
 2. when installing postgres, there is a step in the installer to add extensions, add POSTGIS extension here
 3. if you miss the extension step during postgres installation you can just install it from here https://www.enterprisedb.com/downloads/postgis
+    3.1 For Linux - PostgreSQL 13
+        sudo su -c 'echo "deb [arch=amd64] https://apt.enterprisedb.com/$(lsb_release -cs)-edb/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/edb-$(lsb_release -cs).list'
+        # Replace '<USERNAME>' and '<PASSWORD>' below with your username and password for the EDB repositories. Visit https://www.enterprisedb.com/user to get your username and password
+        sudo su -c 'echo "machine apt.enterprisedb.com login <USERNAME> password <PASSWORD>" > /etc/apt/auth.conf.d/edb.conf'
+        # Add support for secure APT repositories
+        sudo apt-get -y install apt-transport-https
+        # Add the EDB signing key
+        sudo wget -q -O - https://apt.enterprisedb.com/edb-deb.gpg.key  | sudo apt-key add -
+        # Update the repository meta data
+        sudo apt-get update
+        # Install selected packages
+        sudo apt-get -y install postgresql-13-postgis-3 
 4. download dbeaver community edition to use postgres https://dbeaver.io/download/
 5. create database called "bitland". the second way in this tutorial is pretty good. https://phoenixnap.com/kb/postgres-create-database. just use psql window and hit enter 4 times, type in your password (from when you installed postgres), then type "create database bitland;" and hit enter
 6. connect your dbeaver to this database by hitting the "new database connection" button in upper left then choose the postgresql icon, then your parameters should be host = localhost, port = 5432, database = postgres, username and password should be the ones you created when you installed postgres 
