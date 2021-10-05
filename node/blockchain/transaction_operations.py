@@ -21,7 +21,7 @@ import requests
 from node.blockchain.contingency_operations import *
 from utilities.hashing import calculateTransactionHash
 from utilities.bitcoin.bitcoin_requests import getCurrentBitcoinBlockHeight,\
-    validateBitcoinAddressFromBitcoinNode
+    getValidateBitcoinAddress
 from node.blockchain.header_serialization import deserializeBlockHeader
 from node.information.blocks import getMaxBlockHeight
 from node.information.mempool import getMempoolInformation
@@ -265,7 +265,7 @@ def validateContingencies(miner_fee_sats, miner_fee_blocks, transfer_fee_sats, t
     #UPDATE validate the transfer fee address to ensure it is a valid bitcoin address
     if (valid_contingencies == True):
         transfer_fee_address_utf8 = unhexlify(transfer_fee_address).decode('utf-8')
-        valid_contingencies = validateBitcoinAddressFromBitcoinNode(transfer_fee_address_utf8)
+        valid_contingencies = getValidateBitcoinAddress(transfer_fee_address_utf8)
         if(valid_contingencies == False):
             failure_reason = 'invalid transfer fee address'    
     

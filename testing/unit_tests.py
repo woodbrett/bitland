@@ -10,12 +10,20 @@ from node.blockchain.header_serialization import (
     deserializeBlockHeader
     )
 from _datetime import datetime
-from utilities.bitcoin.bitcoin_requests import validateBitcoinAddressFromBitcoinNode
 from utilities.gis_functions import (
     queryPolygonRules
     )
 from node.networking.peering_functions import updatePeer
 from utilities.difficulty import getRetarget, getBitsFromTarget
+from utilities.bitcoin.bitcoin_requests import validateBitcoinAddress,\
+    getBestBlockHash
+from utilities.bitcoin.bitcoin_requests_node import getOutputListBlockNode,\
+    getLastXBitcoinHashesNode, getCurrentBitcoinBlockHeightNode,\
+    getBestBlockHashNode, getBlockHeightFromHashNode, getBlockHashFromHeightNode
+from utilities.bitcoin.bitcoin_requests_external import getOutputListBlockExternal,\
+    getLastXBitcoinHashesExternal, getCurrentBitcoinBlockHeightExternal,\
+    getBestBlockHashExternal, getBlockHeightFromHashExternal,\
+    getBlockHashFromHeightExternal
 
 
 ######### TRANSACTION TESTS #########
@@ -95,9 +103,9 @@ def validate_header_serialized_deserialized():
 
 def validate_bitcoin_addresses():
     
-    if validateBitcoinAddressFromBitcoinNode('bc1qamgmd4s53pq5y0ejlnps580yujpvyhvanvxc2y') == False:
+    if validateBitcoinAddress('bc1qamgmd4s53pq5y0ejlnps580yujpvyhvanvxc2y') == False:
         return False
-    if validateBitcoinAddressFromBitcoinNode('bc1qamgmd4s53pq5y0ejlnaps580yujpvyhvanvx2y') == True:
+    if validateBitcoinAddress('bc1qamgmd4s53pq5y0ejlnaps580yujpvyhvanvx2y') == True:
         return False
 
     return True
@@ -129,23 +137,57 @@ def validate_difficulty_retarget():
     return True
 
 
+######### BITCOIN BLOCKCHAIN TESTS #########
+
+def test_node_vs_external_results():
+    
+    #address & value list for a given block
+    external_output_list = getOutputListBlockExternal(200000)
+    node_output_list = getOutputListBlockNode(200000)
+    if external_output_list != node_output_list:
+        return False
+    
+    #last x blocks
+    if getLastXBitcoinHashesNode(64, 200000) != getLastXBitcoinHashesExternal(64, 200000):
+        return False
+    
+    if getCurrentBitcoinBlockHeightExternal() != getCurrentBitcoinBlockHeightNode():
+        return False
+    
+    if getBestBlockHashExternal() != getBestBlockHashNode():
+        return False
+    
+    block_hash = getBestBlockHash()
+    if getBlockHeightFromHashExternal(block_hash) != getBlockHeightFromHashNode(block_hash):
+        return False
+    
+    if getBlockHashFromHeightExternal(200000) != getBlockHashFromHeightNode(200000):
+        return False
+
+    #validateBitcoinAddressExternal(address_string):
+    
+    return True
+    
+
 if __name__ == '__main__':
     
     ######### TRANSACTION TESTS #########
-    print(validate_sub_six_digits_passes())
-    print(validate_more_six_digits_fails())
+    print(str(validate_sub_six_digits_passes()) + ": sub six digits")
+    print(str(validate_more_six_digits_fails()) + ": more six digits")
     
     ######### SERIALIZATION TESTS #########
-    print(validate_header_serialized_deserialized())
+    print(str(validate_header_serialized_deserialized()) + ": header deserialized")
     
     ######### VALIDATION TESTS #########
-    print(validate_bitcoin_addresses())
+    print(str(validate_bitcoin_addresses()) + ": validate bitcoin address")
     
     ######### PEER TESTS #########
-    print(validate_peer_functions())
+    print(str(validate_peer_functions()) + ": validate peer functions")
     
     ######### DIFFICULTY TESTS #########    
     print(validate_difficulty_retarget())
     
+    ######### BITCOIN BLOCKCHAIN TESTS #########
+    print(test_node_vs_external_results())
     
     
