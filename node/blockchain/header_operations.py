@@ -229,6 +229,7 @@ def calculateMerkleRoot64BitcoinBlocks(block_height=None):
     last_64_hashes = getLastXBitcoinHashes(64, block_height)
     print(last_64_hashes)
     
+    #UPDATE sloppy workaround to solve issue when newly synching node is using external bitcoin node it needs to get the first 64 blocks
     if last_64_hashes == None:
         synchWithBitcoin(block_height-64, block_height)
         last_64_hashes = getLastXBitcoinHashes(64, block_height)

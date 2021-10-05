@@ -6,7 +6,6 @@ Created on Oct 1, 2021
 
 
 from datetime import datetime
-from bitcoin.core import CBlockHeader
 
 from utilities.bitcoin_parser.utils import decode_uint32, format_hash
 

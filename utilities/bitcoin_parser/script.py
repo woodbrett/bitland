@@ -4,7 +4,6 @@ Created on Oct 1, 2021
 @author: admin
 '''
 
-from bitcoin.core.script import *
 from binascii import b2a_hex
 
 
