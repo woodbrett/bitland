@@ -5,7 +5,7 @@ Created on Oct 1, 2021
 '''
 
 from binascii import b2a_hex
-
+from bitcoin.core.script import *
 
 def is_public_key(hex_data):
     """Given a bytes string, returns whether its is probably a bitcoin

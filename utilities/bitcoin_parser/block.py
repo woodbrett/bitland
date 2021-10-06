@@ -105,18 +105,11 @@ if __name__ == '__main__':
     #1 00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048
     #x 0000000000000000000976cd2fec95bfaf889a7c3d434f9520b30db26f25c3fc
 
-    hash_address = get_block_hash_by_height_url.replace(':height', str(200000))
+    hash_address = get_block_hash_by_height_url.replace(':height', str(697386))
     hash = requests.get(hash_address).text
 
     block_address = get_block_by_hash_url.replace(':hash', hash)
     block = requests.get(block_address).content
-    #print(block_raw[0:100])
-    #block = Block(block_raw)
-    
-    #hash = '0000000000000000000976cd2fec95bfaf889a7c3d434f9520b30db26f25c3fc'
-    #address = get_block_by_hash_url.replace(':hash', hash)
-    #print(address)
-    #block = requests.get(address).content
     print(block[0:100])
     
     print(hexlify(block[0:80]))

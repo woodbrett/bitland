@@ -54,8 +54,9 @@ def processBitcoinBlock(block_height):
             
             #update the block table keeping track of which blocks have been added
             block_hash = getBlockHashFromHeight(block_height)
+            check_hex = unhexlify(block_hash)
+            
             insertBitcoinBlockDb(block_height, block_hash)
-        
             added_block = True
         
         except:
@@ -178,10 +179,7 @@ def synchWithBitcoin(start_bitcoin_height=0,end_bitcoin_height=0):
     print(blocks)
     block_heights = []
     for i in range(0,len(blocks)):
-        print('adding bitcoin block ' + str(i + start_bitcoin_height))
         block_heights.append(blocks[i][0])
-    
-    print(block_heights)    
     
     for i in range(start_bitcoin_height,end_bitcoin_height+1):
         if i not in block_heights:

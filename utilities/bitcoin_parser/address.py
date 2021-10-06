@@ -4,6 +4,8 @@ Created on Oct 1, 2021
 @author: admin
 '''
 
+from bitcoin import base58
+from bitcoin.bech32 import CBech32Data
 from utilities.bitcoin_parser.utils import btc_ripemd160, double_sha256
 
 

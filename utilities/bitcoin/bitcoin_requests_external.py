@@ -143,29 +143,5 @@ def getOutputListBlockExternal(block_height):
 
 if __name__ == '__main__':
     
-    best_hash = getBestBlockHashExternal()
-    print(getBlockHeightFromHashExternal(best_hash))
-    
-    #x = getOutputListBlockExternal(200000)
-    
-    '''
-    external = getOutputListBlockExternal(200000)
-    #820
-    
-    node = getOutputListBlockNode(200000)
-    #820
-    
-    for i in range(0,max(len(external),len(node))):
-        print(str(i))
-        print("external: " + str(external[i]))
-        print("node: " + str(node[i]))
-        print(external[i][0] == node[i][0])
-        print(external[i][1] == node[i][1])
-    '''
-    
-    #last x blocks
-    print(getLastXBitcoinHashesNode(64, 703509))
-    print(getLastXBitcoinHashesExternal(64, 703509))
-        
-    
-    
+    external = getOutputListBlockExternal(697386)
+    print(len(external))
