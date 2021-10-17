@@ -18,6 +18,7 @@ from utilities.bitcoin.bitcoin_requests_node import getOutputListBlockNode,\
     getLastXBitcoinHashesNode
 import math
 from utilities.bitcoin.bitcoin_database_information import getLastXBitcoinBlocksDb
+import time
 
 
 def getCurrentBitcoinBlockHeightExternal():
@@ -29,9 +30,15 @@ def getCurrentBitcoinBlockHeightExternal():
 def getBlockHeightFromHashExternal(bitcoin_hash):
     
     url = get_block_height_by_hash_url.replace(':hash', str(bitcoin_hash))
-    block_info = requests.get(url).json()
     
-    return block_info.get('height')
+    #UPDATE brutal solution, try it five times until it gets a response since sometimes it fails
+    for i in range(0,5):        
+        block_info = requests.get(url).json()
+        if block_info.get('height') != None:
+            return block_info.get('height')
+        time.sleep(5)
+        
+    return None
 
 
 def getBlockHashFromHeightExternal(block_height):
@@ -72,6 +79,7 @@ def getLastXBitcoinHashesExternal(x, block_height=None):
     '''
     
     blocks = getLastXBitcoinBlocksDb(x, block_height)
+    print(block_height)
     
     '''
     if len(blocks) != x and block_height != None:
@@ -142,6 +150,8 @@ def getOutputListBlockExternal(block_height):
 
 
 if __name__ == '__main__':
+    
+    getLastXBitcoinHashesExternal(64)
     
     external = getOutputListBlockExternal(697386)
     print(len(external))

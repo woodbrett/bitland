@@ -225,7 +225,7 @@ def checkPeerBlocks(use_threading=True):
         peer_response = peer_heights[i].get('response')
         
         #UPDATE handle the errors from peers more elegantly
-        if peer_response == 'error calling peer':
+        if peer_response == 'error calling peer' or peer_response.get('message') == 'Not authenticated as peer':
             None
         
         elif peer_response.get('block_height') > max_height:
@@ -251,6 +251,8 @@ def checkPeerBlocks(use_threading=True):
 
     
 if __name__ == '__main__':
+    
+    checkPeerBlocks(use_threading=False)
 
     blocks = ['0001000000021aca22a80f725bca872fef98726397be1f5085c7e921135e723d21989fc8ac827aa27a1e1fd8d05e04487bd5613733c83bb061dc86986a80a8e2a23b0061258aab1d0ffff00000000000000000000ce1fbae383e598cb568c0624f3d9e3f715fa5af2ccf9c000aa44c3f162e0fd9d60e48d5728374591d8c829eb4db94acb005eb6368bbb99fe4ce73002a6263317132766c6130326b7673736c796664673374706477743677686d667273646b633764306b6b77730000000000000e6cb8f3000100010001006e504f4c59474f4e28282d39332e3531353632352034352e32313133322c2d39332e3531353632352034352e30383131382c2d39332e3836373138382034352e30383131382c2d39332e3836373138382034352e32313133322c2d39332e3531353632352034352e32313133322929405d90958733c80d242e64ac0076ec4af580664c8a513c3da8ed7622d3a0763630bacf1961ce4d6ef1063d27c5e5c7b3e0d6f6f83bd36960c9335f0347c2fd336c0000000000000000000000000000000000']
 
