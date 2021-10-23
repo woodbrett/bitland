@@ -6,5 +6,5 @@ python -m pip install base58
 python -m pip install ecdsa
 python -m pip install python-bitcoinrpc
 python -m pip install flask_httpauth
-python -m pip install bitcoin
 python -m pip install bitcoinlib
+python -m pip install python-bitcoinlib
