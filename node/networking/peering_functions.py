@@ -36,6 +36,8 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
 
     #UPDATE to check for version
     
+    #UPDATE to check for mainnet / testnet
+    
     #UPDATE make logic smoother
     elif peer.get('peer_status') != 'no peer found':
         if peer.get('status') == 'local_contact_external_accepted':
