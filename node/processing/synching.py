@@ -72,10 +72,12 @@ def run_node(initial_synch=False):
         print('synching bitcoin')
         synchBitcoin()
         
+        pingPeers(peer_types=['connected'])
+        
         time.sleep(120)
 
 
-def pingPeers():
+def pingPeers(peer_types=['connected','unpeered','offline',None]):
 
     ping = messageAllKnownPeers('/peer/peering/ping', rest_type='get',peer_types=['connected','unpeered','offline',None])
     

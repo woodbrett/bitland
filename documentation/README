@@ -24,15 +24,22 @@ global transaction_validation_url
 global rpc_user
 global rpc_password 
 global node_url
-global run_node_var
-global run_mining_var
-global initial_synch_var
+global get_block_by_hash_url
+global bitcoin_source
+global get_block_hash_by_height_url
+global block_hash_tip_url
+global last_ten_block_hashes_url
+global get_block_height_by_hash_url
 
-
-#external bitcoin information
+#bitcoin information
 block_height_url = 'https://blockstream.info/api/blocks/tip/height'
 address_search_url = 'https://blockstream.info/api/address/:address/txs'
 transaction_validation_url = 'https://blockstream.info/api/address/:address'
+get_block_by_hash_url = 'https://blockstream.info/api/block/:hash/raw'
+get_block_hash_by_height_url = 'https://blockstream.info/api/block-height/:height'
+block_hash_tip_url = 'https://blockstream.info/api/blocks/tip/hash'
+last_ten_block_hashes_url = 'https://blockstream.info/api/blocks/:height'
+get_block_height_by_hash_url = 'https://blockstream.info/api/block/:hash'
 
 #other
 max_peer_count = 5
@@ -52,7 +59,13 @@ node_url = '192.168.86.34:8332'
 #running node
 run_node_var = True
 run_mining_var = True
-initial_synch_var = False
+initial_synch_var = True
+bitcoin_source = 'blockstream_api' #local_node or blockstream_api
+
+
+
+
+
 
 
 ***MORE DETAILED INSTRUCTIONS FOR NON TECHNICAL WINDOWS USERS

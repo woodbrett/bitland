@@ -19,7 +19,6 @@ from utilities.hashing import *
 from datetime import datetime, timezone
 import time
 from utilities.difficulty import getTargetFromBits
-from utilities.bitcoin.bitcoin_requests import *
 from node.blockchain.global_variables import *
 from node.blockchain.header_serialization import serializeBlockHeaderUtf8
 from node.information.blocks import (
@@ -29,6 +28,10 @@ from node.information.blocks import (
     getBlock,
     getMedianBlockTime11
     )
+from utilities.bitcoin.bitcoin_requests import getBlockHeightFromHash,\
+    getLastXBitcoinHashes, getCurrentBitcoinBlockHeight,\
+    getValidateBitcoinAddress
+from utilities.bitcoin.bitcoin_transactions import synchWithBitcoin
 
 def validateVer(version):
     
@@ -143,7 +146,7 @@ def validateBits(bits):
 def validateBitcoinAddress(address):
 
     address_utf8 = address.decode('utf-8')
-    is_valid = validateBitcoinAddressFromBitcoinNode(address_utf8)
+    is_valid = getValidateBitcoinAddress(address_utf8)
 
     return is_valid
 
@@ -222,9 +225,16 @@ def getHeaders(start_hash,end_hash):
 
 def calculateMerkleRoot64BitcoinBlocks(block_height=None):
     
+    print(block_height)
     last_64_hashes = getLastXBitcoinHashes(64, block_height)
     print(last_64_hashes)
     
+    #UPDATE sloppy workaround to solve issue when newly synching node is using external bitcoin node it needs to get the first 64 blocks
+    if last_64_hashes == None:
+        synchWithBitcoin(block_height-64, block_height)
+        last_64_hashes = getLastXBitcoinHashes(64, block_height)
+        print(last_64_hashes)
+        
     last_64_hashes_bytes = []
     for i in range(0,len(last_64_hashes)):
         last_64_hashes_bytes.append(unhexlify(last_64_hashes[i]))

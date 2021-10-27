@@ -11,58 +11,52 @@ from system_variables import (
     rpc_password,
     node_url 
     )
+from utilities.bitcoin.bitcoin_requests import getOutputListBlock,\
+    getBlockHashFromHeight, getCurrentBitcoinBlockHeight
 
 #UPDATE add in transaction id
-def spendByAddressBitcoinBlock(bitcoin_block, bitcoin_height, insert_into_db=False):
+def spendByAddressBitcoinBlock(output_list, bitcoin_height, insert_into_db=False):
     
-    transactions = bitcoin_block.get('tx')
-    address_value_array = []
     insert_statement = "insert into bitcoin.recent_transactions( bitcoin_block_height, address, value, txid ) values " 
     
     counter = 0
-    for i in range(0,len(transactions)):
-        transaction_vout = transactions[i].get('vout')
-        txid = transactions[i].get('txid')
-        for j in range(0,len(transaction_vout)):
-            value = transaction_vout[j].get('value') * 100000000
-            addresses = transaction_vout[j].get('scriptPubKey').get('addresses')
-            if addresses != None and len(addresses) == 1:
-                address = addresses[0]
-                address_value_array.append([address,value])
-                if counter == 0:
-                    insert_statement = insert_statement + "(" + str(bitcoin_height) + "," + "'" + address + "'," + str(value) + ",'" + txid + "') "
-                else:
-                    insert_statement = insert_statement + ",(" + str(bitcoin_height) + "," + "'" + address + "'," + str(value) + ",'" + txid + "') "
-                
-                counter = counter + 1
+    for i in range(0, len(output_list)):
+        txid = output_list[i][0]
+        address = output_list[i][1]
+        value = output_list[i][2]
+        
+        if counter == 0:
+            insert_statement = insert_statement + "(" + str(bitcoin_height) + "," + "'" + address + "'," + str(value) + ",'" + txid + "') "
+        else:
+            insert_statement = insert_statement + ",(" + str(bitcoin_height) + "," + "'" + address + "'," + str(value) + ",'" + txid + "') "
+        
+        counter = counter + 1
 
     if insert_into_db == True and counter > 0:   
         insertBitcoinTransactionDb(insert_statement)
     
-    return len(address_value_array)
+    return len(output_list)
 
 
 def processBitcoinBlock(block_height):
     
-    rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
-    block_hash = rpc_connection.getblockhash(block_height)
-    
     #have had some problems with fetching the block, so have it try maximum of 5 times
-    
     added_block = False
     i = 0
     
     while added_block == False and i < 5:
     
         try: 
-            block = rpc_connection.getblock(block_hash,2)  
+            output_list = getOutputListBlock(block_height)
         
             #add the indexed transactions for the block
-            spendByAddressBitcoinBlock(block, block_height, insert_into_db=True)
+            spendByAddressBitcoinBlock(output_list, block_height, insert_into_db=True)
             
             #update the block table keeping track of which blocks have been added
+            block_hash = getBlockHashFromHeight(block_height)
+            check_hex = unhexlify(block_hash)
+            
             insertBitcoinBlockDb(block_height, block_hash)
-        
             added_block = True
         
         except:
@@ -97,9 +91,8 @@ def deleteBitcoinBlock(block_height=0,block_hash=''):
 
 
 def getBlockInformationNodeDb(block_height=0):
-
-    rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
-    node_max_height = rpc_connection.getblockcount()
+    
+    node_max_height = getCurrentBitcoinBlockHeight()
     
     if block_height == 0:
         node_block_height = node_max_height
@@ -108,7 +101,7 @@ def getBlockInformationNodeDb(block_height=0):
     else:
         node_block_height = block_height
 
-    node_block_hash = rpc_connection.getblockhash(node_block_height)
+    node_block_hash = getBlockHashFromHeight(node_block_height)
     
     if block_height == 0:
         db_block_height = getMaxBitcoinBlock()
@@ -186,10 +179,7 @@ def synchWithBitcoin(start_bitcoin_height=0,end_bitcoin_height=0):
     print(blocks)
     block_heights = []
     for i in range(0,len(blocks)):
-        print('adding bitcoin block ' + str(i + start_bitcoin_height))
         block_heights.append(blocks[i][0])
-    
-    print(block_heights)    
     
     for i in range(start_bitcoin_height,end_bitcoin_height+1):
         if i not in block_heights:
@@ -298,28 +288,6 @@ def getBitcoinBlockHash(block_height):
     
 if __name__ == '__main__':
     
-    '''
-    rpc_connection = AuthServiceProxy("http://%s:%s@%s"%(rpc_user, rpc_password, node_url))
-    #best_block_hash = rpc_connection.getbestblockhash()
-    block_hash = rpc_connection.getblockhash(693841)
-    block = rpc_connection.getblock(block_hash,2)
-    #print(block)
-
-    txs = block.get('tx')
-    #print(txs)
-    print(txs[1].get('vout'))
-    print(txs[1].get('txid'))
-    print(txs[1].get('vout')[0].get('value'))
-
-    #print(len(spendByAddressBitcoinBlock(block)))
-    
-    for i in range(693844,694501):
-        print(processBitcoinBlock(i))
+    txid = '6a2d1d183a64ba842f957514936c05290c5be82739154ea6341d57710f52caf3'
+    x = realtimeSynchWithBitcoin()
         
-    print(getBitcoinTransactionBlocks(5,15))
-    print(getBitcoinTransactionBlocks(695216,695225))
-    x = synchWithBitcoin(start_bitcoin_height=695216,end_bitcoin_height=695225,synch_last_10=False)
-
-    '''
-    print(realtimeSynchWithBitcoin())
-    
