@@ -6,7 +6,8 @@
 4. store the database.ini file on your computer and modify the settings for your database
 5. reference the path in the "system_variables.py" file
 6. configure other system variables in the "system_variables.py" file
-7. load initial peer(s) into networking.peer table
+7. run main.py with run_node_var, run_mining_var, initial_synch_var set to False and see if you can visit localhost:8334/local/doc on your browser
+8. load initial peer(s) into networking.peer table
 
 
 ***EXAMPLE system_variables
