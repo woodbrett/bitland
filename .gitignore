@@ -140,3 +140,6 @@ cython_debug/
 # Other
 system_variables.py
 .metadata/
+python-venv/
+database.ini
+testnet_database.ini
