@@ -246,22 +246,22 @@ insert into bitland.int_join (a) select a from bitland.int_join;
 --drop table if exists bitland.tiles;
 --create table bitland.tiles (id serial primary key, x_ordinal int, y_ordinal int, x float8, y float8, geom_1024 geometry, geom_4386 geometry);
 
-with calc1 as (
-select g.*, i.id as y_level, i2.id x_level, 1 + start_y_ratio - y_ratio_increase * (i.id - 1) as y_length, 2048 / x_split as x_length, (2048 / x_split)*(i2.id - 1) as x_start 
-from bitland.geography_definition g
-join bitland.int_join i on g.y_count >= i.id
-join bitland.int_join i2 on g.x_split >= i2.id
-where g.id <= 4
-)
-, cumulative_count as (
-select g.id, coalesce(sum(g1.y_count),0) as cumulative_y_count 
-from bitland.geography_definition g
-left join bitland.geography_definition g1 on g.id > g1.id
-group by 1
-)
-select * --x_level, y_level, x_start_, cumulative_y_count + x_length, 
-from calc1 c1
-join cumulative_count cc on c1.id = cc.id;
+-- with calc1 as (
+-- select g.*, i.id as y_level, i2.id x_level, 1 + start_y_ratio - y_ratio_increase * (i.id - 1) as y_length, 2048 / x_split as x_length, (2048 / x_split)*(i2.id - 1) as x_start 
+-- from bitland.geography_definition g
+-- join bitland.int_join i on g.y_count >= i.id
+-- join bitland.int_join i2 on g.x_split >= i2.id
+-- where g.id <= 4
+-- )
+-- , cumulative_count as (
+-- select g.id, coalesce(sum(g1.y_count),0) as cumulative_y_count 
+-- from bitland.geography_definition g
+-- left join bitland.geography_definition g1 on g.id > g1.id
+-- group by 1
+-- )
+-- select * --x_level, y_level, x_start_, cumulative_y_count + x_length, 
+-- from calc1 c1
+-- join cumulative_count cc on c1.id = cc.id;
 
 create schema testing;
 
