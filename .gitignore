@@ -142,4 +142,4 @@ cython_debug/
 .metadata/
 python-venv/
 database.ini
-testnet_database.ini
+/testnet_database.ini
