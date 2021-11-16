@@ -28,7 +28,8 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
     token = ''
     
     current_peer_count = peerCount()
-    peer = queryPeer(ip_address=ip_address)
+    #peer = queryPeer(ip_address=ip_address)
+    peer = queryPeerByIpAndPort(ip_address, port)
     
     if current_peer_count >= max_peer_count:
         status = 'unsuccessful peer'
@@ -178,6 +179,33 @@ def queryPeer(ip_address = '', self_auth_key = '', peer_auth_key = ''):
             "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key " +
             "from networking.peer " +
             "where ip_address = '" + ip_address + "' or self_auth_key::varchar = '" + self_auth_key + "' or peer_auth_key::varchar = '" + peer_auth_key + "';")
+    
+    try:
+        peer_sql = executeSql(query)
+        columns = namedtuple('columns', ['ip_address', 'port', 'status', 'connected_time', 'last_ping', 'self_auth_key', 'peer_auth_key'])
+        peers = {
+                    'peer_status': 'peer identified',
+                    'ip_address': peer_sql[0],
+                    'port': peer_sql[1],
+                    'status': peer_sql[2],
+                    'connected_time': peer_sql[3],
+                    'last_ping': peer_sql[4],
+                    'self_auth_key': peer_sql[5],
+                    'peer_auth_key': peer_sql[6]
+                }
+
+    except Exception as error:
+        peers = { 'peer_status': 'no peer found'}
+    
+    return peers 
+
+
+def queryPeerByIpAndPort(ip_address, port):
+    
+    query = (        
+        "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key " +
+        "from networking.peer " +
+        "where ip_address = '" + ip_address + "' and port = " + str(port) + ";")
     
     try:
         peer_sql = executeSql(query)
@@ -424,5 +452,7 @@ def messagePeer(endpoint, peer_ip_address, payload='', rest_type='get'):
     
 if __name__ == '__main__':
     
-    attemptToConnectToNewPeer(1, 8334, getTimeNowSeconds(), '76.179.199.85', 8336)
+    #attemptToConnectToNewPeer(1, 8334, getTimeNowSeconds(), '76.179.199.85', 8336)
+    
+    print(queryPeerByIpAndPort('124.123.66.141',8334))
     

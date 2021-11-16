@@ -76,7 +76,7 @@ def ongoing_functions():
             print('starting node', flush=True)
             
         #start mining if true
-        if run_mining_var == True:
+        if run_mining_var == True:  
             t2 = threading.Thread(target=miningProcess,daemon=True)
             t2.start()
             print('started mining', flush=True)
