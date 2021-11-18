@@ -55,6 +55,15 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
             #UPDATE version
             t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), ip_address, port,),daemon=True)
             t1.start()
+             
+        elif peer.get('status') == 'external_contact_local_accepted':
+            deletePeer(ip_address)
+            status = 'successful peer'
+            reason = ''
+            token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
+            #UPDATE version
+            t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), ip_address, port,),daemon=True)
+            t1.start()
             
         else:
             status = 'unsuccessful peer'
