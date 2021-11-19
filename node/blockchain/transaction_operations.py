@@ -265,7 +265,8 @@ def validateContingencies(miner_fee_sats, miner_fee_blocks, transfer_fee_sats, t
     #UPDATE validate the transfer fee address to ensure it is a valid bitcoin address
     if (valid_contingencies == True):
         transfer_fee_address_utf8 = unhexlify(transfer_fee_address).decode('utf-8')
-        valid_contingencies = getValidateBitcoinAddress(transfer_fee_address_utf8)
+        if transfer_fee_sats > 0:
+            valid_contingencies = getValidateBitcoinAddress(transfer_fee_address_utf8)
         if(valid_contingencies == False):
             failure_reason = 'invalid transfer fee address'    
     
