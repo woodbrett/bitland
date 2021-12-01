@@ -518,6 +518,8 @@ create table bitland.landbase_enum(
 	area float8);
 
 CREATE INDEX idx_landbase_enum_geom_gist ON bitland.landbase_enum USING gist (geom);
+create index on bitland.landbase_enum (valid_enabled_block);
+create index on bitland.landbase_enum (block_claim);
 
 insert into bitland.landbase_enum (x_id,y_id,x1 , y1 , x2 , y2 , x3 , y3 , x4 , y4 )
 select itx.id as x_id, ity.id as y_id, 1/ld.cols::numeric*(itx.id-1) as x1, y1, 1/ld.cols::numeric*(itx.id-1) as x2, y2, 1/ld.cols::numeric*itx.id as x3, y3, 1/ld.cols::numeric*itx.id as x4, y4
