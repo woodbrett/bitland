@@ -274,6 +274,23 @@ def checkPeerBlocks(use_threading=True):
         'self_height': getMaxBlockHeight()
         }
 
+
+def removeBlocksThreading(low_block_height, high_block_height, use_threading=True):
+
+    if use_threading == True:
+        thread_id = waitInBlockQueue(type='checking peer blocks')
+    
+    try:
+        x = removeBlocks(low_block_height, high_block_height)
+    except:
+        x = False
+        print('exception in remove blocks')
+
+    if use_threading == True:
+        block_queue.remove(threading.get_ident())  
+        
+    return x
+    
     
 if __name__ == '__main__':
     
