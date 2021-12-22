@@ -98,7 +98,6 @@ def getOutputListBlockNode(block_height):
 
 if __name__ == '__main__':
 
-    print(len(getOutputListBlockNode(200000)))
-
-    address = b'3N6E2nprHmWCk39ibj3nwMSF5J34eRupNb'
+    print(getCurrentBitcoinBlockHeightNode())
+    
     
