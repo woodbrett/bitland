@@ -147,6 +147,9 @@ create schema wallet;
 
 drop table if exists bitland.address;
 create table wallet.addresses (private_key varchar, public_key varchar);
+
+ALTER TABLE bitland.block ADD CONSTRAINT block_header_hash_unique UNIQUE (header_hash);
+ALTER TABLE bitland.block_serialized ADD CONSTRAINT block_serialized_unique UNIQUE (block);
 	
 --
 --BITCOIN SCHEMA

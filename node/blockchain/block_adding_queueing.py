@@ -61,29 +61,43 @@ def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_v
     
     print('made it through queue')
     
-    add_block = True
-        
-    if thread_id == False:
-        add_block = False
-    
-    if add_block == True:
-        self_height = getMaxBlockHeight()
-    
-        if block_height != 0 and block_height > self_height + 1:
+    try:     
+        add_block = True
+            
+        if thread_id == False:
             add_block = False
         
-        elif block_height == 0 or block_height == self_height + 1:
-            if validateBlock(block_bytes, realtime_validation=realtime_validation) == True:
-                new_block = addBlock(block_bytes)
-                add_block = True
+        if add_block == True:
+            self_height = getMaxBlockHeight()
+        
+            if block_height != 0 and block_height > self_height + 1:
+                add_block = False
+            
+            elif block_height == 0 or block_height == self_height + 1:
+                try:
+                    validate_block = validateBlock(block_bytes, realtime_validation=realtime_validation)
+                except:
+                    validate_block = False
+                    
+                if validate_block == True:
+                    try: 
+                        new_block = addBlock(block_bytes)
+                        add_block = True
+                    except:
+                        add_block = False
+                        
+                else:
+                    add_block = False
+                    
+            #UPDATE make sure it didn't not validate because of something wrong, but rather different chain (prior block different)
+            #right now it just sends it to synch node to handle, but this should be integrated more directly
             else:
                 add_block = False
-                
-        #UPDATE make sure it didn't not validate because of something wrong, but rather different chain (prior block different)
-        #right now it just sends it to synch node to handle, but this should be integrated more directly
-        else:
-            add_block = False
+    
+    except:
+        print("exception in validateAddBlock")
         
+    
     if use_threading == True:
         block_queue.remove(threading.get_ident())
     
@@ -98,58 +112,62 @@ def processPeerBlocks(new_blocks_hex, use_threading=False):
     
     if use_threading==True:
         thread_id = waitInBlockQueue(type='processing peer blocks')
-    
-    self_height = getMaxBlockHeight()
-    
-    peer_blocks = json.loads(new_blocks_hex.get('blocks'))
-    start_block_height = int(new_blocks_hex.get('start_block_height'))
-    peer_next_block_index = self_height - start_block_height + 1
-    peer_next_block = peer_blocks[peer_next_block_index]
-    
-    next_block_header = deserializeBlock(unhexlify(peer_next_block))[0]
-    next_block_prev_block = next_block_header.get('prev_block')
-    
-    self_height_hash = unhexlify(getBlock(block_id=self_height).get('header_hash'))
+
+    try:     
+        self_height = getMaxBlockHeight()
+        
+        peer_blocks = json.loads(new_blocks_hex.get('blocks'))
+        start_block_height = int(new_blocks_hex.get('start_block_height'))
+        peer_next_block_index = self_height - start_block_height + 1
+        peer_next_block = peer_blocks[peer_next_block_index]
+        
+        next_block_header = deserializeBlock(unhexlify(peer_next_block))[0]
+        next_block_prev_block = next_block_header.get('prev_block')
+        
+        self_height_hash = unhexlify(getBlock(block_id=self_height).get('header_hash'))
+                
+        self_base_hash = unhexlify(getBlock(block_id=start_block_height).get('header_hash'))
+        peer_base_hash = calculateHeaderHashFromBlock(peer_blocks[0])
             
-    self_base_hash = unhexlify(getBlock(block_id=start_block_height).get('header_hash'))
-    peer_base_hash = calculateHeaderHashFromBlock(peer_blocks[0])
+        if next_block_prev_block == self_height_hash:
+            validateAddBlocksAlreadyQueue(peer_blocks[peer_next_block_index:])
+            blocks_added = len(peer_blocks[peer_next_block_index:])
         
-    if next_block_prev_block == self_height_hash:
-        validateAddBlocksAlreadyQueue(peer_blocks[peer_next_block_index:])
-        blocks_added = len(peer_blocks[peer_next_block_index:])
+        #UPDATE else logic in case the peer has a longer divergent chain
+        #haven't tested this yet
+        
+        elif self_base_hash == peer_base_hash: 
+            
+            comparison_block_height = start_block_height
+            
+            #move to function compare_chains_find_split 
+            for i in range(0,(self_height - start_block_height + 1)):
+                
+                self_hash_i = unhexlify(getBlock(block_id=i+start_block_height).get('header_hash'))
+                peer_hash_i = calculateHeaderHashFromBlock(peer_blocks[i])
+                
+                if self_hash_i != peer_hash_i:
+                    peer_blocks_split = peer_blocks[i:]
+                    break
+                
+                comparison_block_height = comparison_block_height + 1
+            
+            prev_block = getBlock(comparison_block_height).get('prev_block')
+            prior_block = getBlockSerialized(comparison_block_height - 1)
+            
+            valid_blocks = validateBlocksMemory(peer_blocks_split,prev_block,prior_block)
+            
+            if valid_blocks == True:
+                remove = removeBlocks(comparison_block_height,self_height)
+                blocks_removed = len(peer_blocks_split)
+                
+                if remove == True:
+                    validateAddBlocksAlreadyQueue(peer_blocks_split)
+                    blocks_added = len(peer_blocks_split)
     
-    #UPDATE else logic in case the peer has a longer divergent chain
-    #haven't tested this yet
-    
-    elif self_base_hash == peer_base_hash: 
-        
-        comparison_block_height = start_block_height
-        
-        #move to function compare_chains_find_split 
-        for i in range(0,(self_height - start_block_height + 1)):
-            
-            self_hash_i = unhexlify(getBlock(block_id=i+start_block_height).get('header_hash'))
-            peer_hash_i = calculateHeaderHashFromBlock(peer_blocks[i])
-            
-            if self_hash_i != peer_hash_i:
-                peer_blocks_split = peer_blocks[i:]
-                break
-            
-            comparison_block_height = comparison_block_height + 1
-        
-        prev_block = getBlock(comparison_block_height).get('prev_block')
-        prior_block = getBlockSerialized(comparison_block_height - 1)
-        
-        valid_blocks = validateBlocksMemory(peer_blocks_split,prev_block,prior_block)
-        
-        if valid_blocks == True:
-            remove = removeBlocks(comparison_block_height,self_height)
-            blocks_removed = len(peer_blocks_split)
-            
-            if remove == True:
-                validateAddBlocksAlreadyQueue(peer_blocks_split)
-                blocks_added = len(peer_blocks_split)
-    
+    except:
+        print("exception in processPeerBlocks")
+
     if use_threading==True:
         block_queue.remove(threading.get_ident())
                 
@@ -200,7 +218,10 @@ def synchBitcoin(use_threading=True):
     if use_threading == True:
         thread_id = waitInBlockQueue(type='synching bitcoin')
     
-    realtimeSynchWithBitcoin()
+    try:
+        realtimeSynchWithBitcoin()
+    except:
+        print('exception in synchBitcoin')
     
     if use_threading == True:
         block_queue.remove(threading.get_ident())  
@@ -212,34 +233,38 @@ def checkPeerBlocks(use_threading=True):
 
     if use_threading == True:
         thread_id = waitInBlockQueue(type='checking peer blocks')    
-    
-    peer_heights = askPeersForHeight()
-    self_height = getMaxBlockHeight()
-    max_height = self_height
-    max_height_peer = 'self'
-    blocks_added = 0
-    blocks_removed = 0
-    
-    for i in range(0,len(peer_heights)):
+
+    try:     
+        peer_heights = askPeersForHeight()
+        self_height = getMaxBlockHeight()
+        max_height = self_height
+        max_height_peer = 'self'
+        blocks_added = 0
+        blocks_removed = 0
         
-        peer_response = peer_heights[i].get('response')
+        for i in range(0,len(peer_heights)):
+            
+            peer_response = peer_heights[i].get('response')
+            
+            #UPDATE handle the errors from peers more elegantly
+            if peer_response == 'error calling peer' or peer_response.get('message') == 'Not authenticated as peer':
+                None
+            
+            elif peer_response.get('block_height') > max_height:
+                max_height= peer_response.get('block_height')
+                max_height_peer = peer_heights[i].get('peer_ip_address')
         
-        #UPDATE handle the errors from peers more elegantly
-        if peer_response == 'error calling peer' or peer_response.get('message') == 'Not authenticated as peer':
-            None
-        
-        elif peer_response.get('block_height') > max_height:
-            max_height= peer_response.get('block_height')
-            max_height_peer = peer_heights[i].get('peer_ip_address')
-    
-    if max_height_peer != 'self':
-        #UPDATE to only ask for max of X blocks, 50?
-        
-        synched_with_peers = 'out of synch'
-        
-        new_blocks = askPeerForBlocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
-        
-        processPeerBlocks(new_blocks,use_threading=False)
+        if max_height_peer != 'self':
+            #UPDATE to only ask for max of X blocks, 50?
+            
+            synched_with_peers = 'out of synch'
+            
+            new_blocks = askPeerForBlocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
+            
+            processPeerBlocks(new_blocks,use_threading=False)
+
+    except:
+        print('exception in checkPeerBlocks')
 
     if use_threading == True:
         block_queue.remove(threading.get_ident())  
