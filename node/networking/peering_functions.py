@@ -308,7 +308,7 @@ def peerCount():
 
 def deletePeer(ip_address, port):
     
-    query = ("delete from networking.peer where ip_address = '" + ip_address + "and port = " + str(port) + "';")
+    query = ("delete from networking.peer where ip_address = '" + ip_address + "' and port = " + str(port) + ";")
         
     try:
         delete = executeSqlDeleteUpdate(query)
