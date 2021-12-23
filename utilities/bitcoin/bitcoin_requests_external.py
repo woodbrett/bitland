@@ -144,7 +144,7 @@ def validateBitcoinAddressExternal(address_string):
 
 def getOutputListBlockExternal(block_height):
 
-    hash_address = 'https://blockstream.info/api/block-height/696703' #get_block_hash_by_height_url.replace(':height', str(block_height))
+    hash_address = get_block_hash_by_height_url.replace(':height', str(block_height))
     for i in range(0,5): 
         response = requests.get(hash_address)
         if response.status_code == 200:

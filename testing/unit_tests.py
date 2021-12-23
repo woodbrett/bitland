@@ -15,8 +15,7 @@ from utilities.gis_functions import (
     )
 from node.networking.peering_functions import updatePeer
 from utilities.difficulty import getRetarget, getBitsFromTarget
-from utilities.bitcoin.bitcoin_requests import validateBitcoinAddress,\
-    getBestBlockHash
+from utilities.bitcoin.bitcoin_requests import getBestBlockHash
 from utilities.bitcoin.bitcoin_requests_node import getOutputListBlockNode,\
     getLastXBitcoinHashesNode, getCurrentBitcoinBlockHeightNode,\
     getBestBlockHashNode, getBlockHeightFromHashNode, getBlockHashFromHeightNode
@@ -24,6 +23,7 @@ from utilities.bitcoin.bitcoin_requests_external import getOutputListBlockExtern
     getLastXBitcoinHashesExternal, getCurrentBitcoinBlockHeightExternal,\
     getBestBlockHashExternal, getBlockHeightFromHashExternal,\
     getBlockHashFromHeightExternal
+from node.blockchain.header_operations import validateBitcoinAddress
 
 
 ######### TRANSACTION TESTS #########
@@ -103,9 +103,12 @@ def validate_header_serialized_deserialized():
 
 def validate_bitcoin_addresses():
     
-    if validateBitcoinAddress('bc1qamgmd4s53pq5y0ejlnps580yujpvyhvanvxc2y') == False:
+    address1 = hexlify('bc1qamgmd4s53pq5y0ejlnps580yujpvyhvanvxc2y'.encode('utf-8'))
+    address2 = hexlify('bc1qamgmd4s53pq5y0ejlnaps580yujpvyhvanvx2y'.encode('utf-8'))
+    
+    if validateBitcoinAddress(address1) == False:
         return False
-    if validateBitcoinAddress('bc1qamgmd4s53pq5y0ejlnaps580yujpvyhvanvx2y') == True:
+    if validateBitcoinAddress(address2) == True:
         return False
 
     return True
@@ -144,6 +147,7 @@ def test_node_vs_external_results():
     #address & value list for a given block
     external_output_list = getOutputListBlockExternal(200000)
     node_output_list = getOutputListBlockNode(200000)
+    
     if external_output_list != node_output_list:
         return False
     
@@ -185,9 +189,9 @@ if __name__ == '__main__':
     print(str(validate_peer_functions()) + ": validate peer functions")
     
     ######### DIFFICULTY TESTS #########    
-    print(validate_difficulty_retarget())
+    print(str(validate_difficulty_retarget()) + ": validate difficulty retarget")
     
     ######### BITCOIN BLOCKCHAIN TESTS #########
-    print(test_node_vs_external_results())
+    print(str(test_node_vs_external_results()) + ": bitcoin node vs. external results")
     
     
