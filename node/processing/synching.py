@@ -58,7 +58,7 @@ def start_node():
 
 def run_node(initial_synch=False):
     
-    pingPeers()
+    pingPeers(peer_types=['connected','unpeered'])
     
     if initial_synch == True:
         initialSynch()
