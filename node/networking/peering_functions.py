@@ -387,7 +387,7 @@ def responsivePeerRequest(version, port, timestamp, peer_ip_address, peer_port, 
     print(peer_request)
     
     if peer_request.get('status') == 'successful peer':
-        updatePeer(ip_address=peer_ip_address, port=port, self_auth_key=peer_request.get('token'), status='connected')
+        updatePeer(ip_address=peer_ip_address, port=peer_port, self_auth_key=peer_request.get('token'), status='connected')
         return 'Success'
     
     else:
