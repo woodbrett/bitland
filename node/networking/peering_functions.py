@@ -187,7 +187,7 @@ def resetPeers():
     
     for i in range(0,len(peers)):
         
-        updatePeer(ip_address=peers[i].get('ip_address'),ip_address=peers[i].get('port'),status='unpeered')
+        updatePeer(ip_address=peers[i].get('ip_address'),port=peers[i].get('port'),status='unpeered')
     
     return len(peers)
 
