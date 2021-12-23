@@ -183,7 +183,9 @@ create table networking.peer (
   self_auth_key uuid,
   peer_auth_key uuid default uuid_generate_v1() 
 );
-  
+ 
+alter table networking.peer add constraint ip_port_unique unique (ip_address, port);
+ 
 drop table if exists bitland.transaction_mempool cascade;
 create table bitland.transaction_mempool (
   id SERIAL PRIMARY key, 
