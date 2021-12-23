@@ -40,13 +40,13 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
     #UPDATE to check for mainnet / testnet
     
     #UPDATE make logic smoother
-    elif peer.get('peer_status') != 'no peer found':
-        if peer.get('status') == 'local_contact_external_accepted':
-            status = 'successful peer'
-            reason = ''
-            updatePeer(ip_address=ip_address, port=port, status='connected')
-            token = queryPeer(ip_address=ip_address).get('peer_auth_key')
-            
+    elif peer.get('peer_status') != 'no peer found' and peer.get('status') == 'local_contact_external_accepted':
+        status = 'successful peer'
+        reason = ''
+        updatePeer(ip_address=ip_address, port=port, status='connected')
+        token = queryPeer(ip_address=ip_address).get('peer_auth_key')
+        
+        '''
         elif peer.get('status') == 'offline':
             deletePeer(ip_address)
             status = 'successful peer'
@@ -68,11 +68,17 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
         else:
             status = 'unsuccessful peer'
             reason = 'already exist as peer'
-                
+        '''
+              
     else:
-        status = 'successful peer'
+        if peer.get('peer_status') != 'no peer found':
+            deletePeer(ip_address)
+            print('re-establishing connection with peer')
+        else:
+            print('new peer request')
+            
+        status = 'initial connection request accepted'
         reason = ''
-        print('no peer found')
         print(ip_address)
         print(port)
         token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
@@ -300,9 +306,9 @@ def peerCount():
     return peer_count
 
 
-def deletePeer(ip_address):
+def deletePeer(ip_address, port):
     
-    query = ("delete from networking.peer where ip_address = '" + ip_address +"';")
+    query = ("delete from networking.peer where ip_address = '" + ip_address + "and port = " + str(port) + "';")
         
     try:
         delete = executeSqlDeleteUpdate(query)
@@ -333,7 +339,7 @@ def connectToPeer(version, port, timestamp, peer_ip_address, peer_port):
     }
     
 
-def responsivePeerRequest(version, port, timestamp, peer_ip_address, peer_port, wait_time=30):
+def responsivePeerRequest(version, port, timestamp, peer_ip_address, peer_port, wait_time=5):
     
     time.sleep(wait_time)
     
@@ -351,7 +357,7 @@ def attemptToConnectToNewPeer(version, port, timestamp, peer_ip_address, peer_po
     
     peer_request = connectToPeer(version, port, timestamp, peer_ip_address, peer_port)
     
-    if peer_request.get('status') == 'successful peer':
+    if peer_request.get('status') == 'initial connection request accepted':
         addPeer(peer_ip_address,peer_port,'local_contact_external_accepted')
         updatePeer(ip_address=peer_ip_address, self_auth_key=peer_request.get('token'))
         return 'Success'
@@ -463,5 +469,8 @@ if __name__ == '__main__':
     
     #attemptToConnectToNewPeer(1, 8334, getTimeNowSeconds(), '76.179.199.85', 8336)
     
+    evaluateConnectionRequest('74.78.100.60', 1, 8336, 1)
     print(queryPeerByIpAndPort('124.123.66.141',8334))
+    
+    
     
