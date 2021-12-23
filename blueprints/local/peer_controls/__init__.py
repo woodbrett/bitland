@@ -14,7 +14,7 @@ from node.networking.peering_functions import authenticateLocalUser, addPeer
 
 namespace = Namespace('peer_controls', 'Peer Controls')
 
-@namespace.route('/removeBlocks/<string:ip_address>/<int:port>')
+@namespace.route('/addPeer/<string:ip_address>/<int:port>')
 class remove_blocks(Resource):
 
     @namespace.response(500, 'Internal Server error')
