@@ -66,16 +66,8 @@ class initial_connect(Resource):
         timestamp = request.json['timestamp']
                 
         connection_request = evaluateInitialConnectionRequest(ip_address, version, port, timestamp)
-        
-        connection_status = connection_request.status
-        connection_reason = connection_request.reason
-        token = connection_request.token
 
-        return {
-            'status': connection_status,
-            'reason': connection_reason,
-            'token': token
-        }
+        return connection_request
         
 @namespace.route('/validate_connect')
 class validate_connect(Resource):
@@ -93,16 +85,8 @@ class validate_connect(Resource):
         timestamp = request.json['timestamp']
                 
         connection_request = evaluateValidateConnectionRequest(ip_address, version, port, timestamp)
-        
-        connection_status = connection_request.status
-        connection_reason = connection_request.reason
-        token = connection_request.token
-
-        return {
-            'status': connection_status,
-            'reason': connection_reason,
-            'token': token
-        }
+    
+        return connection_request
 
 @namespace.route('/ping')
 class ping(Resource):
