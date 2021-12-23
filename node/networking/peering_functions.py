@@ -387,7 +387,7 @@ def responsivePeerRequest(version, port, timestamp, peer_ip_address, peer_port, 
 
 def attemptToConnectToNewPeer(version, port, timestamp, peer_ip_address, peer_port):
     
-    peer_request = connectToPeer(version, port, timestamp, peer_ip_address, peer_port)
+    peer_request = initialConnectToPeer(version, port, timestamp, peer_ip_address, peer_port)
     
     if peer_request.get('status') == 'initial connection request accepted':
         addPeer(peer_ip_address,peer_port,'local_contact_external_accepted')
