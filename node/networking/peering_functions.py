@@ -159,8 +159,6 @@ def updatePeer(ip_address,port,status=0,connected_time=0,self_auth_key=0,peer_au
     
     x = ''
     
-    print(port)
-    
     if status != 0:
             x = x + "update networking.peer set status = '" + status + "' where ip_address = '" + ip_address + "' and port = " + str(port) + ";"
     if connected_time != 0:
@@ -453,7 +451,7 @@ def messageAllKnownPeers(endpoint, payload='', rest_type='get', peers_to_exclude
             
             responses.append(
                 {'peer_ip_address':peer_ip_address,
-                 'peer_ip_address':peer_port,
+                 'peer_port':peer_port,
                  'response':r})
 
     return responses
