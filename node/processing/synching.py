@@ -60,7 +60,7 @@ def run_node(initial_synch=False):
     
     pingPeers(peer_types=['connected','unpeered'])
     
-    if initial_synch == True:
+    if initial_synch == True:   
         initialSynch()
     
     while True:
@@ -72,7 +72,7 @@ def run_node(initial_synch=False):
         print('synching bitcoin')
         synchBitcoin()
         
-        pingPeers(peer_types=['connected'])
+        pingPeers(peer_types=['connected','unpeered'])
         
         time.sleep(120)
 
