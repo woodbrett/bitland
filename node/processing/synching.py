@@ -39,6 +39,9 @@ def start_node():
     print('pinging peers')
     pingPeers()
     
+    print('sleeping 30 seconds to sort out peering')
+    time.sleep(30)
+    
     print('checking peer blocks')
     peer_height = 1
     self_height = 0

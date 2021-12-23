@@ -55,9 +55,11 @@ def evaluateInitialConnectionRequest(ip_address, version, port, timestamp):
         t1.start()
     
     print("evaluated initial connection request: ")
-    print(status)
-    print(reason)
-    print('token = ' + token)
+    print({
+        "status": status,
+        "reason": reason,
+        "token": token
+        })
     
     return {
         "status": status,
