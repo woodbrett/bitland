@@ -72,7 +72,7 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
               
     else:
         if peer.get('peer_status') != 'no peer found':
-            deletePeer(ip_address)
+            deletePeer(ip_address, port)
             print('re-establishing connection with peer')
         else:
             print('new peer request')
