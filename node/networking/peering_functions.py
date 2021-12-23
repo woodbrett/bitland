@@ -159,8 +159,10 @@ def updatePeer(ip_address,port,status=0,connected_time=0,self_auth_key=0,peer_au
     
     x = ''
     
+    print(port)
+    
     if status != 0:
-        x = x + "update networking.peer set status = '" + status + "' where ip_address = '" + ip_address + "' and port = " + str(port) + ";"
+            x = x + "update networking.peer set status = '" + status + "' where ip_address = '" + ip_address + "' and port = " + str(port) + ";"
     if connected_time != 0:
         x = x + "update networking.peer set connected_time = " + str(connected_time) + " where ip_address = '" + ip_address + "' and port = " + str(port) + ";"
     if self_auth_key != 0:
