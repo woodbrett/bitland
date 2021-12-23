@@ -84,10 +84,11 @@ def pingPeers(peer_types=['connected','unpeered','offline',None]):
     for i in range(0,len(ping)):
         
         ip_address= ping[i].get('peer_ip_address')
+        port= ping[i].get('peer_port')
         peer_response = ping[i].get('response')
         
         if peer_response == 'error calling peer':
-            updatePeer(ip_address=ip_address,status='offline')
+            updatePeer(ip_address=ip_address,port=port,status='offline')
         
         elif peer_response.get('message') == 'Not authenticated as peer':
             
@@ -96,7 +97,7 @@ def pingPeers(peer_types=['connected','unpeered','offline',None]):
             attemptToConnectToNewPeer(bitland_version, peering_port, getTimeNowSeconds(), ip_address, peer_port)
         
         else:
-            updatePeer(ip_address=ping[i].get('peer_ip_address'),status='connected')
+            updatePeer(ip_address=ip_address,port=port,status='connected')
     
     return True
 
