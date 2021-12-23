@@ -63,7 +63,7 @@ def sendBlockToPeers(block_height,block,peers_to_exclude=[]):
         }
     rest_type = 'put'
     
-    send_block = messageAllKnownPeers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
+    send_block = messageAllKnownPeers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude, message_type='send block to peers')    
     
     return send_block
 
@@ -101,7 +101,7 @@ def sendTransactionToPeers(transaction,peers_to_exclude=[]):
         }
     rest_type = 'put'
     
-    send_transaction = messageAllKnownPeers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude)    
+    send_transaction = messageAllKnownPeers(endpoint=endpoint, payload=payload, rest_type=rest_type, peers_to_exclude=peers_to_exclude, message_type='send transaction to peers')    
     
     return send_transaction 
 

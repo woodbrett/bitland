@@ -79,7 +79,7 @@ def run_node(initial_synch=False):
 
 def pingPeers(peer_types=['connected','unpeered','offline',None]):
 
-    ping = messageAllKnownPeers('/peer/peering/ping', rest_type='get',peer_types=['connected','unpeered','offline',None])
+    ping = messageAllKnownPeers('/peer/peering/ping', rest_type='get',peer_types=peer_types,message_type='ping peers')
     
     for i in range(0,len(ping)):
         

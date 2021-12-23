@@ -287,7 +287,9 @@ def queryPeers(ip_address = '', self_auth_key = '', peer_auth_key = ''):
 
 def askPeersForHeight():
     
-    heights = messageAllKnownPeers('/peer/node_queries/getBlockHeight', rest_type='get')
+    print('asking peers for height')
+    
+    heights = messageAllKnownPeers('/peer/node_queries/getBlockHeight', rest_type='get', message_type='ask peers for height')
     
     return heights
 
@@ -401,7 +403,9 @@ def attemptToConnectToNewPeer(version, port, timestamp, peer_ip_address, peer_po
 #currently hardcoded to the structure of the peers query
 #very inelegant with the post/get/etc rest type
 #hardcoded auth
-def messageAllKnownPeers(endpoint, payload='', rest_type='get', peers_to_exclude=[], peer_types=['connected']):
+def messageAllKnownPeers(endpoint, payload='', rest_type='get', peers_to_exclude=[], peer_types=['connected'], message_type=''):
+
+    print('messaging peers, message type: ' + message_type)
 
     peers = queryPeers()
     
@@ -417,6 +421,11 @@ def messageAllKnownPeers(endpoint, payload='', rest_type='get', peers_to_exclude
         for j in range(0,len(peers_to_exclude)):
             if peer_ip_address == peers_to_exclude[j]:
                 exclude_peer = True
+        
+        print('peer types')
+        print(peer_types)
+        print('peer status ' + peer_status)
+        print(peer_status in peer_types)
         
         if exclude_peer == False and peer_status in peer_types:
             url = "http://" + peer_ip_address + ":" + str(peer_port) + endpoint
