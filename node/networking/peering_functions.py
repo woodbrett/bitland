@@ -57,6 +57,7 @@ def evaluateInitialConnectionRequest(ip_address, version, port, timestamp):
     print("evaluated connection request: ")
     print(status)
     print(reason)
+    print('token = ' + token)
     
     return {
         "status": status,
@@ -389,9 +390,13 @@ def attemptToConnectToNewPeer(version, port, timestamp, peer_ip_address, peer_po
     
     peer_request = initialConnectToPeer(version, port, timestamp, peer_ip_address, peer_port)
     
+    print('attempting to connect to new peer, peer request:')
+    print(peer_request)
+    print(peer_request.get('status') == 'initial connection request accepted')
+    
     if peer_request.get('status') == 'initial connection request accepted':
         addPeer(peer_ip_address,peer_port,'local_contact_external_accepted')
-        updatePeer(ip_address=peer_ip_address, port=port, self_auth_key=peer_request.get('token'))
+        updatePeer(ip_address=peer_ip_address, port=peer_port, self_auth_key=peer_request.get('token'))
         return 'Success'
     
     else:
@@ -422,11 +427,6 @@ def messageAllKnownPeers(endpoint, payload='', rest_type='get', peers_to_exclude
             if peer_ip_address == peers_to_exclude[j]:
                 exclude_peer = True
         
-        print('peer types')
-        print(peer_types)
-        print('peer status ' + peer_status)
-        print(peer_status in peer_types)
-        
         if exclude_peer == False and peer_status in peer_types:
             url = "http://" + peer_ip_address + ":" + str(peer_port) + endpoint
             headers = {
@@ -434,7 +434,7 @@ def messageAllKnownPeers(endpoint, payload='', rest_type='get', peers_to_exclude
                 'Accept': 'application/json', 
                 'Authorization': token 
             }
-            
+        
             if rest_type == 'get':
                 try:
                     r = requests.get(url, headers=headers).json()
@@ -457,6 +457,10 @@ def messageAllKnownPeers(endpoint, payload='', rest_type='get', peers_to_exclude
                     r = 'error calling peer'
             
             updatePeer(ip_address=peer_ip_address, port=peer_port, last_ping=getTimeNowSeconds())
+            
+            print({'peer_ip_address':peer_ip_address,
+                 'peer_port':peer_port,
+                 'response':r})
             
             responses.append(
                 {'peer_ip_address':peer_ip_address,
