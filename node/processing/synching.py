@@ -92,7 +92,7 @@ def pingPeers(peer_types=['connected','unpeered','offline',None]):
         elif peer_response.get('message') == 'Not authenticated as peer':
             
             peer_port = queryPeer(ip_address=ip_address).get('port')
-            deletePeer(ip_address)
+            deletePeer(ip_address,peer_port)
             attemptToConnectToNewPeer(bitland_version, peering_port, getTimeNowSeconds(), ip_address, peer_port)
         
         else:
