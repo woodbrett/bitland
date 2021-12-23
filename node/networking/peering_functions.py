@@ -14,14 +14,58 @@ import threading
 import time
 import requests
 import json
-from ipaddress import ip_address
-from _datetime import datetime
 from utilities.time_utils import getTimeNowSeconds
 
 #external_contact_local_accepted
 #local_contact_external_accepted
 
-def evaluateConnectionRequest(ip_address, version, port, timestamp):
+def evaluateInitialConnectionRequest(ip_address, version, port, timestamp):
+        
+    status = ''
+    reason = ''
+    token = ''
+    
+    current_peer_count = peerCount()
+    #peer = queryPeer(ip_address=ip_address)
+    peer = queryPeerByIpAndPort(ip_address, port)
+    
+    if current_peer_count >= max_peer_count:
+        status = 'unsuccessful peer'
+        reason = 'too many peers'
+
+    #UPDATE to check for version
+    
+    #UPDATE to check for mainnet / testnet
+    
+    #UPDATE make logic smoother
+    else:
+        if peer.get('peer_status') != 'no peer found':
+            deletePeer(ip_address, port)
+            print('re-establishing connection with peer')
+        else:
+            print('new peer request')
+            
+        status = 'initial connection request accepted'
+        reason = ''
+        print(ip_address)
+        print(port)
+        token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
+        #UPDATE version
+        t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), ip_address, port,),daemon=True)
+        t1.start()
+    
+    print("evaluated connection request: ")
+    print(status)
+    print(reason)
+    
+    return {
+        "status": status,
+        "reason": reason,
+        "token": token
+        }
+
+
+def evaluateValidateConnectionRequest(ip_address, version, port, timestamp):
         
     status = ''
     reason = ''
@@ -45,58 +89,27 @@ def evaluateConnectionRequest(ip_address, version, port, timestamp):
         reason = ''
         updatePeer(ip_address=ip_address, port=port, status='connected')
         token = queryPeer(ip_address=ip_address).get('peer_auth_key')
-        
-        '''
-        elif peer.get('status') == 'offline':
-            deletePeer(ip_address)
-            status = 'successful peer'
-            reason = ''
-            token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
-            #UPDATE version
-            t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), ip_address, port,),daemon=True)
-            t1.start()
-             
-        elif peer.get('status') == 'external_contact_local_accepted':
-            deletePeer(ip_address)
-            status = 'successful peer'
-            reason = ''
-            token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
-            #UPDATE version
-            t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), ip_address, port,),daemon=True)
-            t1.start()
             
-        else:
-            status = 'unsuccessful peer'
-            reason = 'already exist as peer'
-        '''
-              
     else:
-        if peer.get('peer_status') != 'no peer found':
-            deletePeer(ip_address, port)
-            print('re-establishing connection with peer')
+        status = 'unsuccessful peer'
+        
+        if peer.get('peer_status') == 'no peer found':
+            reason = 'no initial connection made'
         else:
-            print('new peer request')
-            
-        status = 'initial connection request accepted'
-        reason = ''
-        print(ip_address)
-        print(port)
-        token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
-        #UPDATE version
-        t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), ip_address, port,),daemon=True)
-        t1.start()
-    
-    vars = namedtuple('vars', ['status','reason','token'])
-    
+            reason = 'not in validation status'
+            deletePeer(ip_address, port)
+        
+        token = str(addPeer(ip_address, port, 'unpeered'))
+                    
     print("evaluated connection request: ")
     print(status)
     print(reason)
     
-    return vars(
-        status,
-        reason,
-        token
-    )
+    return {
+        "status": status,
+        "reason": reason,
+        "token": token
+        }
     
 
 def authenticatePeer(ip_address, token):
@@ -320,11 +333,30 @@ def deletePeer(ip_address, port):
     return delete
 
 
-def connectToPeer(version, port, timestamp, peer_ip_address, peer_port):
+def initialConnectToPeer(version, port, timestamp, peer_ip_address, peer_port):
     
     #curl -X POST "http://localhost:8334/peer/peering/connect" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"version\": \"abc\", \"port\": 100, \"timestamp\": 100}"
     
-    url = "http://" + peer_ip_address + ":" + str(peer_port) + "/peer/peering/connect" 
+    url = "http://" + peer_ip_address + ":" + str(peer_port) + "/peer/peering/initial_connect" 
+    print(url)
+    payload = {'version':version,'port':port,'timestamp':timestamp}
+    print(payload)
+    headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+
+    r = requests.post(url, data=json.dumps(payload), headers=headers).json()
+    
+    return {
+        'status': r.get('status'),
+        'reason': r.get('reason'),
+        'token': r.get('token')
+    }
+    
+
+def validateConnectToPeer(version, port, timestamp, peer_ip_address, peer_port):
+    
+    #curl -X POST "http://localhost:8334/peer/peering/connect" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"version\": \"abc\", \"port\": 100, \"timestamp\": 100}"
+    
+    url = "http://" + peer_ip_address + ":" + str(peer_port) + "/peer/peering/validate_connect" 
     print(url)
     payload = {'version':version,'port':port,'timestamp':timestamp}
     print(payload)

@@ -7,8 +7,8 @@ Created on Mar 28, 2021
 from flask import request
 from flask_restplus import Namespace, Resource, fields
 from http import HTTPStatus
-from node.networking.peering_functions import evaluateConnectionRequest,\
-    authenticatePeer
+from node.networking.peering_functions import authenticatePeer, evaluateValidateConnectionRequest,\
+    evaluateInitialConnectionRequest
 
 namespace = Namespace('peering', 'Peering')
 
@@ -50,8 +50,8 @@ pong_model = namespace.model('Pong', {
 })
 
 
-@namespace.route('/connect')
-class connect(Resource):
+@namespace.route('/initial_connect')
+class initial_connect(Resource):
     '''Attempt to connect'''
 
     @namespace.response(400, 'Not available to connect')
@@ -65,7 +65,34 @@ class connect(Resource):
         port = request.json['port']
         timestamp = request.json['timestamp']
                 
-        connection_request = evaluateConnectionRequest(ip_address, version, port, timestamp)
+        connection_request = evaluateInitialConnectionRequest(ip_address, version, port, timestamp)
+        
+        connection_status = connection_request.status
+        connection_reason = connection_request.reason
+        token = connection_request.token
+
+        return {
+            'status': connection_status,
+            'reason': connection_reason,
+            'token': token
+        }
+        
+@namespace.route('/validate_connect')
+class validate_connect(Resource):
+    '''Attempt to connect'''
+
+    @namespace.response(400, 'Not available to connect')
+    @namespace.response(500, 'Internal Server error')
+    @namespace.expect(request_to_connect_model)
+    @namespace.marshal_with(connection_info_model, code=HTTPStatus.CREATED)
+    def post(self):
+
+        ip_address = request.remote_addr
+        version = request.json['version']
+        port = request.json['port']
+        timestamp = request.json['timestamp']
+                
+        connection_request = evaluateValidateConnectionRequest(ip_address, version, port, timestamp)
         
         connection_status = connection_request.status
         connection_reason = connection_request.reason

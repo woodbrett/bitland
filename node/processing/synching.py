@@ -12,7 +12,7 @@ from node.networking.node_query_functions import getBlocksStartEnd
 import json
 from node.networking.peering_functions import (
     messageAllKnownPeers,
-    messagePeer, updatePeer, connectToPeer, queryPeer,
+    messagePeer, updatePeer, initialConnectToPeer, validateConnectToPeer, queryPeer,
     attemptToConnectToNewPeer, deletePeer, peerCount, resetPeers
     )
 from node.blockchain.block_serialization import deserializeBlock
