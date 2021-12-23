@@ -11,6 +11,7 @@ from blueprints.local.wallet import namespace as wallet_ns
 from blueprints.local.blockchain_data import namespace as blockchain_data_ns
 from blueprints.local.transaction import namespace as transaction_ns
 from blueprints.local.node_functions import namespace as node_functions_ns
+from blueprints.local.peer_controls import namespace as peer_controls_ns
 
 blueprint = Blueprint('local', __name__, url_prefix='/local')
 
