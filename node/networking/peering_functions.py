@@ -149,8 +149,6 @@ def addPeer(ip_address,port,status,connected_time=0,last_ping=0):
         "returning peer_auth_key;"
         )
     
-    print(query)
-    
     try:
         add_peer = executeSql(query)[0]
 
