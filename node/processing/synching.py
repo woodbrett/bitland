@@ -39,7 +39,7 @@ def start_node():
     print('pinging peers')
     pingPeers()
     
-    print('sleeping 30 seconds to sort out peering')
+    print('sleeping 10 seconds to sort out peering')
     time.sleep(10)
     
     print('checking peer blocks')
@@ -86,21 +86,18 @@ def pingPeers(peer_types=['connected','unpeered','offline',None]):
     
     for i in range(0,len(ping)):
         
-        ip_address= ping[i].get('peer_ip_address')
-        port= ping[i].get('peer_port')
+        peer_ip_address= ping[i].get('peer_ip_address')
+        peer_port= ping[i].get('peer_port')
         peer_response = ping[i].get('response')
         
         if peer_response == 'error calling peer':
-            updatePeer(ip_address=ip_address,port=port,status='offline')
+            updatePeer(ip_address=peer_ip_address,port=peer_port,status='offline')
         
         elif peer_response.get('message') == 'Not authenticated as peer':
-            
-            peer_port = queryPeer(ip_address=ip_address).get('port')
-            deletePeer(ip_address,peer_port)
-            attemptToConnectToNewPeer(bitland_version, peering_port, getTimeNowSeconds(), ip_address, peer_port)
+            attemptToConnectToNewPeer(bitland_version, peering_port, getTimeNowSeconds(), peer_ip_address, peer_port)
         
         else:
-            updatePeer(ip_address=ip_address,port=port,status='connected')
+            updatePeer(ip_address=peer_ip_address,port=peer_port,status='connected')
     
     return True
 

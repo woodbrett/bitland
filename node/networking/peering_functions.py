@@ -401,6 +401,7 @@ def attemptToConnectToNewPeer(version, port, timestamp, peer_ip_address, peer_po
     print(peer_request.get('status') == 'initial connection request accepted')
     
     if peer_request.get('status') == 'initial connection request accepted':
+        deletePeer(peer_ip_address,peer_port)
         addPeer(peer_ip_address,peer_port,'local_contact_external_accepted')
         updatePeer(ip_address=peer_ip_address, port=peer_port, self_auth_key=peer_request.get('token'))
         return 'Success'
