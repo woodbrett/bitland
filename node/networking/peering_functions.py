@@ -383,6 +383,9 @@ def responsivePeerRequest(version, port, timestamp, peer_ip_address, peer_port, 
     
     peer_request = validateConnectToPeer(version, port, timestamp, peer_ip_address, peer_port)
     
+    print('attempting to respond to peer request')
+    print(peer_request)
+    
     if peer_request.get('status') == 'successful peer':
         updatePeer(ip_address=peer_ip_address, port=port, self_auth_key=peer_request.get('token'), status='connected')
         return 'Success'
