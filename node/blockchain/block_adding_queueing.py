@@ -238,15 +238,15 @@ def checkPeerBlocks(use_queue=True):
             
             processPeerBlocks(new_blocks,use_queue=False)
         
-            peer_height = max_height
-            self_height = getMaxBlockHeight()
-            synched = self_height >= peer_height
+        peer_height = max_height
+        self_height = getMaxBlockHeight()
+        synched = self_height >= peer_height
             
-            result = {
-                'peer_height': peer_height,
-                'self_height': self_height,
-                'synched': synched
-                }
+        result = {
+            'peer_height': peer_height,
+            'self_height': self_height,
+            'synched': synched
+            }
 
     except:
         print('exception in checkPeerBlocks')
