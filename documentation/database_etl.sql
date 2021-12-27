@@ -181,7 +181,8 @@ create table networking.peer (
   connected_time bigint,
   last_ping  bigint,
   self_auth_key uuid,
-  peer_auth_key uuid default uuid_generate_v1() 
+  peer_auth_key uuid default uuid_generate_v1(),
+  network varchar
 );
  
 alter table networking.peer add constraint ip_port_unique unique (ip_address, port);
