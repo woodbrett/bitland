@@ -144,7 +144,7 @@ def authenticateLocalUser(ip_address, password):
         return False
 
 
-def addPeer(ip_address,port,status,connected_time=0,last_ping=0,network):
+def addPeer(ip_address,port,status,connected_time=0,last_ping=0,network=''):
     
     query = (
         "insert into networking.peer (ip_address, port, status, connected_time, last_ping, network) " +
