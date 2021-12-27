@@ -518,10 +518,6 @@ def messagePeer(endpoint, peer_ip_address, payload='', rest_type='get'):
     
 if __name__ == '__main__':
     
-    #attemptToConnectToNewPeer(1, 8334, getTimeNowSeconds(), '76.179.199.85', 8336)
-    
-    evaluateConnectionRequest('74.78.100.60', 1, 8336, 1)
-    print(queryPeerByIpAndPort('124.123.66.141',8334))
-    
+    print(peerCount())
     
     

@@ -55,11 +55,10 @@ def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_v
     
     if use_threading == True:
         thread_id = waitInBlockQueue(type='validate and add block')
+        print('made it through queue')
     
     else:
         thread_id = True
-    
-    print('made it through queue')
     
     try:     
         add_block = True
@@ -215,6 +214,8 @@ def validateAddBlocksAlreadyQueue(blocks):
 
 def synchBitcoin(use_threading=True):
     
+    synched = True
+    
     if use_threading == True:
         thread_id = waitInBlockQueue(type='synching bitcoin')
     
@@ -222,11 +223,12 @@ def synchBitcoin(use_threading=True):
         realtimeSynchWithBitcoin()
     except:
         print('exception in synchBitcoin')
+        synched = False
     
     if use_threading == True:
         block_queue.remove(threading.get_ident())  
         
-    return True  
+    return synched  
 
 
 def checkPeerBlocks(use_threading=True):

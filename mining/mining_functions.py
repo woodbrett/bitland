@@ -41,6 +41,7 @@ from utilities.bitcoin.bitcoin_requests import (
     getBlockHeightFromHash
     )
 from utilities.time_utils import getTimeNowSeconds
+import time
 
 def findValidHeader(
         version_byte,
@@ -159,72 +160,78 @@ def validateMempoolTransactions():
 #UPDATE figure out if node is synching before starting to try to mine
 def miningProcess():
     
-    mempool_transactions = validateMempoolTransactions()
-    print(mempool_transactions)
-    transactions = mempool_transactions
-    print(transactions)
-    
-    landbase_transaction_bytes = getLandbaseTransaction()
-    transactions.append(landbase_transaction_bytes)
-
-    print(transactions)
-    
-    version = bitland_version
-    time_ = getTimeNowSeconds()
-    start_nonce = 0
-    bitcoin_hash = getBestBlockHash()
-    bitcoin_height = getBlockHeightFromHash(bitcoin_hash)
-    miner_bitcoin_address = '3N6E2nprHmWCk39ibj3nwMSF5J34eRupNb'
-    
-    version_bytes = version.to_bytes(2, byteorder = 'big')
-    prev_block_bytes = getPrevBlockGuarded()
-    mrkl_root_bytes = calculateMerkleRoot(transactions)
-    time_bytes = time_.to_bytes(5, byteorder = 'big')
-    bits_bytes = getBitsCurrentBlock() 
-    bitcoin_hash_bytes = unhexlify(bitcoin_hash)
-    bitcoin_height_bytes = bitcoin_height.to_bytes(4, byteorder = 'big')
-    bitcoin_last_64_mrkl_bytes = calculateMerkleRoot64BitcoinBlocks(block_height=bitcoin_height)
-    miner_bitcoin_address_bytes = miner_bitcoin_address.encode('utf-8')
-    start_nonce_bytes = start_nonce.to_bytes(4, byteorder = 'big')    
-    
-    current_block_height = getMaxBlockHeight()
-    
-    print('entering mine')
-    
-    mine = findValidHeader(
-        version_bytes,
-        prev_block_bytes, 
-        mrkl_root_bytes,
-        time_bytes,
-        bits_bytes,
-        bitcoin_hash_bytes,
-        bitcoin_height_bytes,
-        bitcoin_last_64_mrkl_bytes,
-        miner_bitcoin_address_bytes,
-        start_nonce_bytes,
-        current_block_height
-    )
-    
-    header = mine[0]
-    status = mine[1]
-    block_height = mine[2]
-    
-    print('mining status: ' + status)
-    
-    #UPDATE do we need to wait at all to allow block to propagate?
-    if status == 'found valid block':
-        serialized_block = serializeBlock(header, transactions)
-        block_hex = hexlify(serialized_block).decode('utf-8')
-        print(block_hex)
+    try:
+        #create transaction set
+        mempool_transactions = validateMempoolTransactions()
+        print(mempool_transactions)
+        transactions = mempool_transactions
+        print(transactions)
         
-        #t1 = threading.Thread(target=validateAddBlock,args=(serialized_block,),daemon=True)
-        #t1.start()
-        #t1.join()
-        
-        queueNewBlockFromPeer(current_block_height+1, block=block_hex)
+        landbase_transaction_bytes = getLandbaseTransaction()
+        transactions.append(landbase_transaction_bytes)
+        print(transactions)
     
+        #create header    
+        version = bitland_version
+        time_ = getTimeNowSeconds()
+        start_nonce = 0
+        bitcoin_hash = getBestBlockHash()
+        bitcoin_height = getBlockHeightFromHash(bitcoin_hash)
+        miner_bitcoin_address = '3N6E2nprHmWCk39ibj3nwMSF5J34eRupNb'
+        
+        version_bytes = version.to_bytes(2, byteorder = 'big')
+        prev_block_bytes = getPrevBlockGuarded()
+        mrkl_root_bytes = calculateMerkleRoot(transactions)
+        time_bytes = time_.to_bytes(5, byteorder = 'big')
+        bits_bytes = getBitsCurrentBlock() 
+        bitcoin_hash_bytes = unhexlify(bitcoin_hash)
+        bitcoin_height_bytes = bitcoin_height.to_bytes(4, byteorder = 'big')
+        bitcoin_last_64_mrkl_bytes = calculateMerkleRoot64BitcoinBlocks(block_height=bitcoin_height)
+        miner_bitcoin_address_bytes = miner_bitcoin_address.encode('utf-8')
+        start_nonce_bytes = start_nonce.to_bytes(4, byteorder = 'big')    
+        
+        current_block_height = getMaxBlockHeight()
+        
+        print('entering mine')
+        
+        mine = findValidHeader(
+            version_bytes,
+            prev_block_bytes, 
+            mrkl_root_bytes,
+            time_bytes,
+            bits_bytes,
+            bitcoin_hash_bytes,
+            bitcoin_height_bytes,
+            bitcoin_last_64_mrkl_bytes,
+            miner_bitcoin_address_bytes,
+            start_nonce_bytes,
+            current_block_height
+        )
+        
+        header = mine[0]
+        status = mine[1]
+        block_height = mine[2]
+        
+        print('mining status: ' + status)
+        
+        #UPDATE do we need to wait at all to allow block to propagate?
+        if status == 'found valid block':
+            serialized_block = serializeBlock(header, transactions)
+            block_hex = hexlify(serialized_block).decode('utf-8')
+            print(block_hex)
+            
+            #t1 = threading.Thread(target=validateAddBlock,args=(serialized_block,),daemon=True)
+            #t1.start()
+            #t1.join()
+            
+            queueNewBlockFromPeer(current_block_height+1, block=block_hex)
+    
+    except:
+        print("error starting mining, likely that the connection to bitcoin source is down, waiting 2 minutes")
+        time.sleep(120) 
+        
     return miningProcess()
-    
+        
 
 if __name__ == "__main__":
 
