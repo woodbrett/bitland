@@ -231,6 +231,17 @@ def synchBitcoin(use_threading=True):
     return synched  
 
 
+def checkBitlandSynched():
+    
+    peer_heights = askPeersForHeight()
+    self_height = getMaxBlockHeight()
+    
+    print(peer_heights)
+    print(self_height)
+    
+    return None
+
+
 def checkPeerBlocks(use_threading=True):
 
     if use_threading == True:
@@ -271,9 +282,14 @@ def checkPeerBlocks(use_threading=True):
     if use_threading == True:
         block_queue.remove(threading.get_ident())  
 
+    peer_height = max_height
+    self_height = getMaxBlockHeight()
+    synched = self_height >= peer_height
+    
     return {
-        'peer_height': max_height,
-        'self_height': getMaxBlockHeight()
+        'peer_height': peer_height,
+        'self_height': self_height,
+        'synched': synched
         }
 
 
@@ -297,7 +313,10 @@ def removeBlocksThreading(low_block_height, high_block_height, use_threading=Tru
 if __name__ == '__main__':
     
     #checkPeerBlocks(use_threading=False)
+    
+    checkBitlandSynched()
 
+    '''
     blocks = ['00010000000a824bbdb29ce135f5f02cea9149e825659ebec44a359c0e227e6d0d9c8794ed7b329f37183587d6ed1f32477eb3de0f1f44247c1733c9968383f864e20061967e571d0ffff000000000000000000003c32b7a4e5ab514a4e4a0be97740b9b97f76981406262000ad69a231848ad631a7ff5f6b549f14dd778c40d82137e33443f65c16ed9093cb6818e0022334e3645326e7072486d57436b333969626a336e774d5346354a3334655275704e6200000000000000000000000000000044df8a00020101a30abf9254134388593f85134032572d3661b4eff2652d69faee7ebd2e0d26610040af22f40f6eacdd2758d4d77d9eac84856312b7174bb7f1cb9fda22f9956191032806526952de07e7208f0038df569248fe972e8c746bc51c31c8b41e091f2f92010101006c504f4c59474f4e28282d3130332e3731303933382034352e343732352c2d3130332e3731303933382034352e33343138322c2d3130342e303632352034352e33343138322c2d3130342e303632352034352e343732352c2d3130332e3731303933382034352e3437323529294099de55664303f3025e4c755880f20089134ffec5ad3275cd9eb097b6fcacb42e0c312af84e8a06d6f33fd24e8f7838de2596fe10d8ef3cc140e9d1b2ece7e92c00000000000000000000000000000000000001000100010068504f4c59474f4e28282d3134342e38343337352038332e39363830322c2d3134342e38343337352038332e37353437322c2d3134362e32352038332e37353437322c2d3134362e32352038332e39363830322c2d3134342e38343337352038332e3936383032292940400094b738d5099ba2208f78b605216c634b9f7ae5c3f5d94224d1663a8c535f1e2f57d419b4b27aec3c92162f59c156a33cdbc4a4049a53799cde39e03a021c0000000000000000000000000000000000']
 
     for i in range(0, len(blocks)):
@@ -312,7 +331,7 @@ if __name__ == '__main__':
         #prior_block_bitcoin_height = prior_block_header[5]    
         
         x = validateAddBlock(block_bytes, use_threading=False,realtime_validation=False)
-    
+    '''
     
     
     

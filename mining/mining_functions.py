@@ -42,6 +42,7 @@ from utilities.bitcoin.bitcoin_requests import (
     )
 from utilities.time_utils import getTimeNowSeconds
 import time
+from node.processing.synching import getNodeStatus
 
 def findValidHeader(
         version_byte,
@@ -161,6 +162,16 @@ def validateMempoolTransactions():
 def miningProcess():
     
     try:
+        node_connectivity = False        
+        node_synched = False
+        while node_synched == False or node_connectivity == False:
+            node_status = getNodeStatus()
+            node_connectivity = node_status.get('node_connectivity')    
+            node_synched = node_status.get('node_synched')
+            if node_synched == False or node_connectivity == False:
+                print('node not ready, waiting to set up mining')
+                time.sleep(1)
+        
         #create transaction set
         mempool_transactions = validateMempoolTransactions()
         print(mempool_transactions)
@@ -227,7 +238,7 @@ def miningProcess():
             queueNewBlockFromPeer(current_block_height+1, block=block_hex)
     
     except:
-        print("error starting mining, likely that the connection to bitcoin source is down, waiting 2 minutes")
+        print("error starting mining, waiting 2 minutes")
         time.sleep(120) 
         
     return miningProcess()

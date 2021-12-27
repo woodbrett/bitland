@@ -31,6 +31,7 @@ last_ten_block_hashes_url = 'https://blockstream.info/api/blocks/:height'
 get_block_height_by_hash_url = 'https://blockstream.info/api/block/:hash'
 
 #other
+min_peer_count = 1
 max_peer_count = 5
 peering_port = 8334
 peering_host = "0.0.0.0"
