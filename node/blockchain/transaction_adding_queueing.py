@@ -7,49 +7,25 @@ import threading
 import time
 from node.blockchain.transaction_operations import validateMempoolTransaction,\
     addTransactionToMempool
+from utilities.queueing import addToQueue, removeFromQueue
 
-transaction_queue = []
-
-def waitInTransactionQueue():
-#all processes validating and adding blocks should come through this to avoid conflicting adds
-
-    transaction_queue.append(threading.get_ident())
-    print(transaction_queue)
+def validateAddTransactionMempool(transaction_bytes, use_queue=True):
     
-    print(threading.get_ident())
-    time.sleep(5)
-    sleep_time = 0
-
-    while transaction_queue[0] != threading.get_ident():
-        time.sleep(1)   
-        sleep_time = sleep_time + 1
-        print('thread: ' + str(threading.get_ident()) + '; sleep: ' + str(sleep_time), flush=True)
-        if sleep_time > 100:
-            return False    
+    queue_id = addToQueue(use_queue=use_queue, queue_type='transaction_queue', function_type='add transaction to mempool')
     
-    return threading.get_ident()
-    
-
-def validateAddTransactionMempool(transaction_bytes, use_threading=True):
-    
-    add_transaction = True
-    
-    if use_threading == True:
-        queued_transaction = waitInTransactionQueue()
-        if queued_transaction == False:
-            add_transaction = False
-    
-    if add_transaction == True:
+    try:
         if validateMempoolTransaction(transaction_bytes)[0] == True:
             addTransactionToMempool(transaction_bytes)
 
         else:
             add_transaction = False
+            
+    except:
+        print('error adding transaction to mempool')
+        add_transaction = False
     
-    if use_threading == True:
-        transaction_queue.remove(threading.get_ident())
-        print('removed thread')
-
+    removeFromQueue(use_queue=use_queue,queue_type='transaction_queue',id=queue_id)  
+    
     return add_transaction    
 
 

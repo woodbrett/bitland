@@ -113,7 +113,7 @@ def run_node(initial_synch=False):
             print('bitcoin connection status: ' + str(bitcoin_connection))
           
             print('checking peer blocks')
-            bitland_synch = checkPeerBlocks(use_threading=True)
+            bitland_synch = checkPeerBlocks(use_queue=True)
             bitland_synched = bitland_synch.get('synched')
             #t3 = threading.Thread(target=checkPeerBlocks,args=(True,),daemon=True)
             #t3.start()
@@ -162,7 +162,7 @@ def initialSynch():
     
     synched = False
     while synched == False:
-        synch_peer = checkPeerBlocks(use_threading=False)
+        synch_peer = checkPeerBlocks(use_queue=False)
         synched = synch_peer.get('peer_height') == synch_peer.get('self_height')
     
 
@@ -190,5 +190,4 @@ if __name__ == '__main__':
     
     #x = pingPeers()
     
-    #x = checkPeerBlocks(use_threading=False)
     

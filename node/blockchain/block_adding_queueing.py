@@ -23,49 +23,17 @@ from utilities.bitcoin.bitcoin_transactions import synchWithBitcoin,\
     realtimeSynchWithBitcoin
 from node.networking.peering_functions import askPeersForHeight,\
     askPeerForBlocks
-
-block_queue = []
-
-def waitInBlockQueue(type=None):
-#all processes validating and adding blocks should come through this to avoid conflicting adds
-    
-    print('inside queue')
-
-    block_queue.append(threading.get_ident())
-    print(block_queue)
-    
-    print(threading.get_ident())
-    time.sleep(5)
-    sleep_time = 0
-
-    while block_queue[0] != threading.get_ident():
-        time.sleep(1)   
-        sleep_time = sleep_time + 1
-        print('thread: ' + str(threading.get_ident()) + '; type: ' + str(type) + '; sleep: ' + str(sleep_time))
-        if sleep_time > 100:
-            return False    
-    
-    return threading.get_ident()
-    
+from utilities.queueing import addToQueue, removeFromQueue
 
 #QUEUED PROCESS
-def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_validation=True, send_to_peers=False):
+def validateAddBlock(block_bytes, block_height=0, use_queue=True, realtime_validation=True, send_to_peers=False):
     
     print('validating and adding block, pre-thread')
-    
-    if use_threading == True:
-        thread_id = waitInBlockQueue(type='validate and add block')
-        print('made it through queue')
-    
-    else:
-        thread_id = True
-    
+    queue_id = addToQueue(use_queue=use_queue, queue_type='block_queue', function_type='validate and add block')
+
     try:     
         add_block = True
             
-        if thread_id == False:
-            add_block = False
-        
         if add_block == True:
             self_height = getMaxBlockHeight()
         
@@ -95,23 +63,20 @@ def validateAddBlock(block_bytes, block_height=0, use_threading=True, realtime_v
     
     except:
         print("exception in validateAddBlock")
+        add_block = False
+    
+    removeFromQueue(use_queue=use_queue,queue_type='block_queue',id=queue_id)
         
-    
-    if use_threading == True:
-        block_queue.remove(threading.get_ident())
-    
     return add_block
 
 
-#QUEUED PROCESS
-def processPeerBlocks(new_blocks_hex, use_threading=False):
+def processPeerBlocks(new_blocks_hex, use_queue=False):
     
     blocks_added = 0
     blocks_removed = 0
-    
-    if use_threading==True:
-        thread_id = waitInBlockQueue(type='processing peer blocks')
 
+    queue_id = addToQueue(use_queue=use_queue, queue_type='block_queue', function_type='processing peer blocks')
+    
     try:     
         self_height = getMaxBlockHeight()
         
@@ -167,8 +132,7 @@ def processPeerBlocks(new_blocks_hex, use_threading=False):
     except:
         print("exception in processPeerBlocks")
 
-    if use_threading==True:
-        block_queue.remove(threading.get_ident())
+    removeFromQueue(use_queue=use_queue,queue_type='block_queue',id=queue_id)
                 
     return blocks_added, blocks_removed
 
@@ -212,21 +176,19 @@ def validateAddBlocksAlreadyQueue(blocks):
     return valid_block
 
 
-def synchBitcoin(use_threading=True):
+def synchBitcoin(use_queue=True):
     
     synched = True
-    
-    if use_threading == True:
-        thread_id = waitInBlockQueue(type='synching bitcoin')
+
+    queue_id = addToQueue(use_queue=use_queue, queue_type='block_queue', function_type='synching bitcoin')
     
     try:
         realtimeSynchWithBitcoin()
     except:
         print('exception in synchBitcoin')
         synched = False
-    
-    if use_threading == True:
-        block_queue.remove(threading.get_ident())  
+
+    removeFromQueue(use_queue=use_queue,queue_type='block_queue',id=queue_id)
         
     return synched  
 
@@ -242,11 +204,11 @@ def checkBitlandSynched():
     return None
 
 
-def checkPeerBlocks(use_threading=True):
+def checkPeerBlocks(use_queue=True):
 
-    if use_threading == True:
-        thread_id = waitInBlockQueue(type='checking peer blocks')    
-
+    queue_id = addToQueue(use_queue=use_queue, queue_type='block_queue', function_type='checking peer blocks')
+    result = None
+    
     try:     
         peer_heights = askPeersForHeight()
         self_height = getMaxBlockHeight()
@@ -274,29 +236,29 @@ def checkPeerBlocks(use_threading=True):
             
             new_blocks = askPeerForBlocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
             
-            processPeerBlocks(new_blocks,use_threading=False)
+            processPeerBlocks(new_blocks,use_queue=False)
+        
+            peer_height = max_height
+            self_height = getMaxBlockHeight()
+            synched = self_height >= peer_height
+            
+            result = {
+                'peer_height': peer_height,
+                'self_height': self_height,
+                'synched': synched
+                }
 
     except:
         print('exception in checkPeerBlocks')
 
-    if use_threading == True:
-        block_queue.remove(threading.get_ident())  
-
-    peer_height = max_height
-    self_height = getMaxBlockHeight()
-    synched = self_height >= peer_height
+    removeFromQueue(use_queue=use_queue,queue_type='block_queue',id=queue_id)  
     
-    return {
-        'peer_height': peer_height,
-        'self_height': self_height,
-        'synched': synched
-        }
+    return result
 
 
-def removeBlocksThreading(low_block_height, high_block_height, use_threading=True):
+def removeBlocksQueueing(low_block_height, high_block_height, use_queue=True):
 
-    if use_threading == True:
-        thread_id = waitInBlockQueue(type='checking peer blocks')
+    queue_id = addToQueue(use_queue=use_queue, queue_type='block_queue', function_type='removing blocks')
     
     try:
         x = removeBlocks(low_block_height, high_block_height)
@@ -304,15 +266,14 @@ def removeBlocksThreading(low_block_height, high_block_height, use_threading=Tru
         x = False
         print('exception in remove blocks')
 
-    if use_threading == True:
-        block_queue.remove(threading.get_ident())  
+    removeFromQueue(use_queue=use_queue,queue_type='block_queue',id=queue_id) 
         
     return x
     
     
 if __name__ == '__main__':
     
-    #checkPeerBlocks(use_threading=False)
+    #checkPeerBlocks(use_queue=False)
     
     checkBitlandSynched()
 
@@ -330,7 +291,7 @@ if __name__ == '__main__':
         #prior_block_hash = calculateHeaderHashFromBlock(block_bytes=prior_block)
         #prior_block_bitcoin_height = prior_block_header[5]    
         
-        x = validateAddBlock(block_bytes, use_threading=False,realtime_validation=False)
+        x = validateAddBlock(block_bytes, use_queue=False,realtime_validation=False)
     '''
     
     
