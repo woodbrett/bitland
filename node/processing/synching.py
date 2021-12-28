@@ -28,7 +28,7 @@ from node.blockchain.block_adding_queueing import processPeerBlocks,\
 from node.blockchain.mempool_operations import garbageCollectMempool
 from ipaddress import ip_address
 from node.blockchain.global_variables import bitland_version
-from system_variables import peering_port, min_peer_count
+from system_variables import peering_port, min_peer_count, node_network
 from utilities.time_utils import getTimeNowSeconds
 from utilities.bitcoin.bitcoin_requests import getBestBlockHash
 from utilities import bitcoin
@@ -98,6 +98,7 @@ def run_node(initial_synch=False):
         if best_bitcoin_block_hash == None:
             bitcoin_connection = False
             bitcoin_synched = False
+            bitland_synched = False
         else:
             bitcoin_connection = True
 
@@ -138,7 +139,7 @@ def pingPeers(peer_types=['connected','unpeered','offline',None]):
             updatePeer(ip_address=peer_ip_address,port=peer_port,status='offline')
         
         elif peer_response.get('message') == 'Not authenticated as peer':
-            attemptToConnectToNewPeer(bitland_version, peering_port, getTimeNowSeconds(), peer_ip_address, peer_port)
+            attemptToConnectToNewPeer(bitland_version, peering_port, getTimeNowSeconds(), node_network, peer_ip_address, peer_port)
         
         else:
             updatePeer(ip_address=peer_ip_address,port=peer_port,status='connected')

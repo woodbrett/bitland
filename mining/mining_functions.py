@@ -86,13 +86,22 @@ def findValidHeader(
                 header_byte = b''
                 status = 'rival found block'
                 break
+        if(nonce % 10000000 == 0):
+            node_status = getNodeStatus()
+            node_connectivity = node_status.get('node_connectivity')    
+            node_synched = node_status.get('node_synched')
+            if node_synched == False or node_connectivity == False:
+                print('node out of synch, exiting mine')
+                status = 'node out of synch, exiting mine'
+                break
         if(nonce > 4000000000):
             header_byte = b''
             status = 'timed out'
             break
-        nonce_hex = hexlify(nonce_byte)
-        status = 'found valid block'
-        new_block_height = current_block_height + 1
+    
+    nonce_hex = hexlify(nonce_byte)
+    status = 'found valid block'
+    new_block_height = current_block_height + 1
 
     end_time = datetime.now()
     print(end_time - start_time)
