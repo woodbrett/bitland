@@ -99,15 +99,20 @@ def findValidHeader(
             status = 'timed out'
             break
     
-    nonce_hex = hexlify(nonce_byte)
-    status = 'found valid block'
-    new_block_height = current_block_height + 1
+    if headerhash_byte <= difficulty_byte:
+        nonce_hex = hexlify(nonce_byte)
+        status = 'found valid block'
+        new_block_height = current_block_height + 1
 
     end_time = datetime.now()
     print(end_time - start_time)
     print(int.from_bytes(time_byte,'big'))
     
-    return (header_byte, status,new_block_height)
+    return {
+        'header_byte': header_byte, 
+        'status': status,
+        'new_block_height': new_block_height or 0
+        }
 
 
 def getTransactionsFromMempool(max_size_bytes=4000000):
@@ -228,9 +233,9 @@ def miningProcess():
             current_block_height
         )
         
-        header = mine[0]
-        status = mine[1]
-        block_height = mine[2]
+        header = mine.get('header_byte')
+        status = mine.get('status')
+        block_height = mine.get('new_block_height')
         
         print('mining status: ' + status)
         

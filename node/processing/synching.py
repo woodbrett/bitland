@@ -32,18 +32,24 @@ from system_variables import peering_port, min_peer_count, node_network
 from utilities.time_utils import getTimeNowSeconds
 from utilities.bitcoin.bitcoin_requests import getBestBlockHash
 from utilities import bitcoin
+from utilities.connectivity import checkInternetConnection
 
 global bitcoin_connection 
 global peer_count 
 global bitland_synched
 global bitcoin_synched
+global internet_connection
 
 bitcoin_connection = False
 peer_count = 0
 bitland_synched = False
 bitcoin_synched = True
+internet_connection = False
 
 def start_node():
+
+    print('checking internet connection')
+    internet_connection = checkInternetConnection()
 
     print('resetting peers')
     resetPeers()
@@ -54,26 +60,6 @@ def start_node():
     print('sleeping 10 seconds to sort out peering')
     time.sleep(10)
     
-    '''
-    print('synching bitcoin')
-    bitcoin_connection = synchBitcoin()
-    
-    if bitcoin_connection == True:
-        print('checking peer blocks')
-        peer_height = 1
-        self_height = 0
-        while self_height < peer_height:
-            block_comparison = checkPeerBlocks(use_threading=True)
-            peer_height = block_comparison.get('peer_height')
-            self_height = block_comparison.get('self_height')
-    
-    else:
-        print('not able to check peer blocks since bitcoin connection is not established')
-            
-    #t3 = threading.Thread(target=checkPeerBlocks,args=(True,),daemon=True)
-    #t3.start()
-    '''
-    
     return True
 
 
@@ -83,6 +69,7 @@ def run_node(initial_synch=False):
     global peer_count 
     global bitland_synched
     global bitcoin_synched
+    global internet_connection
     
     #pingPeers(peer_types=['connected','unpeered'])
     
@@ -91,8 +78,17 @@ def run_node(initial_synch=False):
     
     while True:
 
-        peers = pingPeers(peer_types=['connected','unpeered'])
-        peer_count = peers.get('peer_count')
+        if internet_connection == False:
+            if checkInternetConnection() == True:
+                internet_connection = True
+                resetPeers()
+        
+        if internet_connection == True:
+            peers = pingPeers(peer_types=['connected','unpeered'])
+            peer_count = peers.get('peer_count')
+        
+            if peer_count == 0:
+                internet_connection = checkInternetConnection()
         
         best_bitcoin_block_hash = getBestBlockHash()
         if best_bitcoin_block_hash == None:
@@ -122,7 +118,7 @@ def run_node(initial_synch=False):
         print('node status:')
         print(getNodeStatus())
         
-        time.sleep(120)
+        time.sleep(60)
 
 
 def pingPeers(peer_types=['connected','unpeered','offline',None]):
@@ -169,7 +165,7 @@ def initialSynch():
 
 def getNodeStatus():
     
-    node_connectivity = (bitcoin_connection and peer_count >= min_peer_count)
+    node_connectivity = (bitcoin_connection and peer_count >= min_peer_count and internet_connection)
     node_synched = (bitcoin_synched and bitland_synched)
     bitland_height = getMaxBlockHeight()
     
@@ -180,7 +176,8 @@ def getNodeStatus():
         "bitcoin_synched": bitcoin_synched,
         "node_connectivity": node_connectivity,
         "bitland_height": bitland_height,
-        "node_synched": node_synched
+        "node_synched": node_synched,
+        "internet_connection": internet_connection
         }
 
 
