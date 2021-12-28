@@ -31,7 +31,7 @@ def addToQueue(use_queue=True, queue_type='block_queue', function_type=None, id=
             while block_queue[0] != id:
                 time.sleep(1)   
                 sleep_time = sleep_time + 1
-                print('thread: ' + str(id) + '; type: ' + str(type) + '; sleep: ' + str(sleep_time))
+                print('thread: ' + str(id) + '; type: ' + str(function_type) + '; sleep: ' + str(sleep_time))
                 if sleep_time > 100:
                     raise Exception("Timed out in queue, function type of: " + str(function_type))  
         
@@ -44,7 +44,7 @@ def addToQueue(use_queue=True, queue_type='block_queue', function_type=None, id=
             while transaction_queue[0] != id:
                 time.sleep(1)   
                 sleep_time = sleep_time + 1
-                print('thread: ' + str(id) + '; type: ' + str(type) + '; sleep: ' + str(sleep_time))
+                print('thread: ' + str(id) + '; type: ' + str(function_type) + '; sleep: ' + str(sleep_time))
                 if sleep_time > 100:
                     raise Exception("Timed out in queue, function type of: " + str(function_type))  
         

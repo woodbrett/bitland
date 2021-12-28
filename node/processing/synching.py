@@ -76,49 +76,55 @@ def run_node(initial_synch=False):
     if initial_synch == True:   
         initialSynch()
     
-    while True:
-
-        if internet_connection == False:
-            if checkInternetConnection() == True:
-                internet_connection = True
-                resetPeers()
-        
-        if internet_connection == True:
-            peers = pingPeers(peer_types=['connected','unpeered'])
-            peer_count = peers.get('peer_count')
-        
-            if peer_count == 0:
-                internet_connection = checkInternetConnection()
-        
-        best_bitcoin_block_hash = getBestBlockHash()
-        if best_bitcoin_block_hash == None:
-            bitcoin_connection = False
-            bitcoin_synched = False
-            bitland_synched = False
-        else:
-            bitcoin_connection = True
-
-        node_status = getNodeStatus()
-        
-        if node_status.get('node_connectivity') == True:
-                            
-            print('synching bitcoin')
-            synch_bitcoin = synchBitcoin()
-            bitcoin_connection = synch_bitcoin
-            bitcoin_synched = synch_bitcoin
-            
-            print('bitcoin connection status: ' + str(bitcoin_connection))
-          
-            print('checking peer blocks')
-            bitland_synch = checkPeerBlocks(use_queue=True)
-            bitland_synched = bitland_synch.get('synched')
-            #t3 = threading.Thread(target=checkPeerBlocks,args=(True,),daemon=True)
-            #t3.start()
+    try:
+        while True:
     
-        print('node status:')
-        print(getNodeStatus())
+            if internet_connection == False:
+                if checkInternetConnection() == True:
+                    internet_connection = True
+                    resetPeers()
+            
+            if internet_connection == True:
+                peers = pingPeers(peer_types=['connected','unpeered'])
+                peer_count = peers.get('peer_count')
+            
+                if peer_count == 0:
+                    internet_connection = checkInternetConnection()
+            
+            best_bitcoin_block_hash = getBestBlockHash()
+            if best_bitcoin_block_hash == None:
+                bitcoin_connection = False
+                bitcoin_synched = False
+                bitland_synched = False
+            else:
+                bitcoin_connection = True
+    
+            node_status = getNodeStatus()
+            
+            if node_status.get('node_connectivity') == True:
+                                
+                print('synching bitcoin')
+                synch_bitcoin = synchBitcoin()
+                bitcoin_connection = synch_bitcoin
+                bitcoin_synched = synch_bitcoin
+                
+                print('bitcoin connection status: ' + str(bitcoin_connection))
+              
+                print('checking peer blocks')
+                bitland_synch = checkPeerBlocks(use_queue=True)
+                bitland_synched = bitland_synch.get('synched')
+                #t3 = threading.Thread(target=checkPeerBlocks,args=(True,),daemon=True)
+                #t3.start()
         
-        time.sleep(60)
+            print('node status:')
+            print(getNodeStatus())
+            
+            time.sleep(60)
+    
+    except:
+        print('exception in running node, restarting now')
+        start_node()
+        run_node()
 
 
 def pingPeers(peer_types=['connected','unpeered','offline',None]):
