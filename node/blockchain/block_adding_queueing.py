@@ -25,6 +25,7 @@ from node.networking.peering_functions import askPeersForHeight,\
     askPeerForBlocks
 from utilities.queueing import addToQueue, removeFromQueue
 
+#UPDATE logic to make it much smoother
 #QUEUED PROCESS
 def validateAddBlock(block_bytes, block_height=0, use_queue=True, realtime_validation=True, send_to_peers=False):
     

@@ -45,11 +45,13 @@ def analyzeNewBlockFromPeer(block_height,block_hex='',block_bytes=b'',peer=''):
     print('validating adding block')
     
     add_block = validateAddBlock(block_bytes, block_height, use_queue=True)
-    print('successfully added block')
     
     if add_block == True:
-        print('sending block to peers')
+        print('successfully added block, sending block to peers')
         sendBlockToPeers(block_height,block_hex,peers_to_exclude=[peer])
+    
+    else:
+        print('not able to add block, not sending to peers')
     
     return add_block
 
