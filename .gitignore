@@ -143,3 +143,4 @@ cython_debug/
 python-venv/
 database.ini
 /testnet_database.ini
+.vscode/launch.json
