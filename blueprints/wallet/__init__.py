@@ -36,14 +36,14 @@ def authenticate():
         return redirect(url_for('wallet.login', error='Invalid password'))
     else:
         utxos = getWalletUtxos()
-        resp = make_response(render_template('mywallet.html', utxos=utxos.get('utxos')))
+        resp = make_response(render_template('utxos.html', utxos=utxos.get('utxos')))
         resp.set_cookie('authenticated', 'True')
         return resp
     
 @blueprint.route('/dashboard', methods = ['GET'])
 def dashboard():
     if request.cookies.get('authenticated') == 'True':
-        return render_template('mywallet.html')
+        return render_template('utxos.html')
     else:
         return redirect(url_for('wallet.login'))
     
