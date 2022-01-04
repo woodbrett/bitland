@@ -7,6 +7,7 @@ Created on Mar 28, 2021
 from flask import Flask
 from blueprints.peer import blueprint as peer
 from blueprints.local import blueprint as local
+from blueprints.wallet import blueprint as wallet
 import threading
 from mining.mining_functions import miningProcess
 from system_variables import (
@@ -28,6 +29,7 @@ app.config['RESTPLUS_MASK_SWAGGER'] = False
 
 app.register_blueprint(peer)
 app.register_blueprint(local)
+app.register_blueprint(wallet)
 
 
 def startUp():
