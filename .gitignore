@@ -144,3 +144,4 @@ python-venv/
 database.ini
 /testnet_database.ini
 .vscode/launch.json
+nohup.out

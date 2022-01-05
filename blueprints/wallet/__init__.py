@@ -43,7 +43,7 @@ def authenticate():
 @blueprint.route('/dashboard', methods = ['GET'])
 def dashboard():
     if request.cookies.get('authenticated') == 'True':
-        return render_template('utxos.html')
+        return redirect(url_for('wallet.utxos'))
     else:
         return redirect(url_for('wallet.login'))
     
