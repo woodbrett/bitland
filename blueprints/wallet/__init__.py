@@ -4,10 +4,11 @@ Created on Dec 29, 2021
 @author: prakasha
 '''
 
+from os import system
 from flask import Blueprint, request, render_template, make_response, redirect, url_for
 from node.networking.peering_functions import authenticateLocalUser
 from wallet.information import getWalletUtxos
-
+from wallet.transaction_creation import createSimpleTransactionTransfer
 from system_variables import (
     override_ip_to_allow_remote_wallet_access,
     )
@@ -59,6 +60,31 @@ def utxos():
     if request.cookies.get('authenticated') == 'True':
         utxos = getWalletUtxos()
         return render_template('utxos.html', utxos=utxos.get('utxos'))
+    else:
+        return redirect(url_for('wallet.login'))
+
+@blueprint.route('/send', methods = ['GET', 'POST'])
+def send():
+    if request.cookies.get('authenticated') == 'True':
+        txHash = request.form['txHash']
+        privateKey = request.form['privateKey']
+        vout = request.form['vout']
+        return render_template('send.html', txHash=txHash, privateKey=privateKey, vout=vout)
+    else:
+        return redirect(url_for('wallet.login'))
+    
+@blueprint.route('/validateSend', methods = ['POST'])
+def validateSend():
+    if request.cookies.get('authenticated') == 'True':
+        txHash = request.form['txHash']
+        privateKey = request.form['privateKey']
+        vout = request.form['vout']
+        spendType = request.form["spendType"]
+        publicKey = request.form["publicKey"]
+        serialized_transaction = createSimpleTransactionTransfer(txHash, vout, privateKey,
+                                                                 spendType, publicKey)
+        
+        return redirect(url_for('wallet.utxos'))
     else:
         return redirect(url_for('wallet.login'))
     

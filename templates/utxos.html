@@ -4,49 +4,53 @@
 
 <main class="col-md-12 ms-sm-auto col-lg-12 px-md-4">
   <h2 class="mt-4">UTXOS</h2>
-  <div class="table-responsive">
-    <table class="table table-striped table-sm">
-      <thead>
-        <tr>
-          
-          
-          <th scope="col">TX Hash</th>
-          <!--<th scope="col">Public Key</th>
-          <th scope="col">VOUT</th>
-          <th scope="col">Shape</th> -->
-        </tr>
-      </thead>
-      <tbody>
-        {% for utxo in utxos %}
-        <tr>
-            <td> <i class="fas fa-plus"
-              type="button" data-bs-toggle="collapse" data-bs-target="#id_{{ utxo.block_height }}" 
-              aria-expanded="false" aria-controls="{{ utxo.block_height }}"></i>&nbsp;&nbsp;{{ utxo.transaction_hash }}
-            
-              <div class="collapse" id="id_{{ utxo.block_height }}">
-                <div class="card card-body">
-                  <p><strong>Block#:</strong> {{ utxo.block_height }}</p>
-                  <p><strong>Public Key:</strong> {{ utxo.public_key }}</p>
-                  <p><strong>VOUT:</strong> {{ utxo.vout }}</p>
-                  <p><strong>Shape:</strong> {{ utxo.shape }}</p>
-                </div>
-              </div>
+  <form action = "/wallet/send" method = "POST">
+    <div class="table-responsive">
+      <table class="table table-striped table-sm">
+        <thead>
+          <tr>
+            <th scope="col">Transaction Hash</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for utxo in utxos %}
+          <tr class="cursor-pointer">
+              <td role='button' data-bs-toggle="collapse" data-bs-target="#id_{{ utxo.block_height }}" 
+              aria-expanded="false" aria-controls="{{ utxo.block_height }}"> 
+                
+                +&nbsp;&nbsp;{{ utxo.transaction_hash }}
               
-            </td>
-            
-            <!-- <td> {{ utxo.block_height }} </td>
-            <td>
-                {{ utxo.transaction_hash }}
-            </td>
-            <td> {{ utxo.public_key }} </td>
-            <td> {{ utxo.vout }} </td>
-            <td> {{ utxo.shape }} </td> -->
-        </tr>
-        
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+                <div class="collapse" id="id_{{ utxo.block_height }}">
+                  <div class="card card-body">
+                    
+                      <input type="hidden" name="txHash" value="{{ utxo.transaction_hash }}" />
+                      <input type="hidden" name="vout" value="{{ utxo.vout }}" />
+                      <input type="hidden" name="privateKey" value="{{ utxo.private_key }}" />
+                      <p type="input"><strong>Block#:</strong> {{ utxo.block_height }}</p>
+                      <p><strong>Public Key:</strong> {{ utxo.public_key }}</p>
+                      <p><strong>VOUT:</strong> {{ utxo.vout }}</p>
+                      <p><strong>Shape:</strong> {{ utxo.shape }}</p>
+                      <button type="submit" class="btn btn-primary">Send</button>
+                    </form>
+                  </div>
+                </div>
+                
+              </td>
+              
+              <!-- <td> {{ utxo.block_height }} </td>
+              <td>
+                  {{ utxo.transaction_hash }}
+              </td>
+              <td> {{ utxo.public_key }} </td>
+              <td> {{ utxo.vout }} </td>
+              <td> {{ utxo.shape }} </td> -->
+          </tr>
+          
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
 </main>
   
 {% endblock %}
