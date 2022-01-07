@@ -66,10 +66,13 @@ def utxos():
 @blueprint.route('/send', methods = ['GET', 'POST'])
 def send():
     if request.cookies.get('authenticated') == 'True':
-        txHash = request.form['txHash']
-        privateKey = request.form['privateKey']
-        vout = request.form['vout']
-        return render_template('send.html', txHash=txHash, privateKey=privateKey, vout=vout)
+        if request.method == 'POST':
+            txHash = request.form['txHash']
+            privateKey = request.form['privateKey']
+            vout = request.form['vout']
+            return render_template('send.html', txHash=txHash, privateKey=privateKey, vout=vout)
+        else:
+            return render_template('send.html')
     else:
         return redirect(url_for('wallet.login'))
     
