@@ -15,10 +15,9 @@
         <tbody>
           {% for utxo in utxos %}
           <tr class="cursor-pointer">
-              <td role='button' data-bs-toggle="collapse" data-bs-target="#id_{{ utxo.block_height }}" 
-              aria-expanded="false" aria-controls="{{ utxo.block_height }}"> 
-                
-                +&nbsp;&nbsp;{{ utxo.transaction_hash }}
+              <td> 
+                <span role='button' data-bs-toggle="collapse" data-bs-target="#id_{{ utxo.block_height }}" 
+                aria-expanded="false" aria-controls="{{ utxo.block_height }}">+&nbsp;&nbsp;</span>{{ utxo.transaction_hash }}
               
                 <div class="collapse" id="id_{{ utxo.block_height }}">
                   <div class="card card-body">
