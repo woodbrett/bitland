@@ -254,6 +254,14 @@ def createTransactionClaim(input_transaction_hash, input_vout, miner_fee_sats, m
 
 if __name__ == '__main__':
 
+    createSimpleTransactionTransfer(
+    '5ea34f3d44f7dfabdeabe1545e1636bc409e7cfaa808219f695b73ecb9682de7',
+    0,
+    '689cac2f251f95a438d7073cca14286c53a2d0458771bd6c41ab88508c2643b3',
+    1,
+    'dcf5d32e96e925d337979bdd85d83a31a6a5f49ecae78f7b48a01160c824b197eaa00522626a37dbe4b0dba71a08964a7760660342ab4e73f547baf8282e76ca'
+    )
+
     ############## SIMPLE TRANSACTION #################
     
     '''

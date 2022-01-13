@@ -7,7 +7,8 @@ from utilities.sql_utils import *
 from system_variables import (
     max_peer_count,
     peering_port,
-    local_api_password
+    local_api_password,
+    node_network
     )
 from collections import namedtuple
 import threading
@@ -19,7 +20,7 @@ from utilities.time_utils import getTimeNowSeconds
 #external_contact_local_accepted
 #local_contact_external_accepted
 
-def evaluateInitialConnectionRequest(ip_address, version, port, timestamp):
+def evaluateInitialConnectionRequest(ip_address, version, port, timestamp, network):
         
     status = ''
     reason = ''
@@ -29,15 +30,16 @@ def evaluateInitialConnectionRequest(ip_address, version, port, timestamp):
     #peer = queryPeer(ip_address=ip_address)
     peer = queryPeerByIpAndPort(ip_address, port)
     
-    if current_peer_count >= max_peer_count:
+    if node_network != network:
+        status = 'unsuccessful peer'
+        reason = 'mismatched network - this is ' + node_network + ' node'
+        
+    elif current_peer_count >= max_peer_count:
         status = 'unsuccessful peer'
         reason = 'too many peers'
 
     #UPDATE to check for version
     
-    #UPDATE to check for mainnet / testnet
-    
-    #UPDATE make logic smoother
     else:
         if peer.get('peer_status') != 'no peer found':
             deletePeer(ip_address, port)
@@ -51,7 +53,7 @@ def evaluateInitialConnectionRequest(ip_address, version, port, timestamp):
         print(port)
         token = str(addPeer(ip_address, port, 'external_contact_local_accepted'))
         #UPDATE version
-        t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), ip_address, port,),daemon=True)
+        t1 = threading.Thread(target=responsivePeerRequest,args=(1, peering_port, getTimeNowSeconds(), node_network, ip_address, port,),daemon=True)
         t1.start()
     
     print("evaluated initial connection request: ")
@@ -68,23 +70,24 @@ def evaluateInitialConnectionRequest(ip_address, version, port, timestamp):
         }
 
 
-def evaluateValidateConnectionRequest(ip_address, version, port, timestamp):
+def evaluateValidateConnectionRequest(ip_address, version, port, timestamp, network):
         
     status = ''
     reason = ''
     token = ''
     
     current_peer_count = peerCount()
-    #peer = queryPeer(ip_address=ip_address)
     peer = queryPeerByIpAndPort(ip_address, port)
     
-    if current_peer_count >= max_peer_count:
+    if node_network != network:
+        status = 'unsuccessful peer'
+        reason = 'mismatched network - this is ' + node_network + ' node'
+        
+    elif current_peer_count >= max_peer_count:
         status = 'unsuccessful peer'
         reason = 'too many peers'
 
     #UPDATE to check for version
-    
-    #UPDATE to check for mainnet / testnet
     
     #UPDATE make logic smoother
     elif peer.get('peer_status') != 'no peer found' and peer.get('status') == 'local_contact_external_accepted':
@@ -141,11 +144,11 @@ def authenticateLocalUser(ip_address, password):
         return False
 
 
-def addPeer(ip_address,port,status,connected_time=0,last_ping=0):
+def addPeer(ip_address,port,status,connected_time=0,last_ping=0,network=''):
     
     query = (
-        "insert into networking.peer (ip_address, port, status, connected_time, last_ping) " +
-        "values ('" + ip_address +"'," + str(port) + ",'" + status + "'," + str(connected_time) + "," + str(last_ping) + ") " +
+        "insert into networking.peer (ip_address, port, status, connected_time, last_ping, network) " +
+        "values ('" + ip_address +"'," + str(port) + ",'" + status + "'," + str(connected_time) + "," + str(last_ping) + ",'" + network + "') " +
         "returning peer_auth_key;"
         )
     
@@ -159,7 +162,7 @@ def addPeer(ip_address,port,status,connected_time=0,last_ping=0):
 
 
 #UPDATE
-def updatePeer(ip_address,port,status=0,connected_time=0,self_auth_key=0,peer_auth_key=0,derive_peer_auth_key=False,last_ping=0):
+def updatePeer(ip_address,port,status=0,connected_time=0,self_auth_key=0,peer_auth_key=0,derive_peer_auth_key=False,last_ping=0,network=0):
     
     x = ''
     
@@ -175,6 +178,8 @@ def updatePeer(ip_address,port,status=0,connected_time=0,self_auth_key=0,peer_au
         x = x + "update networking.peer set peer_auth_key = uuid_generate_v1() where ip_address = '" + ip_address + "' and port = " + str(port) + ";"
     if last_ping != 0:
         x = x + "update networking.peer set last_ping = " + str(last_ping) + " where ip_address = '" + ip_address + "' and port = " + str(port) + ";"
+    if network != 0:
+        x = x + "update networking.peer set network = '" + network + "' where ip_address = '" + ip_address + "' and port = " + str(port) + ";"
     
     try:
         update = executeSqlDeleteUpdate(x)
@@ -199,20 +204,18 @@ def resetPeers():
 def queryPeer(ip_address = '', self_auth_key = '', peer_auth_key = ''):
     
     if ip_address == '' and self_auth_key == '' and peer_auth_key == '':
-
         query = (        
-            "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key " +
+            "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key, network " +
             "from networking.peer " + ";")        
     
     else:
         query = (        
-            "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key " +
+            "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key, network " +
             "from networking.peer " +
             "where ip_address = '" + ip_address + "' or self_auth_key::varchar = '" + self_auth_key + "' or peer_auth_key::varchar = '" + peer_auth_key + "';")
     
     try:
         peer_sql = executeSql(query)
-        columns = namedtuple('columns', ['ip_address', 'port', 'status', 'connected_time', 'last_ping', 'self_auth_key', 'peer_auth_key'])
         peers = {
                     'peer_status': 'peer identified',
                     'ip_address': peer_sql[0],
@@ -221,7 +224,8 @@ def queryPeer(ip_address = '', self_auth_key = '', peer_auth_key = ''):
                     'connected_time': peer_sql[3],
                     'last_ping': peer_sql[4],
                     'self_auth_key': peer_sql[5],
-                    'peer_auth_key': peer_sql[6]
+                    'peer_auth_key': peer_sql[6],
+                    'network': peer_sql[7]
                 }
 
     except Exception as error:
@@ -233,13 +237,12 @@ def queryPeer(ip_address = '', self_auth_key = '', peer_auth_key = ''):
 def queryPeerByIpAndPort(ip_address, port):
     
     query = (        
-        "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key " +
+        "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key,network " +
         "from networking.peer " +
         "where ip_address = '" + ip_address + "' and port = " + str(port) + ";")
     
     try:
         peer_sql = executeSql(query)
-        columns = namedtuple('columns', ['ip_address', 'port', 'status', 'connected_time', 'last_ping', 'self_auth_key', 'peer_auth_key'])
         peers = {
                     'peer_status': 'peer identified',
                     'ip_address': peer_sql[0],
@@ -248,7 +251,8 @@ def queryPeerByIpAndPort(ip_address, port):
                     'connected_time': peer_sql[3],
                     'last_ping': peer_sql[4],
                     'self_auth_key': peer_sql[5],
-                    'peer_auth_key': peer_sql[6]
+                    'peer_auth_key': peer_sql[6],
+                    'network': peer_sql[7]
                 }
 
     except Exception as error:
@@ -260,14 +264,13 @@ def queryPeerByIpAndPort(ip_address, port):
 def queryPeers(ip_address = '', self_auth_key = '', peer_auth_key = ''):
     
     if ip_address == '' and self_auth_key == '' and peer_auth_key == '':
-
         query = (        
-            "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key " +
+            "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key,network " +
             "from networking.peer " + ";")        
     
     else:
         query = (        
-            "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key " +
+            "select ip_address ,port ,status ,connected_time ,last_ping ,self_auth_key ,peer_auth_key, network " +
             "from networking.peer " +
             "where ip_address = '" + ip_address + "' or self_auth_key::varchar = '" + self_auth_key + "' or peer_auth_key::varchar = '" + peer_auth_key + "';")
     
@@ -282,7 +285,8 @@ def queryPeers(ip_address = '', self_auth_key = '', peer_auth_key = ''):
             'cpmmected_time': peer_sql[i][3],
             'last_ping': peer_sql[i][4],
             'self_auth_key': peer_sql[i][5],
-            'peer_auth_key': peer_sql[i][6]
+            'peer_auth_key': peer_sql[i][6],
+            'network': peer_sql[i][7],
             }
         dict_array.append(dicti)
     
@@ -337,13 +341,13 @@ def deletePeer(ip_address, port):
     return delete
 
 
-def initialConnectToPeer(version, port, timestamp, peer_ip_address, peer_port):
+def initialConnectToPeer(version, port, timestamp, network, peer_ip_address, peer_port):
     
     #curl -X POST "http://localhost:8334/peer/peering/connect" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"version\": \"abc\", \"port\": 100, \"timestamp\": 100}"
     
     url = "http://" + peer_ip_address + ":" + str(peer_port) + "/peer/peering/initial_connect" 
     print(url)
-    payload = {'version':version,'port':port,'timestamp':timestamp}
+    payload = {'version':version,'port':port,'timestamp':timestamp,'network':network}
     print(payload)
     headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
@@ -356,13 +360,13 @@ def initialConnectToPeer(version, port, timestamp, peer_ip_address, peer_port):
     }
     
 
-def validateConnectToPeer(version, port, timestamp, peer_ip_address, peer_port):
+def validateConnectToPeer(version, port, timestamp, network, peer_ip_address, peer_port):
     
     #curl -X POST "http://localhost:8334/peer/peering/connect" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"version\": \"abc\", \"port\": 100, \"timestamp\": 100}"
     
     url = "http://" + peer_ip_address + ":" + str(peer_port) + "/peer/peering/validate_connect" 
     print(url)
-    payload = {'version':version,'port':port,'timestamp':timestamp}
+    payload = {'version':version,'port':port,'timestamp':timestamp,'network':network}
     print(payload)
     headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
@@ -375,26 +379,26 @@ def validateConnectToPeer(version, port, timestamp, peer_ip_address, peer_port):
     }
     
 
-def responsivePeerRequest(version, port, timestamp, peer_ip_address, peer_port, wait_time=5):
+def responsivePeerRequest(version, port, timestamp, network, peer_ip_address, peer_port, wait_time=5):
     
     time.sleep(wait_time)
     
-    peer_request = validateConnectToPeer(version, port, timestamp, peer_ip_address, peer_port)
+    peer_request = validateConnectToPeer(version, port, timestamp, network, peer_ip_address, peer_port)
     
     print('attempting to respond to peer request')
     print(peer_request)
     
     if peer_request.get('status') == 'successful peer':
-        updatePeer(ip_address=peer_ip_address, port=peer_port, self_auth_key=peer_request.get('token'), status='connected')
+        updatePeer(ip_address=peer_ip_address, port=peer_port, self_auth_key=peer_request.get('token'), status='connected', network=network)
         return 'Success'
     
     else:
         return 'Fail'    
     
 
-def attemptToConnectToNewPeer(version, port, timestamp, peer_ip_address, peer_port):
+def attemptToConnectToNewPeer(version, port, timestamp, network, peer_ip_address, peer_port):
     
-    peer_request = initialConnectToPeer(version, port, timestamp, peer_ip_address, peer_port)
+    peer_request = initialConnectToPeer(version, port, timestamp, network, peer_ip_address, peer_port)
     
     print('attempting to connect to new peer, peer request:')
     print(peer_request)
@@ -403,7 +407,7 @@ def attemptToConnectToNewPeer(version, port, timestamp, peer_ip_address, peer_po
     if peer_request.get('status') == 'initial connection request accepted':
         deletePeer(peer_ip_address,peer_port)
         addPeer(peer_ip_address,peer_port,'local_contact_external_accepted')
-        updatePeer(ip_address=peer_ip_address, port=peer_port, self_auth_key=peer_request.get('token'))
+        updatePeer(ip_address=peer_ip_address, port=peer_port, self_auth_key=peer_request.get('token'), network=network)
         return 'Success'
     
     else:
@@ -518,10 +522,6 @@ def messagePeer(endpoint, peer_ip_address, payload='', rest_type='get'):
     
 if __name__ == '__main__':
     
-    #attemptToConnectToNewPeer(1, 8334, getTimeNowSeconds(), '76.179.199.85', 8336)
-    
-    evaluateConnectionRequest('74.78.100.60', 1, 8336, 1)
-    print(queryPeerByIpAndPort('124.123.66.141',8334))
-    
+    print(peerCount())
     
     

@@ -24,6 +24,10 @@ request_to_connect_model = namespace.model('Request to Connect', {
     'timestamp': fields.Integer(
         required=True,
         description='Timestamp'
+    ),
+    'network': fields.String(
+        required=True,
+        description='Network Type (mainnet or testnet)'
     )
 })
 
@@ -64,8 +68,9 @@ class initial_connect(Resource):
         version = request.json['version']
         port = request.json['port']
         timestamp = request.json['timestamp']
+        network = request.json['network']
                 
-        connection_request = evaluateInitialConnectionRequest(ip_address, version, port, timestamp)
+        connection_request = evaluateInitialConnectionRequest(ip_address, version, port, timestamp, network)
 
         return connection_request
         
@@ -83,8 +88,9 @@ class validate_connect(Resource):
         version = request.json['version']
         port = request.json['port']
         timestamp = request.json['timestamp']
+        network = request.json['network']
                 
-        connection_request = evaluateValidateConnectionRequest(ip_address, version, port, timestamp)
+        connection_request = evaluateValidateConnectionRequest(ip_address, version, port, timestamp, network)
     
         return connection_request
 

@@ -10,7 +10,7 @@ from http import HTTPStatus
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.wrappers import Response
 from node.networking.peering_functions import authenticateLocalUser
-from node.blockchain.block_adding_queueing import removeBlocksThreading
+from node.blockchain.block_adding_queueing import removeBlocksQueueing
 
 namespace = Namespace('node_functions', 'Node Functions')
 
@@ -24,7 +24,7 @@ class remove_blocks(Resource):
         if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated')
         
-        status = removeBlocksThreading(start_block,end_block)
+        status = removeBlocksQueueing(start_block,end_block)
 
         return {
             'status': status

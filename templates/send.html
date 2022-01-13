@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block main %}
+
+<main class="col-md-12 ms-sm-auto col-lg-12 px-md-4">
+  <form action="/wallet/validateSend" method="POST">
+    <h2 class="mt-4">Send</h2>
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" name="txHash" id="txHash" value="{{txHash}}">
+      <label for="txHash">Input transaction hash</label>
+    </div>
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" name="vout" id="vout" value="{{vout}}">
+      <label for="vout">VOUT</label>
+    </div>
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" name="privateKey" id="privateKey" value="{{privateKey}}">
+      <label for="privateKey">Input private key</label>
+    </div>
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" name="spendType" id="spendType">
+      <label for="spendType">Spend type</label>
+    </div>
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" name="publicKey" id="publicKey">
+      <label for="publicKey">Output public key</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Send</button>
+  </form>
+</main>
+
+<!-- "input_transaction_hash": "string",
+"input_vout": 0,
+"input_private_key": "string",
+"input_spend_type": 0,
+"output_public_key": "string" -->
+
+{% endblock %}

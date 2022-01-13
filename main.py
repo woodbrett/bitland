@@ -7,6 +7,7 @@ Created on Mar 28, 2021
 from flask import Flask
 from blueprints.peer import blueprint as peer
 from blueprints.local import blueprint as local
+from blueprints.wallet import blueprint as wallet
 import threading
 from mining.mining_functions import miningProcess
 from system_variables import (
@@ -28,17 +29,18 @@ app.config['RESTPLUS_MASK_SWAGGER'] = False
 
 app.register_blueprint(peer)
 app.register_blueprint(local)
+app.register_blueprint(wallet)
 
 
-def start_up():
+def startUp():
     
-    t4 = threading.Thread(target=ongoing_functions, daemon=True)
+    t4 = threading.Thread(target=ongoingFunctions, daemon=True)
     t4.start()
 
     return None
 
 
-def flask_started():
+def flaskStarted():
     
     not_started = True
 
@@ -56,9 +58,9 @@ def flask_started():
         time.sleep(2)
 
 
-def ongoing_functions():
+def ongoingFunctions():
     
-    flask_started()
+    flaskStarted()
 
     if initial_synch_var == True:
         
@@ -86,12 +88,22 @@ def ongoing_functions():
     return None
 
 
+def runPeerServer():
+    
+    try:
+        app.run(port=peering_port,host=peering_host)
+    except:
+        runPeerServer()
+
+
 if __name__ == "__main__":
 
-    start_up()
-    app.run(port=peering_port,host=peering_host)
+    startUp()
+    runPeerServer()
+        
     
    
+    
     
     
     
