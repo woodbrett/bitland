@@ -81,8 +81,8 @@ def validateSend():
     if request.cookies.get('authenticated') == 'True':
         txHash = request.form['txHash']
         privateKey = request.form['privateKey']
-        vout = request.form['vout']
-        spendType = request.form["spendType"]
+        vout = int(request.form['vout'])
+        spendType = int(request.form["spendType"])
         publicKey = request.form["publicKey"]
         serialized_transaction = createSimpleTransactionTransfer(txHash, vout, privateKey,
                                                                  spendType, publicKey)
