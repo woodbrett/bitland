@@ -43,7 +43,7 @@ class get_current_version(Resource):
 
     @namespace.response(500, 'Internal Server error')
     @namespace.doc(security='Bearer')   
-    def get(self,ip_address,port):
+    def get(self):
         
         if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated')
@@ -58,7 +58,7 @@ class get_current_time(Resource):
 
     @namespace.response(500, 'Internal Server error')
     @namespace.doc(security='Bearer')   
-    def get(self,ip_address,port):
+    def get(self):
         
         if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated')
@@ -73,7 +73,7 @@ class get_current_bitcoin_hash(Resource):
 
     @namespace.response(500, 'Internal Server error')
     @namespace.doc(security='Bearer')   
-    def get(self,ip_address,port):
+    def get(self):
         
         if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated')
@@ -90,7 +90,7 @@ class get_current_bitcoin_height(Resource):
 
     @namespace.response(500, 'Internal Server error')
     @namespace.doc(security='Bearer')   
-    def get(self,ip_address,port):
+    def get(self):
         
         if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated')
@@ -108,7 +108,7 @@ class get_current_bitcoin_last_64(Resource):
 
     @namespace.response(500, 'Internal Server error')
     @namespace.doc(security='Bearer')   
-    def get(self,ip_address,port):
+    def get(self):
         
         if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated')
@@ -127,7 +127,7 @@ class get_current_height(Resource):
 
     @namespace.response(500, 'Internal Server error')
     @namespace.doc(security='Bearer')   
-    def get(self,ip_address,port):
+    def get(self):
         
         if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
             namespace.abort(400, 'Not authenticated')
