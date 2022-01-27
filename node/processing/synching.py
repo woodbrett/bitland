@@ -12,8 +12,8 @@ from node.networking.node_query_functions import getBlocksStartEnd
 import json
 from node.networking.peering_functions import (
     messageAllKnownPeers,
-    messagePeer, updatePeer, connectToPeer, queryPeer,
-    attemptToConnectToNewPeer, deletePeer, peerCount, resetPeers
+    messagePeer, updatePeer, initialConnectToPeer, validateConnectToPeer, queryPeer,
+    attemptToConnectToNewPeer, deletePeer, peerCount, resetPeers, queryPeers
     )
 from node.blockchain.block_serialization import deserializeBlock
 from node.blockchain.validate_block import (
@@ -28,10 +28,28 @@ from node.blockchain.block_adding_queueing import processPeerBlocks,\
 from node.blockchain.mempool_operations import garbageCollectMempool
 from ipaddress import ip_address
 from node.blockchain.global_variables import bitland_version
-from system_variables import peering_port
+from system_variables import peering_port, min_peer_count, node_network
 from utilities.time_utils import getTimeNowSeconds
+from utilities.bitcoin.bitcoin_requests import getBestBlockHash
+from utilities import bitcoin
+from utilities.connectivity import checkInternetConnection
+
+global bitcoin_connection 
+global peer_count 
+global bitland_synched
+global bitcoin_synched
+global internet_connection
+
+bitcoin_connection = False
+peer_count = 0
+bitland_synched = False
+bitcoin_synched = True
+internet_connection = False
 
 def start_node():
+
+    print('checking internet connection')
+    internet_connection = checkInternetConnection()
 
     print('resetting peers')
     resetPeers()
@@ -39,66 +57,100 @@ def start_node():
     print('pinging peers')
     pingPeers()
     
-    print('checking peer blocks')
-    peer_height = 1
-    self_height = 0
-    while self_height < peer_height:
-        block_comparison = checkPeerBlocks(use_threading=True)
-        peer_height = block_comparison.get('peer_height')
-        self_height = block_comparison.get('self_height')
-        
-    #t3 = threading.Thread(target=checkPeerBlocks,args=(True,),daemon=True)
-    #t3.start()
-        
-    print('synching bitcoin')
-    synchBitcoin()
+    print('sleeping 10 seconds to sort out peering')
+    time.sleep(10)
     
     return True
 
 
 def run_node(initial_synch=False):
     
-    pingPeers()
+    global bitcoin_connection 
+    global peer_count 
+    global bitland_synched
+    global bitcoin_synched
+    global internet_connection
     
-    if initial_synch == True:
+    #pingPeers(peer_types=['connected','unpeered'])
+    
+    if initial_synch == True:   
         initialSynch()
     
-    while True:
+    try:
+        while True:
+    
+            if internet_connection == False:
+                if checkInternetConnection() == True:
+                    internet_connection = True
+                    resetPeers()
+            
+            if internet_connection == True:
+                peers = pingPeers(peer_types=['connected','unpeered'])
+                peer_count = peers.get('peer_count')
+            
+                if peer_count == 0:
+                    internet_connection = checkInternetConnection()
+            
+            best_bitcoin_block_hash = getBestBlockHash()
+            if best_bitcoin_block_hash == None:
+                bitcoin_connection = False
+                bitcoin_synched = False
+                bitland_synched = False
+            else:
+                bitcoin_connection = True
+    
+            node_status = getNodeStatus()
+            
+            if node_status.get('node_connectivity') == True:
+                                
+                print('synching bitcoin')
+                synch_bitcoin = synchBitcoin()
+                bitcoin_connection = synch_bitcoin
+                bitcoin_synched = synch_bitcoin
+                
+                print('bitcoin connection status: ' + str(bitcoin_connection))
+              
+                print('checking peer blocks')
+                bitland_synch = checkPeerBlocks(use_queue=True)
+                bitland_synched = bitland_synch.get('synched')
+                #t3 = threading.Thread(target=checkPeerBlocks,args=(True,),daemon=True)
+                #t3.start()
         
-        print('checking peer blocks')
-        t3 = threading.Thread(target=checkPeerBlocks,args=(True,),daemon=True)
-        t3.start()
-        
-        print('synching bitcoin')
-        synchBitcoin()
-        
-        pingPeers(peer_types=['connected'])
-        
-        time.sleep(120)
+            print('node status:')
+            print(getNodeStatus())
+            
+            time.sleep(60)
+    
+    except:
+        print('exception in running node, restarting now')
+        start_node()
+        run_node()
 
 
 def pingPeers(peer_types=['connected','unpeered','offline',None]):
 
-    ping = messageAllKnownPeers('/peer/peering/ping', rest_type='get',peer_types=['connected','unpeered','offline',None])
+    ping = messageAllKnownPeers('/peer/peering/ping', rest_type='get',peer_types=peer_types,message_type='ping peers')
     
     for i in range(0,len(ping)):
         
-        ip_address= ping[i].get('peer_ip_address')
+        peer_ip_address= ping[i].get('peer_ip_address')
+        peer_port= ping[i].get('peer_port')
         peer_response = ping[i].get('response')
         
         if peer_response == 'error calling peer':
-            updatePeer(ip_address=ip_address,status='offline')
+            updatePeer(ip_address=peer_ip_address,port=peer_port,status='offline')
         
         elif peer_response.get('message') == 'Not authenticated as peer':
-            
-            peer_port = queryPeer(ip_address=ip_address).get('port')
-            deletePeer(ip_address)
-            attemptToConnectToNewPeer(bitland_version, peering_port, getTimeNowSeconds(), ip_address, peer_port)
+            attemptToConnectToNewPeer(bitland_version, peering_port, getTimeNowSeconds(), node_network, peer_ip_address, peer_port)
         
         else:
-            updatePeer(ip_address=ping[i].get('peer_ip_address'),status='connected')
+            updatePeer(ip_address=peer_ip_address,port=peer_port,status='connected')
     
-    return True
+    count = peerCount()
+    
+    return {
+        "peer_count": count
+    }
 
 
 def initialSynch():
@@ -113,49 +165,26 @@ def initialSynch():
     
     synched = False
     while synched == False:
-        synch_peer = checkPeerBlocks(use_threading=False)
+        synch_peer = checkPeerBlocks(use_queue=False)
         synched = synch_peer.get('peer_height') == synch_peer.get('self_height')
     
 
-# def checkPeerBlocks(use_threading=True):
-#
-#     peer_heights = askPeersForHeight()
-#     self_height = getMaxBlockHeight()
-#     max_height = self_height
-#     max_height_peer = 'self'
-#     blocks_added = 0
-#     blocks_removed = 0
-#
-#     for i in range(0,len(peer_heights)):
-#
-#         peer_response = peer_heights[i].get('response')
-#
-#         #UPDATE handle the errors from peers more elegantly
-#         if peer_response == 'error calling peer':
-#             None
-#
-#         elif peer_response.get('block_height') > max_height:
-#             max_height= peer_response.get('block_height')
-#             max_height_peer = peer_heights[i].get('peer_ip_address')
-#
-#     if max_height_peer != 'self':
-#         #UPDATE to only ask for max of X blocks, 50?
-#
-#         synched_with_peers = 'out of synch'
-#
-#         new_blocks = askPeerForBlocks(max_height_peer, max(self_height - 5,0), min(max_height-self_height,50)+self_height)
-#
-#         if use_threading==True:
-#             t1 = threading.Thread(target=processPeerBlocks,args=(new_blocks,use_threading,),daemon=True)
-#             t1.start()
-#             t1.join()
-#         else:
-#             processPeerBlocks(new_blocks,use_threading=use_threading)
-#
-#     return {
-#         'peer_height': max_height_peer,
-#         'self_height': getMaxBlockHeight()
-#         }
+def getNodeStatus():
+    
+    node_connectivity = (bitcoin_connection and peer_count >= min_peer_count and internet_connection)
+    node_synched = (bitcoin_synched and bitland_synched)
+    bitland_height = getMaxBlockHeight()
+    
+    return {
+        "bitcoin_connection": bitcoin_connection,
+        "peer_count": peer_count,
+        "bitland_synched": bitland_synched,
+        "bitcoin_synched": bitcoin_synched,
+        "node_connectivity": node_connectivity,
+        "bitland_height": bitland_height,
+        "node_synched": node_synched,
+        "internet_connection": internet_connection
+        }
 
 
 if __name__ == '__main__':
@@ -165,5 +194,4 @@ if __name__ == '__main__':
     
     #x = pingPeers()
     
-    #x = checkPeerBlocks(use_threading=False)
     

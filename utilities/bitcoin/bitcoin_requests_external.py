@@ -21,21 +21,27 @@ from utilities.bitcoin.bitcoin_database_information import getLastXBitcoinBlocks
 import time
 
 
+#UPDATE how it handles errors from, i used a very crude approach to start, tries it five times until it gets a response since sometimes it fails
+
 def getCurrentBitcoinBlockHeightExternal():
+
+    for i in range(0,5):
+        response = requests.get(block_height_url)
+        if response.status_code == 200:
+            return int(response.text)
+        time.sleep(5)
     
-    calculated_block_height = int(requests.get(block_height_url).text)
-    return calculated_block_height
+    return None
 
 
 def getBlockHeightFromHashExternal(bitcoin_hash):
     
-    url = get_block_height_by_hash_url.replace(':hash', str(bitcoin_hash))
+    url = get_block_height_by_hash_url.replace(':hash', str(bitcoin_hash))    
     
-    #UPDATE brutal solution, try it five times until it gets a response since sometimes it fails
-    for i in range(0,5):        
-        block_info = requests.get(url).json()
-        if block_info.get('height') != None:
-            return block_info.get('height')
+    for i in range(0,5):   
+        response = requests.get(url)
+        if response.status_code == 200 :
+            return response.json().get('height')
         time.sleep(5)
         
     return None
@@ -44,14 +50,25 @@ def getBlockHeightFromHashExternal(bitcoin_hash):
 def getBlockHashFromHeightExternal(block_height):
     
     hash_address = get_block_hash_by_height_url.replace(':height', str(block_height))
-    block_hash = requests.get(hash_address).text
-    return block_hash
+    
+    for i in range(0,5): 
+        response = requests.get(hash_address)
+        if response.status_code == 200:
+            return response.text
+        time.sleep(5)
+        
+    return None
 
 
 def getBestBlockHashExternal():
     
-    best_block_hash = requests.get(block_hash_tip_url).text
-    return best_block_hash
+    for i in range(0,5): 
+        response = requests.get(block_hash_tip_url)
+        if response.status_code == 200:
+            return response.text
+        time.sleep(5)
+        
+    return None
 
 
 #UPDATE
@@ -128,10 +145,22 @@ def validateBitcoinAddressExternal(address_string):
 def getOutputListBlockExternal(block_height):
 
     hash_address = get_block_hash_by_height_url.replace(':height', str(block_height))
-    hash = requests.get(hash_address).text
+    for i in range(0,5): 
+        response = requests.get(hash_address)
+        if response.status_code == 200:
+            hash = response.text
+            break
+        else:
+            time.sleep(5)
 
     block_address = get_block_by_hash_url.replace(':hash', hash)
-    block_raw = requests.get(block_address).content
+    for i in range(0,5): 
+        response = requests.get(block_address)
+        if response.status_code == 200:
+            block_raw = response.content
+            break
+        else:
+            time.sleep(5)
 
     address_value_array = []
     block = Block(block_raw)
@@ -151,7 +180,5 @@ def getOutputListBlockExternal(block_height):
 
 if __name__ == '__main__':
     
-    getLastXBitcoinHashesExternal(64)
-    
-    external = getOutputListBlockExternal(697386)
-    print(len(external))
+    print(getCurrentBitcoinBlockHeightExternal())
+    #getOutputListBlockExternal(696703)

@@ -147,6 +147,9 @@ create schema wallet;
 
 drop table if exists bitland.address;
 create table wallet.addresses (private_key varchar, public_key varchar);
+
+ALTER TABLE bitland.block ADD CONSTRAINT block_header_hash_unique UNIQUE (header_hash);
+ALTER TABLE bitland.block_serialized ADD CONSTRAINT block_serialized_unique UNIQUE (block);
 	
 --
 --BITCOIN SCHEMA
@@ -178,9 +181,12 @@ create table networking.peer (
   connected_time bigint,
   last_ping  bigint,
   self_auth_key uuid,
-  peer_auth_key uuid default uuid_generate_v1() 
+  peer_auth_key uuid default uuid_generate_v1(),
+  network varchar
 );
-  
+ 
+alter table networking.peer add constraint ip_port_unique unique (ip_address, port);
+ 
 drop table if exists bitland.transaction_mempool cascade;
 create table bitland.transaction_mempool (
   id SERIAL PRIMARY key, 
@@ -246,22 +252,22 @@ insert into bitland.int_join (a) select a from bitland.int_join;
 --drop table if exists bitland.tiles;
 --create table bitland.tiles (id serial primary key, x_ordinal int, y_ordinal int, x float8, y float8, geom_1024 geometry, geom_4386 geometry);
 
-with calc1 as (
-select g.*, i.id as y_level, i2.id x_level, 1 + start_y_ratio - y_ratio_increase * (i.id - 1) as y_length, 2048 / x_split as x_length, (2048 / x_split)*(i2.id - 1) as x_start 
-from bitland.geography_definition g
-join bitland.int_join i on g.y_count >= i.id
-join bitland.int_join i2 on g.x_split >= i2.id
-where g.id <= 4
-)
-, cumulative_count as (
-select g.id, coalesce(sum(g1.y_count),0) as cumulative_y_count 
-from bitland.geography_definition g
-left join bitland.geography_definition g1 on g.id > g1.id
-group by 1
-)
-select * --x_level, y_level, x_start_, cumulative_y_count + x_length, 
-from calc1 c1
-join cumulative_count cc on c1.id = cc.id;
+-- with calc1 as (
+-- select g.*, i.id as y_level, i2.id x_level, 1 + start_y_ratio - y_ratio_increase * (i.id - 1) as y_length, 2048 / x_split as x_length, (2048 / x_split)*(i2.id - 1) as x_start 
+-- from bitland.geography_definition g
+-- join bitland.int_join i on g.y_count >= i.id
+-- join bitland.int_join i2 on g.x_split >= i2.id
+-- where g.id <= 4
+-- )
+-- , cumulative_count as (
+-- select g.id, coalesce(sum(g1.y_count),0) as cumulative_y_count 
+-- from bitland.geography_definition g
+-- left join bitland.geography_definition g1 on g.id > g1.id
+-- group by 1
+-- )
+-- select * --x_level, y_level, x_start_, cumulative_y_count + x_length, 
+-- from calc1 c1
+-- join cumulative_count cc on c1.id = cc.id;
 
 create schema testing;
 
@@ -518,6 +524,8 @@ create table bitland.landbase_enum(
 	area float8);
 
 CREATE INDEX idx_landbase_enum_geom_gist ON bitland.landbase_enum USING gist (geom);
+create index on bitland.landbase_enum (valid_enabled_block);
+create index on bitland.landbase_enum (block_claim);
 
 insert into bitland.landbase_enum (x_id,y_id,x1 , y1 , x2 , y2 , x3 , y3 , x4 , y4 )
 select itx.id as x_id, ity.id as y_id, 1/ld.cols::numeric*(itx.id-1) as x1, y1, 1/ld.cols::numeric*(itx.id-1) as x2, y2, 1/ld.cols::numeric*itx.id as x3, y3, 1/ld.cols::numeric*itx.id as x4, y4

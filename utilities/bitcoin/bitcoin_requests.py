@@ -74,16 +74,23 @@ def getBlockHashFromHeight(bitcoin_height, bitcoin_source_request=None):
 
 def getBestBlockHash(bitcoin_source_request=None):
     
-    if bitcoin_source_request == None:
-        bitcoin_source_request = bitcoin_source
-
-    if bitcoin_source_request == 'local_node':
-        return getBestBlockHashNode()
+    try:
+        
+        if bitcoin_source_request == None:
+            bitcoin_source_request = bitcoin_source
     
-    elif bitcoin_source_request == 'blockstream_api':
-        return getBestBlockHashExternal()
-     
-    else:
+        if bitcoin_source_request == 'local_node':
+            return getBestBlockHashNode()
+        
+        elif bitcoin_source_request == 'blockstream_api':
+            return getBestBlockHashExternal()
+         
+        else:
+            return None
+
+    except:
+        
+        print('exception in getBestBlockHash')
         return None
 
 

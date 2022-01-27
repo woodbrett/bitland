@@ -101,7 +101,7 @@ def serializeMinerAddress(miner_bitcoin_address_bytes):
 
 
 def deserializeBlockHeader(header, start_pos=0):
-    
+
     counter = start_pos
     
     version = header[counter:(counter + version_bytes_len)]

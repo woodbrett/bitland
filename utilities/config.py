@@ -4,9 +4,20 @@ Created on Nov 8, 2020
 @author: brett_wood
 '''
 from configparser import ConfigParser
-from system_variables import database_settings_file_location
+from system_variables import (
+    mainnet_database_settings_file_location, 
+    testnet_database_settings_file_location,
+    node_network
+    )
 
-def config(filename=database_settings_file_location, section='postgresql'):
+def config(node_network=node_network, section='postgresql'):
+    
+    if node_network == 'mainnet':
+        filename = mainnet_database_settings_file_location
+    
+    elif node_network == 'testnet':
+        filename = testnet_database_settings_file_location
+    
     # create a parser
     parser = ConfigParser()
     # read config file
