@@ -58,3 +58,6 @@ initial_synch_var = False
 bitcoin_source = 'local_node' #local_node or blockstream_api
 node_network = 'mainnet' #mainnet or testnet
 internet_connectivity_test_source = 'http://www.blockstream.com'
+
+#wallet
+override_ip_to_allow_remote_wallet_access = False
