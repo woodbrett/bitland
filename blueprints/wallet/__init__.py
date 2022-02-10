@@ -4,9 +4,11 @@ Created on Dec 29, 2021
 @author: prakasha
 '''
 
+from binascii import hexlify
 from os import system
 from flask import Blueprint, request, render_template, make_response, redirect, url_for
 from node.networking.peering_functions import authenticateLocalUser
+from wallet.broadcast_transaction import broadcastTransaction
 from wallet.information import getWalletUtxos
 from wallet.transaction_creation import createSimpleTransactionTransfer
 from system_variables import (
@@ -86,7 +88,8 @@ def validateSend():
         publicKey = request.form["publicKey"]
         serialized_transaction = createSimpleTransactionTransfer(txHash, vout, privateKey,
                                                                  spendType, publicKey)
-        
+        serialized_transaction_hex = hexlify(serialized_transaction).decode('utf-8')
+        broadcastTransaction(serialized_transaction_hex)
         return redirect(url_for('wallet.utxos'))
     else:
         return redirect(url_for('wallet.login'))
