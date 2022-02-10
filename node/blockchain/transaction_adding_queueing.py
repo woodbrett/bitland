@@ -12,17 +12,13 @@ from utilities.queueing import addToQueue, removeFromQueue
 def validateAddTransactionMempool(transaction_bytes, use_queue=True):
     
     queue_id = addToQueue(use_queue=use_queue, queue_type='transaction_queue', function_type='add transaction to mempool')
-    
+    add_transaction = False
     try:
         if validateMempoolTransaction(transaction_bytes)[0] == True:
             addTransactionToMempool(transaction_bytes)
-
-        else:
-            add_transaction = False
-            
+            add_transaction = True
     except:
         print('error adding transaction to mempool')
-        add_transaction = False
     
     removeFromQueue(use_queue=use_queue,queue_type='transaction_queue',id=queue_id)  
     
