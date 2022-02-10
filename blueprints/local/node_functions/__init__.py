@@ -15,9 +15,12 @@ from node.blockchain.global_variables import bitland_version
 from utilities.time_utils import getTimeNowSeconds
 from utilities.bitcoin.bitcoin_requests import getBestBlockHash,\
     getBlockHeightFromHash
-from node.blockchain.header_operations import calculateMerkleRoot64BitcoinBlocks
-from binascii import unhexlify
+from node.blockchain.header_operations import calculateMerkleRoot64BitcoinBlocks,\
+    getPrevBlockGuarded
+from binascii import unhexlify, hexlify
 from node.information.blocks import getMaxBlockHeight
+from utilities.difficulty import getBitsCurrentBlock
+from ecdsa.util import bit_length
 
 namespace = Namespace('node_functions', 'Node Functions')
 
@@ -137,3 +140,43 @@ class get_current_height(Resource):
         return {
             'height':current_block_height
         }               
+        
+
+#difficulty_bits
+@namespace.route('/difficultyBits')
+class get_difficulty_bits(Resource):
+
+    @namespace.response(500, 'Internal Server error')
+    @namespace.doc(security='Bearer')   
+    def get(self):
+        
+        if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
+            namespace.abort(400, 'Not authenticated')
+
+        bits_bytes = getBitsCurrentBlock()
+        print(bits_bytes)
+        print(hexlify(bits_bytes).decode('utf-8'))
+        
+        return {
+            'difficulty_bits':hexlify(bits_bytes).decode('utf-8')
+        }               
+        
+
+#previous block hash
+@namespace.route('/previousBlockHash')
+class get_previous_block_hash(Resource):
+
+    @namespace.response(500, 'Internal Server error')
+    @namespace.doc(security='Bearer')   
+    def get(self):
+        
+        if authenticateLocalUser(request.remote_addr, request.headers.get("Authorization")) == False:
+            namespace.abort(400, 'Not authenticated')
+
+        previous_block_hash = getPrevBlockGuarded()
+        print(previous_block_hash)
+
+        return {
+            'previous_block_hash':hexlify(previous_block_hash).decode('utf-8')
+        }   
+
